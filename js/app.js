@@ -227,7 +227,7 @@ class BingoMusical {
         });
 
         this.restartBtn.addEventListener('click', () => {
-            this.clearHistory();
+            this.clearHistory().then();
             this.bingoCompleted = false;
             this.lineaCompleted = false;
             this.celebrationOverlay.classList.add('hidden');
@@ -328,9 +328,7 @@ class BingoMusical {
 
     generateSoundEffects() {
         if (!globalThis.AudioContext) {
-            if (process.env.NODE_ENV === 'development') {
-                console.warn('Web Audio API no soportada');
-            }
+            console.warn('Web Audio API no soportada');
             return;
         }
 
@@ -389,9 +387,7 @@ class BingoMusical {
             try {
                 this.soundEffects[effectName]();
             } catch (error) {
-                if (process.env.NODE_ENV === 'development') {
-                    console.warn('Error al reproducir efecto:', error);
-                }
+                console.warn('Error al reproducir efecto:', error);
             }
         }
     }
@@ -538,9 +534,7 @@ class BingoMusical {
                     .catch(() => false);
 
                 if (!exists) {
-                    if (process.env.NODE_ENV === 'development') {
-                        console.warn(`Archivo no encontrado: ${audioPath}`);
-                    }
+                    console.warn(`Archivo no encontrado: ${audioPath}`);
                     continue;
                 }
 
@@ -877,7 +871,7 @@ class BingoMusical {
     }
 
     updateCounters() {
-        this.playedCounterSpan.textContent = this.playedSongs.length;
+        this.playedCounterSpan.textContent = this.playedSongs.length.toString();
         this.totalCounterSpan.textContent = this.getTotalSongsWithFiles();
     }
 
@@ -921,8 +915,8 @@ class BingoMusical {
 
     playSong(songId) {
         const song = this.songs.find(s => s.id === songId);
-        if (!song || !song.file) {
-            if (!song?.file) this.showAlert('Esta canción no tiene archivo de audio.', 'Sin Archivo');
+        if (!song?.file) {
+            this.showAlert('Esta canción no tiene archivo de audio.', 'Sin Archivo');
             return;
         }
 
@@ -1026,17 +1020,17 @@ class BingoMusical {
 
     updateProgress() {
         const progress = (this.audioPlayer.currentTime / this.audioPlayer.duration) * 100;
-        this.progressFill.value = progress;
-        this.progressFill.setAttribute('aria-valuenow', Math.round(progress).toString());
+        if (Number.isFinite(progress)) {
+            this.progressFill.value = progress;
+            this.progressFill.setAttribute('aria-valuenow', Math.round(progress).toString());
 
-        const formattedTime = this.formatTime(this.audioPlayer.currentTime);
-        this.currentTimeSpan.textContent = formattedTime;
-        this.currentTimeSpan.setAttribute('datetime', `PT${Math.floor(this.audioPlayer.currentTime)}S`);
+            this.currentTimeSpan.textContent = this.formatTime(this.audioPlayer.currentTime);
+            this.currentTimeSpan.setAttribute('datetime', `PT${Math.floor(this.audioPlayer.currentTime)}S`);
+        }
     }
 
     updateDuration() {
-        const formattedDuration = this.formatTime(this.audioPlayer.duration);
-        this.durationSpan.textContent = formattedDuration;
+        this.durationSpan.textContent = this.formatTime(this.audioPlayer.duration);
         this.durationSpan.setAttribute('datetime', `PT${Math.floor(this.audioPlayer.duration)}S`);
     }
 
@@ -1153,7 +1147,7 @@ class BingoMusical {
         this.playEffect('click');
 
         if (document.fullscreenElement) {
-            document.exitFullscreen();
+            document.exitFullscreen().then();
         } else {
             document.documentElement.requestFullscreen().catch(err => {
                 console.warn('Error al entrar en pantalla completa:', err);
