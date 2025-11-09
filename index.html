@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Aplicación de Bingo Musical">
+  <meta name="author" content="Jonathan Cáceres">
+  <meta name="keywords" content="bingo, música, juego, frontend, accesibilidad">
+  <meta name="theme-color" content="#fafafa">
+  <title>Bingo Musical</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta property="og:title" content="Bingo Musical">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="Proyecto local">
+  <meta property="og:image" content="logo.png">
+  <meta property="og:image:alt" content="Bingo Musical">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:site_name" content="Bingo Musical">
+</head>
+
+<body>
+  <!-- Barra de herramientas superior -->
+  <header class="toolbar" role="banner">
+    <div class="toolbar-left">
+      <img id="toolbar-logo" class="toolbar-logo" src="icon.png" alt="Logo del Bingo Musical">
+      <h1 class="app-title">Bingo Musical</h1>
+    </div>
+    <div class="toolbar-right">
+      <!-- Control de volumen de música -->
+      <fieldset class="volume-control">
+        <label class="volume-label" for="music-volume">Música:</label>
+        <input id="music-volume" 
+               class="volume-slider" 
+               type="range" 
+               min="0" 
+               max="100" 
+               value="100" 
+               aria-label="Volumen de música" 
+               aria-valuemin="0" 
+               aria-valuemax="100" 
+               aria-valuenow="100"
+        >
+        <output id="music-volume-value" class="volume-value" for="music-volume">
+          100%
+        </output>
+      </fieldset>
+
+      <!-- Control de volumen de efectos -->
+      <fieldset class="volume-control">
+        <label class="volume-label" for="effects-volume">Efectos:</label>
+        <input id="effects-volume" 
+               class="volume-slider" 
+               type="range" 
+               min="0" 
+               max="100" 
+               value="70" 
+               aria-label="Volumen de efectos" 
+               aria-valuemin="0" 
+               aria-valuemax="100" 
+               aria-valuenow="70"
+        >
+        <output id="effects-volume-value" class="volume-value" for="effects-volume">
+          70%
+        </output>
+      </fieldset>
+
+      <!-- Botón de Línea -->
+      <button id="linea-btn" 
+              class="btn btn-special btn-linea" 
+              type="button" 
+              title="¡Cantar LÍNEA!" 
+              aria-label="Cantar línea"
+      >
+        <span aria-hidden="true">📏</span> ¡LÍNEA!
+      </button>
+
+      <!-- Botón de BINGO -->
+      <button id="bingo-btn" 
+              class="btn btn-special btn-bingo" 
+              type="button" 
+              title="¡Cantar BINGO!" 
+              aria-label="Cantar bingo"
+      >
+        <span aria-hidden="true">🎉</span>¡BINGO!
+      </button>
+
+      <!-- Botón de pantalla completa -->
+      <button id="fullscreen-btn" 
+              class="btn btn-fullscreen" 
+              type="button" 
+              title="Modo pantalla completa" 
+              aria-label="Activar pantalla completa"
+      >
+        <span class="fullscreen-icon" aria-hidden="true">⛶</span> Pantalla Completa
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Historial de canciones reproducidas (izquierda) -->
+    <aside class="history-panel" aria-label="Historial de canciones reproducidas">
+      <h2>🎵 Canciones Reproducidas</h2>
+      <nav id="history-grid" class="history-grid" aria-label="Canciones reproducidas">
+        <!-- Los iconos de las canciones reproducidas aparecerán aquí -->
+      </nav>
+      <output class="history-counter" for="history-grid" aria-live="polite">
+        <span id="played-counter">0</span> / <span id="total-counter">0</span> canciones
+      </output>
+    </aside>
+
+    <!-- Contenido principal (derecha) -->
+    <main class="main-content">
+      <!-- Reproductor de música -->
+      <section class="player-section" aria-label="Reproductor de música">
+        <figure class="player-container">
+          <div class="song-icon-wrapper">
+            <div class="song-icon">
+              <img id="current-icon" src="icon.png" alt="Canción actual">
+              <div class="pulse-animation" aria-hidden="true"></div>
+            </div>
+          </div>
+          <figcaption class="player-info">
+            <h2 id="song-title">Selecciona una canción o presiona reproducir</h2>
+            <nav class="controls" aria-label="Controles de reproducción">
+              <button id="play-btn" 
+                      class="btn btn-play" 
+                      type="button" 
+                      aria-label="Reproducir Aleatorio"
+              >
+                <span aria-hidden="true">🔀</span> Reproducir Aleatorio
+              </button>
+              <button id="pause-btn" 
+                      class="btn btn-pause" 
+                      type="button" 
+                      aria-label="Pausar" 
+                      disabled
+              >
+                <span aria-hidden="true">⏸</span> Pausar
+              </button>
+              <button id="stop-btn" 
+                      class="btn btn-stop" 
+                      type="button" 
+                      aria-label="Detener" 
+                      disabled
+              >
+                <span aria-hidden="true">⏹</span> Detener
+              </button>
+            </nav>
+            <div class="progress-container">
+              <progress id="progress-fill" 
+                        class="progress-bar" 
+                        value="0" 
+                        max="100" 
+                        aria-label="Progreso de reproducción" 
+                        aria-valuemin="0" 
+                        aria-valuemax="100" 
+                        aria-valuenow="0"
+              >
+              </progress>
+              <output class="time-display" for="audio-player">
+                <time id="current-time" datetime="PT0S">0:00</time> / 
+                <time id="duration" datetime="PT0S">0:00</time>
+              </output>
+            </div>
+            <audio id="audio-player" aria-label="Reproductor de audio"></audio>
+          </figcaption>
+        </figure>
+      </section>
+
+      <!-- Lista de canciones -->
+      <section class="songs-section" aria-label="Lista de canciones">
+        <header class="songs-header">
+          <h2>📋 Lista de Canciones</h2>
+          <nav class="songs-actions" aria-label="Acciones de lista">
+            <button id="shuffle-all" 
+                    class="btn btn-secondary btn-icon" 
+                    type="button" 
+                    aria-label="Modo Continuo" 
+                    aria-pressed="false"
+            >
+              <span aria-hidden="true">🔄</span> Modo Continuo
+            </button>
+            <button id="generate-cartones" 
+                    class="btn btn-secondary btn-icon" 
+                    type="button" 
+                    aria-label="Generar Cartones"
+            >
+              <span aria-hidden="true">🎴</span> Generar Cartones
+            </button>
+            <button id="export-list" 
+                    class="btn btn-secondary btn-icon" 
+                    type="button" 
+                    aria-label="Exportar Lista"
+            >
+              <span aria-hidden="true">💾</span> Exportar Lista
+            </button>
+            <button id="import-list" 
+                    class="btn btn-secondary btn-icon" 
+                    type="button" 
+                    aria-label="Importar Lista"
+            >
+              <span aria-hidden="true">📂</span> Importar Lista
+            </button>
+            <input id="import-file" 
+                   class="file-import" 
+                   type="file" 
+                   accept=".json" 
+                   aria-label="Seleccionar archivo a importar"
+            >
+          </nav>
+        </header>
+        <div class="songs-controls">
+          <!-- Input de canciones con label personalizado -->
+          <div class="file-input-wrapper">
+            <input id="add-songs" 
+                   class="file-input" 
+                   type="file" 
+                   accept="audio/*" 
+                   multiple 
+                   aria-describedby="add-songs-description"
+            >
+            <label for="add-songs" class="file-label btn-icon">
+              <span class="file-icon" aria-hidden="true">🎵</span>
+              <span class="file-text">Agregar Canciones</span>
+            </label>
+            <span id="add-songs-description" class="sr-only">
+              Selecciona archivos de audio para agregar a la lista
+            </span>
+          </div>
+
+          <button type="button" id="clear-history" class="btn btn-secondary btn-icon" aria-label="Limpiar historial"><span aria-hidden="true">🗑️</span> Limpiar Historial</button>
+        </div>
+        <ul id="songs-list" class="songs-list">
+          <!-- La lista de canciones se generará dinámicamente -->
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal para generar cartones -->
+  <dialog id="carton-modal" 
+          class="modal hidden" 
+          aria-labelledby="carton-modal-title"
+  >
+    <article class="modal-content">
+      <header class="modal-header">
+        <h2 id="carton-modal-title">🎴 Generar Cartones de Bingo</h2>
+        <button id="close-carton-modal" 
+                class="close-btn" 
+                type="button" 
+                aria-label="Cerrar modal"
+        >
+          ✕
+        </button>
+      </header>
+      <section class="modal-body">
+        <p class="modal-description">
+          Genera cartones únicos para imprimir y repartir a los jugadores.
+        </p>
+        <form class="carton-input-group">
+          <label class="carton-label" for="carton-count">
+            Número de cartones:
+          </label>
+          <input id="carton-count" 
+                 class="modal-carton-input" 
+                 type="number" 
+                 min="1" 
+                 max="1500" 
+                 value="10" 
+                 aria-describedby="carton-hint"
+          >
+          <small id="carton-hint" class="carton-hint">
+            Cada cartón contiene 12 canciones únicas distribuidas en 3 filas
+          </small>
+        </form>
+        <footer class="modal-actions">
+          <button id="generate-html-cartones" 
+                  class="btn btn-play btn-icon" 
+                  type="button"
+          >
+            <span aria-hidden="true">🎴</span> Generar Cartones
+          </button>
+        </footer>
+      </section>
+    </article>
+  </dialog>
+
+  <!-- Modal para personalizar icono -->
+  <dialog id="icon-modal" 
+          class="modal hidden" 
+          aria-labelledby="icon-modal-title"
+  >
+    <article class="modal-content">
+      <header class="modal-header">
+        <h2 id="icon-modal-title">🎨 Personalizar Icono</h2>
+        <button id="close-modal" 
+                class="close-btn" 
+                type="button" 
+                aria-label="Cerrar modal"
+        >
+          ✕
+        </button>
+      </header>
+      <section class="modal-body">
+        <p id="modal-song-title" class="modal-song-title"></p>
+
+        <!-- Botón para subir imagen PNG personalizada -->
+        <div class="upload-wrapper">
+          <input id="custom-icon-upload" 
+                 type="file" 
+                 accept="image/png, image/svg+xml" 
+                 style="display: none;" 
+                 aria-label="Seleccionar imagen personalizada"
+          >
+          <button id="upload-custom-icon-btn" 
+                  class="btn btn-secondary btn-icon btn-fullwidth" 
+                  type="button"
+          >
+            <span aria-hidden="true">📷</span> Subir Imagen PNG o SVG Personalizada
+          </button>
+        </div>
+
+        <nav class="icon-picker" aria-label="Selector de iconos">
+          <!-- Los iconos se generarán dinámicamente -->
+        </nav>
+      </section>
+    </article>
+  </dialog>
+
+  <!-- Modal genérico de confirmación -->
+  <dialog id="confirm-modal" 
+          class="modal hidden" 
+          role="alertdialog" 
+          aria-labelledby="confirm-title" 
+          aria-describedby="confirm-message"
+  >
+    <article class="modal-content modal-small">
+      <header class="modal-header">
+        <h2 id="confirm-title">❓ Confirmar</h2>
+      </header>
+      <section class="modal-body">
+        <p id="confirm-message" class="confirm-message"></p>
+        <footer class="modal-actions">
+          <button id="confirm-cancel" 
+                  class="btn btn-secondary btn-icon" 
+                  type="button"
+          >
+            <span aria-hidden="true">✖️</span> Cancelar
+          </button>
+          <button id="confirm-accept" 
+                  class="btn btn-play btn-icon" 
+                  type="button"
+          >
+            <span aria-hidden="true">✔️</span> Aceptar
+          </button>
+        </footer>
+      </section>
+    </article>
+  </dialog>
+
+  <!-- Modal de alerta genérico -->
+  <dialog id="alert-modal" 
+          class="modal hidden" 
+          role="alertdialog" 
+          aria-labelledby="alert-title" 
+          aria-describedby="alert-message"
+  >
+    <article class="modal-content modal-small">
+      <header class="modal-header">
+        <h2 id="alert-title">ℹ️ Información</h2>
+      </header>
+      <section class="modal-body">
+        <p id="alert-message" class="confirm-message"></p>
+        <footer class="modal-actions">
+          <button id="alert-ok" 
+                  class="btn btn-play btn-icon" 
+                  type="button"
+          >
+            <span aria-hidden="true">👍</span> Aceptar
+          </button>
+        </footer>
+      </section>
+    </article>
+  </dialog>
+
+  <!-- Overlay de celebración para LÍNEA -->
+  <aside id="linea-overlay" 
+         class="celebration-overlay hidden" 
+         aria-labelledby="linea-title" 
+         aria-modal="true"
+  >
+    <article class="celebration-content">
+      <h1 id="linea-title" class="celebration-title celebration-title-linea">
+        📏 ¡LÍNEA! 📏
+      </h1>
+      <p class="celebration-text">
+        ¡Felicidades, has completado una línea!
+      </p>
+      <button id="continue-linea-btn" 
+              class="btn btn-play btn-large btn-icon" 
+              type="button"
+      >
+        <span aria-hidden="true">▶️</span> Continuar Jugando
+      </button>
+    </article>
+  </aside>
+
+  <!-- Overlay de celebración para BINGO -->
+  <aside id="celebration-overlay" 
+         class="celebration-overlay hidden" 
+         aria-labelledby="celebration-title" 
+         aria-modal="true"
+  >
+    <article class="celebration-content">
+      <h1 id="celebration-title" class="celebration-title">
+        🎉 ¡BINGO! 🎉
+      </h1>
+      <p class="celebration-text">
+        ¡Felicidades, has completado el bingo!
+      </p>
+      <button id="restart-btn" 
+              class="btn btn-play btn-large btn-icon" 
+              type="button"
+      >
+        <span aria-hidden="true">🔄</span> Comenzar de Nuevo
+      </button>
+    </article>
+  </aside>
+
+  <script src="js/carton-generator.js" defer></script>
+  <script src="js/app.js" defer></script>
+</body>
+
+</html>
