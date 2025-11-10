@@ -894,7 +894,7 @@ class BingoMusical {
             });
 
             li.addEventListener('click', () => {
-                if (song.file && (!this.gameStarted || song.played)) {
+                if (song.file && !this.gameStarted) {
                     this.playEffect('click');
                     this.playSong(song.id);
                 }
@@ -1132,6 +1132,11 @@ class BingoMusical {
         historyItem.title = song.title;
         historyItem.setAttribute('role', 'img');
         historyItem.setAttribute('aria-label', `Canción reproducida: ${song.title}`);
+
+        historyItem.addEventListener('click', () => {
+            this.playEffect('click');
+            this.playSong(song.id);
+        });
 
         const img = document.createElement('img');
 

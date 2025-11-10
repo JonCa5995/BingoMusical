@@ -255,6 +255,7 @@ body.fullscreen .history-grid {
     transition: transform 0.2s;
     animation: fadeIn 0.3s ease-in;
     position: relative;
+    cursor: pointer;
 }
 
 .history-item::before {
