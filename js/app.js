@@ -1036,7 +1036,7 @@ class BingoMusical {
     }
 
     updateControls(playing) {
-        this.playBtn.disabled = playing;
+        this.playBtn.disabled = playing && this.gameStarted; // Modificado: deshabilitar solo si está reproduciendo Y el juego ha iniciado
         this.pauseBtn.disabled = false;
         this.stopBtn.disabled = !playing && this.currentSongIndex === null;
         
