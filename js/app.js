@@ -604,7 +604,7 @@ class BingoMusical {
                     messageTitle = 'Importación Exitosa';
                 }
                 this.showAlert(message, messageTitle);
-            }, duplicates.length > 0 ? 5000 : 0);
+            }, duplicates.length > 0 ? 2000 : 0);
 
         } catch (error) {
             console.error(error);
@@ -844,8 +844,8 @@ class BingoMusical {
         this.importListBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
 
         this.clearHistoryBtn.disabled = !isDisabled; // Habilitar solo si el juego ha iniciado
-        this.clearHistoryBtn.style.opacity = !isDisabled ? '0.5' : '1';
-        this.clearHistoryBtn.style.cursor = !isDisabled ? 'not-allowed' : 'pointer';
+        this.clearHistoryBtn.style.opacity = isDisabled ? '1' : '0.5';
+        this.clearHistoryBtn.style.cursor = isDisabled ? 'pointer' : 'not-allowed';
 
         this.shuffleAllBtn.disabled = isDisabled;
         this.shuffleAllBtn.style.opacity = isDisabled ? '0.5' : '1';
@@ -912,11 +912,20 @@ class BingoMusical {
             const iconHtml = this.setRenderSongIconHtml(song);
             const iconDisabled = (song.played || this.gameStarted) ? 'disabled' : '';
 
+            let songStateLabel;
+            if (song.played) {
+                songStateLabel = '✓ Ya reproducida';
+            } else if (song.file) {
+                songStateLabel = '○ Pendiente';
+            } else {
+                songStateLabel = '⚠ Sin archivo';
+            }
+
             li.innerHTML = `
               <button type="button" class="song-item-icon" data-song-id="${song.id}" title="${iconTitle}" style="cursor:${iconCursor};" aria-label="Cambiar icono de ${song.title}" ${iconDisabled}>${iconHtml}</button>
               <div class="song-item-info">
                 <strong class="song-item-title">${song.title}</strong>
-                <div class="song-item-status" role="status" aria-live="polite">${song.played ? '✓ Ya reproducida' : (song.file ? '○ Pendiente' : '⚠ Sin archivo')}</div>
+                <div class="song-item-status" role="status" aria-live="polite">${songStateLabel}</div>
               </div>
               <button type="button" class="song-item-delete" title="Eliminar canción" aria-label="Eliminar ${song.title}"><span aria-hidden="true">❌</span></button>
             `;
@@ -1049,11 +1058,8 @@ class BingoMusical {
         this.audioPlayer.pause();
         this.audioPlayer.currentTime = 0;
         this.isPlaying = false;
-        // this.currentSongIndex = null; // Mantener la canción actual seleccionada
         this.updateControls(false);
 
-        // this.songTitleElement.textContent = 'Selecciona una canción o presiona reproducir'; // Mantener el título
-        // this.currentIconImg.src = ''; // Mantener el icono
         this.progressFill.value = 0;
         this.progressFill.setAttribute('aria-valuenow', '0');
         this.songIconContainer.classList.remove('playing');
@@ -1097,14 +1103,12 @@ class BingoMusical {
         if (playing) {
             this.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span> Pausar';
             this.pauseBtn.setAttribute('aria-label', 'Pausar reproducción');
+        } else if (this.audioPlayer.currentTime > 0) {
+            this.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reanudar';
+            this.pauseBtn.setAttribute('aria-label', 'Reanudar reproducción');
         } else {
-            if (this.audioPlayer.currentTime > 0) {
-                this.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reanudar';
-                this.pauseBtn.setAttribute('aria-label', 'Reanudar reproducción');
-            } else {
-                this.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reproducir';
-                this.pauseBtn.setAttribute('aria-label', 'Reproducir canción seleccionada');
-            }
+            this.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reproducir';
+            this.pauseBtn.setAttribute('aria-label', 'Reproducir canción seleccionada');
         }
     }
 
