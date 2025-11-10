@@ -142,6 +142,7 @@ class BingoMusical {
         this.generateSoundEffects();
         this.renderSongsList();
         this.updateCounters();
+        this.updateControls(false);
     }
 
     _setupPlayerEventListeners() {
@@ -1042,16 +1043,29 @@ class BingoMusical {
     }
 
     updateControls(playing) {
-        this.playBtn.disabled = playing && this.gameStarted; // Modificado: deshabilitar solo si está reproduciendo Y el juego ha iniciado
-        this.pauseBtn.disabled = false;
-        this.stopBtn.disabled = !playing && this.currentSongIndex === null;
-        
+        const noSongSelected = this.currentSongIndex === null;
+
+        this.playBtn.disabled = playing && this.gameStarted;
+        this.pauseBtn.disabled = noSongSelected;
+        this.stopBtn.disabled = noSongSelected;
+
+        if (noSongSelected) {
+            this.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reproducir';
+            this.pauseBtn.setAttribute('aria-label', 'Reproducir');
+            return;
+        }
+
         if (playing) {
             this.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span> Pausar';
             this.pauseBtn.setAttribute('aria-label', 'Pausar reproducción');
         } else {
-            this.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reanudar';
-            this.pauseBtn.setAttribute('aria-label', 'Reanudar reproducción');
+            if (this.audioPlayer.currentTime > 0) {
+                this.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reanudar';
+                this.pauseBtn.setAttribute('aria-label', 'Reanudar reproducción');
+            } else {
+                this.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reproducir';
+                this.pauseBtn.setAttribute('aria-label', 'Reproducir canción seleccionada');
+            }
         }
     }
 
