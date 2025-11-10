@@ -23,7 +23,7 @@ class BingoMusical {
         this.songsFolder = 'canciones/';
         this.initializeElements();
         this.initializeIcons();
-        this.soundEffects = { start: null, win: null, click: null, complete: null };
+        this.soundEffects = { start: null, win: null, click: null, complete: null, error: null };
         
         this.init();
     }
@@ -250,7 +250,8 @@ class BingoMusical {
             this.alertModal.showModal();
         }
         
-        this.playEffect('click');
+        const isError = /error|inválido|insuficientes/i.test(title);
+        this.playEffect(isError ? 'error' : 'click');
     }
 
     closeAlertModal() {
@@ -345,15 +346,18 @@ class BingoMusical {
         this.soundEffects.win = () => this._createMelody([523.25, 587.33, 659.25, 783.99], 0.15, 0.3);
         this.soundEffects.click = () => this._createSoundEffect(800, 800, 0.05, 0.2);
         this.soundEffects.complete = () => this._createMelody([523.25, 659.25, 783.99, 1046.5], 0.1, 0.4, 'triangle');
+        this.soundEffects.error = () => this._createSoundEffect(600, 100, 0.6, 0.6, 'square');
     }
 
-    _createSoundEffect(startFreq, endFreq, duration, volumeMultiplier = 1) {
+    _createSoundEffect(startFreq, endFreq, duration, volumeMultiplier = 1, waveType = 'sine') {
         const audioCtx = new AudioContext();
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
 
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
+
+        oscillator.type = waveType;
 
         oscillator.frequency.setValueAtTime(startFreq, audioCtx.currentTime);
         if (startFreq !== endFreq) {
@@ -506,8 +510,7 @@ class BingoMusical {
         if (!file) return;
 
         if (this.gameStarted) {
-            const message = 'No puedes importar una lista una vez que el juego ha iniciado. ' +
-                          'Debes limpiar el historial primero.';
+            const message = 'No puedes importar una lista una vez que el juego ha iniciado. Debes reiniciar el juego primero.';
             this.showAlert(message, 'Juego Iniciado');
             event.target.value = '';
             return;
@@ -521,22 +524,36 @@ class BingoMusical {
                 throw new Error('Formato de archivo inválido');
             }
 
+            // Reset lists for replacement behavior
             this.songs = [];
             this.playedSongs = [];
+            this.songId = 1; // Reset song ID counter for the new list
+
+            const duplicates = [];
+            const newSongs = [];
+            const titlesAdded = new Set();
             const usedIcons = new Set();
 
             for (const songData of playlist.songs) {
+                const title = songData.title;
+
+                if (titlesAdded.has(title)) {
+                    duplicates.push(title);
+                    continue; // Skip duplicate within the same file
+                }
+
                 let {icon, iconType = 'emoji'} = songData;
 
                 if (!icon || usedIcons.has(icon)) {
                     const availableIcon = this.availableIcons.find(i => !usedIcons.has(i));
                     const randomIndex = Math.floor(Math.random() * this.availableIcons.length);
-                    icon = availableIcon || this.availableIcons[randomIndex];
+                    icon = availableIcon || this.availableIcons[randomIndex] || '🎵';
                 }
 
                 usedIcons.add(icon);
+                titlesAdded.add(title);
 
-                const audioPath = this.songsFolder + songData.title + '.mp3';
+                const audioPath = this.songsFolder + title + '.mp3';
                 const exists = await fetch(audioPath, {method: 'HEAD'})
                     .then(response => response.ok)
                     .catch(() => false);
@@ -545,42 +562,50 @@ class BingoMusical {
                     const resp = await fetch(audioPath);
                     const blob = await resp.blob();
 
-                    this.songs.push({
-                        id: songData.id,
-                        title: songData.title,
+                    newSongs.push({
+                        id: this.songId++, // Use class-level counter
+                        title: title,
                         icon,
                         iconType,
                         audioPath,
                         file: blob,
+                        played: false
                     });
                 } else {
                     console.warn(`Archivo no encontrado: ${audioPath}`);
                 }
             }
 
+            this.songs = newSongs; // Assign the filtered list
+
             this.renderSongsList();
             this.updateCounters();
             this.updateUIState();
 
-            let message;
-            let messageTitle;
-            if (this.songs.length === 0) {
+            // Show duplicate warning first, if any
+            if (duplicates.length > 0) {
                 this.playEffect('error');
-                message = `Se han importado 0 canciones.\n\n` +
-                    `revisa que los archivos de audio estén en: ${this.songsFolder}\n\n` +
-                    `Los nombres de los archivos de audio deben coincidir ` +
-                    `con los títulos de las canciones.`;
-                messageTitle = 'Error al importar la lista';
-            } else {
-                this.playEffect('win');
-                message = `Lista importada: ${this.songs.length} canciones.\n\n` +
-                    `Los archivos de audio deben estar en: ${this.songsFolder}\n\n` +
-                    `Los nombres de los archivos de audio deben coincidir ` +
-                    `con los títulos de las canciones.`;
-                messageTitle = 'Importación Exitosa';
-                this.songId = this.songs.at(-1).id + 1;
+                const message = `Se omitieron las siguientes canciones duplicadas:\n\n- ${duplicates.join('\n- ')}`;
+                this.showAlert(message, 'Canciones Duplicadas Omitidas');
             }
-            this.showAlert(message, messageTitle);
+
+            // Then, show the main success/error message
+            // Use a timeout to ensure the duplicate alert is seen first if both are shown
+            setTimeout(() => {
+                let message;
+                let messageTitle;
+                if (this.songs.length === 0) {
+                    this.playEffect('error');
+                    message = `Se han importado 0 canciones.\n\nRevisa que los archivos de audio estén en: ${this.songsFolder}\ny que los nombres coincidan con los títulos.`;
+                    messageTitle = 'Error al Importar';
+                } else {
+                    this.playEffect('win');
+                    message = `Lista importada con ${this.songs.length} canciones.\n\nLos archivos de audio deben estar en: ${this.songsFolder}`;
+                    messageTitle = 'Importación Exitosa';
+                }
+                this.showAlert(message, messageTitle);
+            }, duplicates.length > 0 ? 5000 : 0);
+
         } catch (error) {
             console.error(error);
             const message = `Error al importar la lista: ${error.message}`;
