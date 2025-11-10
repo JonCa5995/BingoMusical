@@ -791,15 +791,23 @@ class BingoMusical {
 
     updateUIState() {
         const isDisabled = this.gameStarted;
-        
+
         this.addSongsInput.disabled = isDisabled;
         this.addSongsLabel.style.opacity = isDisabled ? '0.5' : '1';
         this.addSongsLabel.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
         this.addSongsLabel.style.pointerEvents = isDisabled ? 'none' : 'auto';
-        
+
         this.importListBtn.disabled = isDisabled;
         this.importListBtn.style.opacity = isDisabled ? '0.5' : '1';
         this.importListBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+
+        if (this.gameStarted) {
+            this.playBtn.innerHTML = '<span aria-hidden="true">🔀</span> Canción Aleatoria';
+            this.playBtn.setAttribute('aria-label', 'Canción Aleatoria');
+        } else {
+            this.playBtn.innerHTML = '<span aria-hidden="true">▶️</span> Iniciar Juego';
+            this.playBtn.setAttribute('aria-label', 'Iniciar Juego');
+        }
     }
 
     showMissingSongsWarning(songsList) {
@@ -990,11 +998,11 @@ class BingoMusical {
         this.audioPlayer.pause();
         this.audioPlayer.currentTime = 0;
         this.isPlaying = false;
-        this.currentSongIndex = null;
+        // this.currentSongIndex = null; // Mantener la canción actual seleccionada
         this.updateControls(false);
 
-        this.songTitleElement.textContent = 'Selecciona una canción o presiona reproducir';
-        this.currentIconImg.src = '';
+        // this.songTitleElement.textContent = 'Selecciona una canción o presiona reproducir'; // Mantener el título
+        // this.currentIconImg.src = ''; // Mantener el icono
         this.progressFill.value = 0;
         this.progressFill.setAttribute('aria-valuenow', '0');
         this.songIconContainer.classList.remove('playing');
