@@ -466,7 +466,6 @@ class BingoMusical {
                 title: song.title,
                 icon: song.icon,
                 iconType: song.iconType || 'emoji',
-                played: song.played
             }))
         };
 
@@ -530,40 +529,51 @@ class BingoMusical {
 
                 const audioPath = this.songsFolder + songData.title + '.mp3';
                 const exists = await fetch(audioPath, {method: 'HEAD'})
-                    .then(res => res.ok)
+                    .then(response => response.ok)
                     .catch(() => false);
 
-                if (!exists) {
+                if (exists) {
+                    const resp = await fetch(audioPath);
+                    const blob = await resp.blob();
+
+                    this.songs.push({
+                        id: songData.id,
+                        title: songData.title,
+                        icon,
+                        iconType,
+                        audioPath,
+                        file: blob,
+                    });
+                } else {
                     console.warn(`Archivo no encontrado: ${audioPath}`);
-                    continue;
                 }
-
-                const resp = await fetch(audioPath);
-                const blob = await resp.blob();
-
-                this.songs.push({
-                    id: songData.id,
-                    title: songData.title,
-                    icon,
-                    iconType,
-                    audioPath,
-                    file: blob,
-                    played: false
-                });
             }
 
             this.renderSongsList();
             this.updateCounters();
             this.updateUIState();
-            this.playEffect('win');
-            
-            const message = `Lista importada: ${this.songs.length} canciones.\n\n` +
-                          `Los archivos de audio deben estar en: ${this.songsFolder}\n\n` +
-                          `Los nombres de los archivos de audio deben coincidir ` +
-                          `con los títulos de las canciones.`;
-            this.showAlert(message, 'Importación Exitosa');
-            this.songId = this.songs.at(-1).id + 1;
+
+            let message = '';
+            let messageTitle = '';
+            if (this.songs.length === 0) {
+                this.playEffect('error');
+                message = `Se han importado 0 canciones.\n\n` +
+                    `revisa que los archivos de audio estén en: ${this.songsFolder}\n\n` +
+                    `Los nombres de los archivos de audio deben coincidir ` +
+                    `con los títulos de las canciones.`;
+                messageTitle = 'Error al importar la lista';
+            } else {
+                this.playEffect('win');
+                message = `Lista importada: ${this.songs.length} canciones.\n\n` +
+                    `Los archivos de audio deben estar en: ${this.songsFolder}\n\n` +
+                    `Los nombres de los archivos de audio deben coincidir ` +
+                    `con los títulos de las canciones.`;
+                messageTitle = 'Importación Exitosa';
+                this.songId = this.songs.at(-1).id + 1;
+            }
+            this.showAlert(message, messageTitle);
         } catch (error) {
+            console.error(error);
             const message = `Error al importar la lista: ${error.message}`;
             this.showAlert(message, 'Error de Importación');
         }
