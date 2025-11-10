@@ -243,7 +243,6 @@ body.fullscreen .history-grid {
     aspect-ratio: 1;
     background: var(--background-color);
     border-radius: 10px;
-    padding: 0.3rem;
     display: flex;
     flex-direction: column;
     align-items: center;
