@@ -745,39 +745,53 @@ class BingoMusical {
         if (files.length === 0) return;
 
         if (this.gameStarted) {
-            this.showAlert('No puedes agregar canciones una vez que el juego ha iniciado. Debes limpiar el historial primero.', 'Juego Iniciado');
+            this.showAlert('No puedes agregar canciones una vez que el juego ha iniciado. Debes reiniciar el juego primero.', 'Juego Iniciado');
             event.target.value = '';
             return;
         }
 
+        const duplicates = [];
+        const newSongs = [];
+        const existingTitles = new Set(this.songs.map(s => s.title));
+
         for (const file of files) {
             const fileName = file.name.replace(/\.[^/.]+$/, "");
-            const existingSong = this.songs.find(s => s.title === fileName && !s.file);
 
-            if (existingSong) {
-                existingSong.file = file;
-            } else {
-                const availableIconsList = this.getAvailableIcons();
-                const randomIcon = availableIconsList.length > 0
-                    ? availableIconsList[Math.floor(Math.random() * availableIconsList.length)]
-                    : this.availableIcons[Math.floor(Math.random() * this.availableIcons.length)];
-
-                this.songs.push({
-                    id: this.songId++,
-                    title: fileName,
-                    icon: randomIcon,
-                    iconType: 'emoji',
-                    audioPath: this.songsFolder + fileName + '.mp3',
-                    file: file,
-                    played: false
-                });
+            if (existingTitles.has(fileName)) {
+                duplicates.push(fileName);
+                continue;
             }
+
+            const availableIconsList = this.getAvailableIcons();
+            const randomIcon = availableIconsList.length > 0
+                ? availableIconsList[Math.floor(Math.random() * availableIconsList.length)]
+                : this.availableIcons[Math.floor(Math.random() * this.availableIcons.length)];
+
+            newSongs.push({
+                id: this.songId++,
+                title: fileName,
+                icon: randomIcon,
+                iconType: 'emoji',
+                audioPath: this.songsFolder + file.name, // Use original file.name
+                file: file,
+                played: false
+            });
+            existingTitles.add(fileName); // Avoid duplicates within the same batch
         }
 
-        this.playEffect('click');
-        this.renderSongsList();
-        this.updateCounters();
-        this.updateUIState();
+        if (newSongs.length > 0) {
+            this.songs.push(...newSongs);
+            this.playEffect('click');
+            this.renderSongsList();
+            this.updateCounters();
+            this.updateUIState();
+        }
+
+        if (duplicates.length > 0) {
+            const message = `Las siguientes canciones ya existen y no se han añadido:\n\n- ${duplicates.join('\n- ')}`;
+            this.showAlert(message, 'Canciones Duplicadas');
+        }
+
         event.target.value = '';
     }
 
