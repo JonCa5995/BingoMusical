@@ -43,9 +43,7 @@
                aria-valuemax="100"
                aria-valuenow="100"
         >
-        <output id="music-volume-value" class="volume-value" for="music-volume">
-          100%
-        </output>
+        <output id="music-volume-value" class="volume-value" for="music-volume">100%</output>
       </fieldset>
 
       <!-- Control de volumen de efectos -->
@@ -62,9 +60,7 @@
                aria-valuemax="100"
                aria-valuenow="70"
         >
-        <output id="effects-volume-value" class="volume-value" for="effects-volume">
-          70%
-        </output>
+        <output id="effects-volume-value" class="volume-value" for="effects-volume">70%</output>
       </fieldset>
 
       <!-- Botón de Línea -->
@@ -112,9 +108,7 @@
         </nav>
       </div>
       <output class="history-counter" for="history-grid" aria-live="polite">
-        <span id="played-counter">0</span>
-        /
-        <span id="total-counter">0</span>
+        <span id="played-counter">0</span>/<span id="total-counter">0</span>
         canciones
       </output>
     </aside>
@@ -133,11 +127,7 @@
           <figcaption class="player-info">
             <h2 id="song-title">Selecciona una canción o presiona reproducir</h2>
             <nav class="controls" aria-label="Controles de reproducción">
-              <button id="play-btn"
-                      class="btn btn-play"
-                      type="button"
-                      aria-label="Iniciar Juego"
-              >
+              <button id="play-btn" class="btn btn-play" type="button" aria-label="Iniciar Bingo">
                 <span aria-hidden="true">▶️</span>
                 Iniciar Bingo
               </button>
@@ -145,12 +135,7 @@
                 <span aria-hidden="true">▶</span>
                 Reproducir
               </button>
-              <button id="stop-btn"
-                      class="btn btn-stop"
-                      type="button"
-                      aria-label="Reiniciar Canción"
-                      disabled
-              >
+              <button id="stop-btn" class="btn btn-stop" type="button" aria-label="Reiniciar Canción" disabled>
                 <span aria-hidden="true">⏮</span>
                 Reiniciar Canción
               </button>
@@ -167,9 +152,7 @@
               >
               </progress>
               <output class="time-display" for="audio-player">
-                <time id="current-time" datetime="PT0S">0:00</time>
-                /
-                <time id="duration" datetime="PT0S">0:00</time>
+                <time id="current-time" datetime="PT0S">0:00</time>/<time id="duration" datetime="PT0S">0:00</time>
               </output>
             </div>
             <audio id="audio-player" aria-label="Reproductor de audio"></audio>
@@ -199,19 +182,11 @@
               <span aria-hidden="true">🎴</span>
               Generar Cartones
             </button>
-            <button id="export-list"
-                    class="btn btn-secondary btn-icon"
-                    type="button"
-                    aria-label="Exportar Lista"
-            >
+            <button id="export-list" class="btn btn-secondary btn-icon" type="button" aria-label="Exportar Lista">
               <span aria-hidden="true">💾</span>
               Exportar Lista
             </button>
-            <button id="import-list"
-                    class="btn btn-secondary btn-icon"
-                    type="button"
-                    aria-label="Importar Lista"
-            >
+            <button id="import-list" class="btn btn-secondary btn-icon" type="button" aria-label="Importar Lista">
               <span aria-hidden="true">📂</span>
               Importar Lista
             </button>
@@ -260,18 +235,11 @@
   </div>
 
   <!-- Modal para generar cartones -->
-  <dialog id="carton-modal"
-          class="modal hidden"
-          aria-labelledby="carton-modal-title"
-  >
+  <dialog id="carton-modal" class="modal hidden" aria-labelledby="carton-modal-title">
     <article class="modal-content">
       <header class="modal-header">
         <h2 id="carton-modal-title">🎴 Generar Cartones de Bingo</h2>
-        <button id="close-carton-modal"
-                class="close-btn"
-                type="button"
-                aria-label="Cerrar modal"
-        >
+        <button id="close-carton-modal" class="close-btn" type="button" aria-label="Cerrar modal">
           ✕
         </button>
       </header>
@@ -296,10 +264,7 @@
           </small>
         </form>
         <footer class="modal-actions">
-          <button id="generate-html-cartones"
-                  class="btn btn-play btn-icon"
-                  type="button"
-          >
+          <button id="generate-html-cartones" class="btn btn-play btn-icon" type="button">
             <span aria-hidden="true">🎴</span>
             Generar Cartones
           </button>
@@ -309,20 +274,11 @@
   </dialog>
 
   <!-- Modal para personalizar icono -->
-  <dialog id="icon-modal"
-          class="modal hidden"
-          aria-labelledby="icon-modal-title"
-  >
+  <dialog id="icon-modal" class="modal hidden" aria-labelledby="icon-modal-title">
     <article class="modal-content">
       <header class="modal-header">
         <h2 id="icon-modal-title">🎨 Personalizar Icono</h2>
-        <button id="close-modal"
-                class="close-btn"
-                type="button"
-                aria-label="Cerrar modal"
-        >
-          ✕
-        </button>
+        <button id="close-modal" class="close-btn" type="button" aria-label="Cerrar modal">✕</button>
       </header>
       <section class="modal-body">
         <p id="modal-song-title" class="modal-song-title"></p>
@@ -335,10 +291,7 @@
                  style="display: none;"
                  aria-label="Seleccionar imagen personalizada"
           >
-          <button id="upload-custom-icon-btn"
-                  class="btn btn-secondary btn-icon btn-fullwidth"
-                  type="button"
-          >
+          <button id="upload-custom-icon-btn" class="btn btn-secondary btn-icon btn-fullwidth" type="button">
             <span aria-hidden="true">📷</span>
             Subir Imagen PNG o SVG Personalizada
           </button>
@@ -365,17 +318,11 @@
       <section class="modal-body">
         <p id="confirm-message" class="confirm-message"></p>
         <footer class="modal-actions">
-          <button id="confirm-cancel"
-                  class="btn btn-secondary btn-icon"
-                  type="button"
-          >
+          <button id="confirm-cancel" class="btn btn-secondary btn-icon" type="button">
             <span aria-hidden="true">✖️</span>
             Cancelar
           </button>
-          <button id="confirm-accept"
-                  class="btn btn-play btn-icon"
-                  type="button"
-          >
+          <button id="confirm-accept" class="btn btn-play btn-icon" type="button">
             <span aria-hidden="true">✔️</span>
             Aceptar
           </button>
@@ -398,10 +345,7 @@
       <section class="modal-body">
         <p id="alert-message" class="confirm-message"></p>
         <footer class="modal-actions">
-          <button id="alert-ok"
-                  class="btn btn-play btn-icon"
-                  type="button"
-          >
+          <button id="alert-ok" class="btn btn-play btn-icon" type="button">
             <span aria-hidden="true">👍</span>
             Aceptar
           </button>
@@ -411,21 +355,11 @@
   </dialog>
 
   <!-- Overlay de celebración para LÍNEA -->
-  <aside id="linea-overlay"
-         class="celebration-overlay hidden"
-         aria-labelledby="linea-title"
-  >
+  <aside id="linea-overlay" class="celebration-overlay hidden" aria-labelledby="linea-title">
     <article class="celebration-content">
-      <h1 id="linea-title" class="celebration-title celebration-title-linea">
-        📏 ¡LÍNEA! 📏
-      </h1>
-      <p class="celebration-text">
-        ¡Felicidades, has completado una línea!
-      </p>
-      <button id="continue-linea-btn"
-              class="btn btn-play btn-large btn-icon"
-              type="button"
-      >
+      <h1 id="linea-title" class="celebration-title celebration-title-linea">📏 ¡LÍNEA! 📏</h1>
+      <p class="celebration-text">¡Felicidades, has completado una línea!</p>
+      <button id="continue-linea-btn" class="btn btn-play btn-large btn-icon" type="button">
         <span aria-hidden="true">▶️</span>
         Continuar Jugando
       </button>
@@ -433,21 +367,11 @@
   </aside>
 
   <!-- Overlay de celebración para BINGO -->
-  <aside id="celebration-overlay"
-         class="celebration-overlay hidden"
-         aria-labelledby="celebration-title"
-  >
+  <aside id="celebration-overlay" class="celebration-overlay hidden" aria-labelledby="celebration-title">
     <article class="celebration-content">
-      <h1 id="celebration-title" class="celebration-title">
-        🎉 ¡BINGO! 🎉
-      </h1>
-      <p class="celebration-text">
-        ¡Felicidades, has completado el bingo!
-      </p>
-      <button id="restart-btn"
-              class="btn btn-play btn-large btn-icon"
-              type="button"
-      >
+      <h1 id="celebration-title" class="celebration-title">🎉 ¡BINGO! 🎉</h1>
+      <p class="celebration-text">¡Felicidades, has completado el bingo!</p>
+      <button id="restart-btn" class="btn btn-play btn-large btn-icon" type="button">
         <span aria-hidden="true">🔄</span>
         Comenzar de Nuevo
       </button>
@@ -457,5 +381,4 @@
   <script src="js/carton-generator.js" defer></script>
   <script src="js/app.js" defer></script>
 </body>
-
 </html>
