@@ -160,7 +160,7 @@ class BingoMusical {
 
     _setupSongManagementEventListeners() {
         this.addSongsInput.addEventListener('change', (e) => this.addSongs(e));
-        this.clearHistoryBtn.addEventListener('click', () => this.clearHistory());
+        this.clearHistoryBtn.addEventListener('click', () => this.reiniciarJuego());
         this.shuffleAllBtn.addEventListener('click', () => this.toggleContinuousMode());
     }
 
@@ -228,7 +228,7 @@ class BingoMusical {
         });
 
         this.restartBtn.addEventListener('click', () => {
-            this.clearHistory().then();
+            this.reiniciarJuego().then();
             this.bingoCompleted = false;
             this.lineaCompleted = false;
             this.celebrationOverlay.classList.add('hidden');
@@ -678,7 +678,16 @@ class BingoMusical {
         if (!song) return;
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+
+        const handleUpdate = () => {
+            song.iconType = 'image';
+            this.renderSongsList();
+            this.playEffect('click');
+            this.closeIconModal();
+            this.showAlert('Icono personalizado cargado correctamente.', 'Icono Actualizado');
+        };
+
+        reader.onload = (event) => {
             if (file.type === 'image/png') {
                 const img = new Image();
                 img.onload = () => {
@@ -688,22 +697,16 @@ class BingoMusical {
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, 200, 200);
                     song.icon = canvas.toDataURL('image/png');
+                    handleUpdate(); // Call update logic after canvas is ready
                 };
-                img.src = e.target.result;
+                img.src = event.target.result;
             } else {
-                song.icon = e.target.result;
+                song.icon = event.target.result;
+                handleUpdate(); // Call update logic directly for SVG
             }
-
-            song.iconType = 'image';
-
-            this.renderSongsList();
-            this.playEffect('click');
-            this.closeIconModal();
-            this.showAlert('Icono personalizado cargado correctamente.', 'Icono Actualizado');
         };
 
         reader.readAsDataURL(file);
-        this.shouldRender = true;
     }
 
     selectIcon(icon, iconType = 'emoji') {
@@ -800,6 +803,10 @@ class BingoMusical {
         this.importListBtn.disabled = isDisabled;
         this.importListBtn.style.opacity = isDisabled ? '0.5' : '1';
         this.importListBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+
+        this.clearHistoryBtn.disabled = !isDisabled; // Habilitar solo si el juego ha iniciado
+        this.clearHistoryBtn.style.opacity = !isDisabled ? '0.5' : '1';
+        this.clearHistoryBtn.style.cursor = !isDisabled ? 'not-allowed' : 'pointer';
 
         if (this.gameStarted) {
             this.playBtn.innerHTML = '<span aria-hidden="true">🔀</span> Canción Aleatoria';
@@ -924,13 +931,19 @@ class BingoMusical {
             return;
         }
 
+        // This is now the official start of the game
+        if (!this.gameStarted) {
+            this.gameStarted = true;
+            this.updateUIState();
+        }
+
         const unplayedSongs = this.songs.filter(song => !song.played && song.file);
 
         if (unplayedSongs.length === 0) {
             this.showAlert('No hay más canciones disponibles. Limpia el historial para volver a empezar', 'Sin Canciones');
             return;
         }
-        
+
         if (unplayedSongs.length === 1) {
             this.playBtn.disabled = true;
         }
@@ -946,17 +959,6 @@ class BingoMusical {
             return;
         }
 
-        const totalSongs = this.getTotalSongsWithFiles();
-        if (totalSongs < BingoMusical.MIN_SONGS_REQUIRED) {
-            this.showAlert(`Necesitas al menos ${BingoMusical.MIN_SONGS_REQUIRED} canciones cargadas para poder comenzar a jugar.`, 'Canciones Insuficientes');
-            return;
-        }
-
-        if (!this.gameStarted) {
-            this.gameStarted = true;
-            this.updateUIState();
-        }
-
         this.playEffect('start');
         this.audioPlayer.pause();
         this.audioPlayer.src = URL.createObjectURL(song.file);
@@ -969,14 +971,17 @@ class BingoMusical {
         this.updatePlayerUI(song);
         this.updateControls(true);
 
-        if (!song.played) {
+        // Only do game logic if the game has started
+        if (this.gameStarted && !song.played) {
             song.played = true;
             this.playedSongs.push(song);
             this.addToHistory(song);
-            this.renderSongsList();
             this.updateCounters();
             this.playEffect('win');
         }
+
+        // Always re-render the list to show the current playing song
+        this.renderSongsList();
     }
 
     pauseSong() {
@@ -1137,12 +1142,12 @@ class BingoMusical {
         this.historyGrid.scrollTop = this.historyGrid.scrollHeight;
     }
 
-    async clearHistory() {
+    async reiniciarJuego() {
         this.playEffect('click');
 
         const confirmed = await this.showConfirm(
-            '¿Estás seguro de que quieres limpiar el historial? Esto reiniciará el juego completamente.',
-            'Confirmar Limpieza'
+            '¿Estás seguro de que quieres reiniciar el juego? Esto limpiará el historial y el progreso actual.',
+            'Confirmar Reinicio'
         );
 
         if (confirmed) {
