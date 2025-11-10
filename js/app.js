@@ -82,6 +82,7 @@ class BingoMusical {
         this.modalSongTitle = document.getElementById('modal-song-title');
         this.iconPickerContainer = document.querySelector('.icon-picker');
         this.cartonCountInput = document.getElementById('carton-count');
+        this.songsSection = document.querySelector('.songs-section');
     }
 
     initializeIcons() {
@@ -293,35 +294,42 @@ class BingoMusical {
     }
 
     setupDragAndDrop() {
-        const fileLabels = document.querySelectorAll('.file-label');
+        const dropZones = [
+            ...document.querySelectorAll('.file-label'),
+            this.songsSection
+        ];
+
         const events = {
             prevent: ['dragenter', 'dragover', 'dragleave', 'drop'],
             highlight: ['dragenter', 'dragover'],
             unhighlight: ['dragleave', 'drop']
         };
 
-        for (const label of fileLabels) {
+        for (const zone of dropZones) {
             for (const eventName of events.prevent) {
-                label.addEventListener(eventName, (e) => {
+                zone.addEventListener(eventName, (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                 }, false);
             }
 
             for (const eventName of events.highlight) {
-                label.addEventListener(eventName, () => label.classList.add('dragover'), false);
+                zone.addEventListener(eventName, () => {
+                    if (!this.gameStarted) {
+                        zone.classList.add('dragover');
+                    }
+                }, false);
             }
 
             for (const eventName of events.unhighlight) {
-                label.addEventListener(eventName, () => label.classList.remove('dragover'), false);
+                zone.addEventListener(eventName, () => zone.classList.remove('dragover'), false);
             }
 
-            label.addEventListener('drop', (e) => {
-                const files = e.dataTransfer.files;
-                const inputId = label.getAttribute('for');
-                const input = document.getElementById(inputId);
-                input.files = files;
-                input.dispatchEvent(new Event('change', {bubbles: true}));
+            zone.addEventListener('drop', (e) => {
+                if (this.gameStarted) return;
+
+                this.addSongsInput.files = e.dataTransfer.files;
+                this.addSongsInput.dispatchEvent(new Event('change', { bubbles: true }));
             }, false);
         }
     }
@@ -553,8 +561,8 @@ class BingoMusical {
             this.updateCounters();
             this.updateUIState();
 
-            let message = '';
-            let messageTitle = '';
+            let message;
+            let messageTitle;
             if (this.songs.length === 0) {
                 this.playEffect('error');
                 message = `Se han importado 0 canciones.\n\n` +

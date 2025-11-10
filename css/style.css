@@ -627,6 +627,11 @@ time {
     transform: scale(1.02);
 }
 
+.songs-section.dragover {
+    border: 2px dashed var(--primary-color);
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
 /* Estado de input con foco */
 .file-input:focus + .file-label {
     outline: 2px solid var(--primary-color);
