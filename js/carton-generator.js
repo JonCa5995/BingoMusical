@@ -30,7 +30,7 @@ class BingoCartonGenerator {
             } while (this.isDuplicateCarton(carton, usedCombinations));
 
             for (const row of carton.rows) {
-                const songIds = row.cells.filter(c => c.type === 'song').map(c => c.song.id).sort().join('-');
+                const songIds = row.cells.filter(c => c.type === 'song').map(c => c.song.id).sort((a, b) => a - b).join('-');
                 usedCombinations.add(songIds);
             }
 
@@ -39,6 +39,7 @@ class BingoCartonGenerator {
 
         return cartones;
     }
+
     generateSingleCarton(songs, cartonNumber) {
         const selectedSongs = this.selectRandomSongs(songs, BingoCartonGenerator.SONGS_PER_CARTON);
         const rows = [];
@@ -104,6 +105,7 @@ class BingoCartonGenerator {
         }
         return positions.sort((a, b) => a - b);
     }
+
     isDuplicateCarton(carton, usedCombinations) {
         return carton.rows.some(row => usedCombinations.has(this.getRowKey(row)));
     }
@@ -115,10 +117,11 @@ class BingoCartonGenerator {
     getRowKey(row) {
         return row.cells.filter(c => c.type === 'song').map(c => `${c.song.id}-${c.position}`).join('|');
     }
+
     generatePrintableHTML(cartones) {
         const header = this._generateHTMLHeader(cartones.length);
         const cartonesHTML = cartones.map(carton => this._generateCartonHTML(carton)).join('\n');
-        
+
         return `${header}\n  <main class="cartones-grid">\n${cartonesHTML}  </main>\n</body>\n</html>`;
     }
 
@@ -174,7 +177,7 @@ class BingoCartonGenerator {
     }
 
     _generateCartonHTML(carton) {
-        const rowsHTML = carton.rows.map(row => 
+        const rowsHTML = carton.rows.map(row =>
             row.cells.map(cell => this._generateCellHTML(cell)).join('')
         ).join('\n        \n');
 
@@ -192,13 +195,14 @@ ${rowsHTML}
 
     _generateCellHTML(cell) {
         if (cell.type === 'song') {
-            const iconHTML = cell.song.iconType === 'image' 
+            const iconHTML = cell.song.iconType === 'image'
                 ? `<img src="${cell.song.icon}" alt="${cell.song.title}" class="image-icon">`
                 : `<span role="img" aria-label="${cell.song.title}">${cell.song.icon}</span>`;
             return `          <div class="carton-cell song" role="gridcell"><div class="cell-icon">${iconHTML}</div></div>\n`;
         }
         return `          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true">${cell.icon}</div></div>\n`;
     }
+
     downloadAsHTML(cartones, filename = 'cartones-bingo-musical.html') {
         const html = this.generatePrintableHTML(cartones);
         const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
@@ -208,7 +212,7 @@ ${rowsHTML}
         link.href = url;
         link.download = filename;
         link.setAttribute('aria-label', `Descargar ${cartones.length} cartones de bingo`);
-        
+
         document.body.appendChild(link);
         link.click();
         link.remove();
