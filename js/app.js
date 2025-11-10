@@ -801,12 +801,18 @@ class BingoMusical {
         this.addSongsLabel.style.pointerEvents = isDisabled ? 'none' : 'auto';
 
         this.importListBtn.disabled = isDisabled;
-        this.importListBtn.style.opacity = isDisabled ? '0.5' : '1';
         this.importListBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
 
         this.clearHistoryBtn.disabled = !isDisabled; // Habilitar solo si el juego ha iniciado
         this.clearHistoryBtn.style.opacity = !isDisabled ? '0.5' : '1';
         this.clearHistoryBtn.style.cursor = !isDisabled ? 'not-allowed' : 'pointer';
+
+        this.shuffleAllBtn.disabled = isDisabled;
+        this.shuffleAllBtn.style.opacity = isDisabled ? '0.5' : '1';
+        this.shuffleAllBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+        if (isDisabled && this.continuousMode) {
+            this.toggleContinuousMode();
+        }
 
         if (this.gameStarted) {
             this.playBtn.innerHTML = '<span aria-hidden="true">🔀</span> Canción Aleatoria';
@@ -888,7 +894,7 @@ class BingoMusical {
             });
 
             li.addEventListener('click', () => {
-                if (song.file) {
+                if (song.file && (!this.gameStarted || song.played)) {
                     this.playEffect('click');
                     this.playSong(song.id);
                 }
@@ -1088,29 +1094,36 @@ class BingoMusical {
         this.isPlaying = false;
         this.songIconContainer.classList.remove('playing');
 
-        if (this.bingoCompleted || this.continuousMode) {
+        // Handle continuous PREVIEW mode
+        if (this.continuousMode && !this.gameStarted) {
             setTimeout(() => {
-                const unplayedSongs = this.songs.filter(song => !song.played && song.file);
-                if (unplayedSongs.length > 0) {
-                    this.playRandomSong();
+                const availableSongs = this.songs.filter(song => song.file);
+                if (availableSongs.length > 0) {
+                    const randomSong = availableSongs[Math.floor(Math.random() * availableSongs.length)];
+                    this.playSong(randomSong.id);
                 } else {
-                    const totalWithFiles = this.getTotalSongsWithFiles();
-                    if (this.playedSongs.length === totalWithFiles && totalWithFiles > 0 && !this.bingoCompleted) {
-                        this.bingoCompleted = true;
-                        setTimeout(() => {
-                            this.playEffect('complete');
-                            this.celebrationOverlay.classList.remove('hidden');
-                        }, 500);
-                    }
-                    if (this.continuousMode) {
-                        this.toggleContinuousMode();
-                    }
-                    this.updateControls(false);
+                    // No songs to play, turn off the mode
+                    this.toggleContinuousMode();
                 }
             }, 1000);
-        } else {
-            this.updateControls(false);
+            return; // End execution here for this case
         }
+
+        // Handle song ending during the game
+        if (this.gameStarted) {
+            const unplayedSongs = this.songs.filter(song => !song.played && song.file);
+            if (unplayedSongs.length === 0 && !this.bingoCompleted) {
+                // All songs have been played, trigger BINGO automatically
+                this.bingoCompleted = true;
+                setTimeout(() => {
+                    this.playEffect('complete');
+                    this.celebrationOverlay.classList.remove('hidden');
+                }, 500);
+            }
+        }
+
+        // Default behavior: update controls to show song has stopped
+        this.updateControls(false);
     }
 
     addToHistory(song) {
