@@ -103,9 +103,11 @@
     <!-- Historial de canciones reproducidas (izquierda) -->
     <aside class="history-panel" aria-label="Historial de canciones reproducidas">
       <h2>🎵 Canciones Reproducidas</h2>
-      <nav id="history-grid" class="history-grid" aria-label="Canciones reproducidas">
-        <!-- Los iconos de las canciones reproducidas aparecerán aquí -->
-      </nav>
+      <div class="history-container">
+        <nav id="history-grid" class="history-grid" aria-label="Canciones reproducidas">
+          <!-- Los iconos de las canciones reproducidas aparecerán aquí -->
+        </nav>
+      </div>
       <output class="history-counter" for="history-grid" aria-live="polite">
         <span id="played-counter">0</span> / <span id="total-counter">0</span> canciones
       </output>
