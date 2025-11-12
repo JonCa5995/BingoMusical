@@ -221,6 +221,21 @@ class BingoMusical {
         this.confirmCancelBtn.addEventListener('click', () => this.closeConfirmModal(false));
         this.confirmAcceptBtn.addEventListener('click', () => this.closeConfirmModal(true));
         this.alertOkBtn.addEventListener('click', () => this.closeAlertModal());
+
+        // Soporte para cerrar modales con tecla Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (!this.iconModal.classList.contains('hidden')) {
+                    this.closeIconModal();
+                } else if (!this.cartonModal.classList.contains('hidden')) {
+                    this.closeCartonModal();
+                } else if (!this.confirmModal.classList.contains('hidden')) {
+                    this.closeConfirmModal(false);
+                } else if (!this.alertModal.classList.contains('hidden')) {
+                    this.closeAlertModal();
+                }
+            }
+        });
     }
 
     _setupCelebrationEventListeners() {
@@ -246,10 +261,16 @@ class BingoMusical {
         this.alertMessage.textContent = message;
         this.alertModal.classList.remove('hidden');
         
+        // Guardar el elemento con foco actual
+        this.previouslyFocusedElement = document.activeElement;
+
         if (this.alertModal.showModal) {
             this.alertModal.showModal();
         }
         
+        // Enfocar el botón de aceptar
+        setTimeout(() => this.alertOkBtn.focus(), 100);
+
         const isError = /error|inválido|insuficientes/i.test(title);
         this.playEffect(isError ? 'error' : 'click');
     }
@@ -265,6 +286,12 @@ class BingoMusical {
         }
         
         this.alertModal.classList.add('hidden');
+
+        // Restaurar foco al elemento anterior
+        if (this.previouslyFocusedElement) {
+            this.previouslyFocusedElement.focus();
+            this.previouslyFocusedElement = null;
+        }
     }
 
     showConfirm(message, title = 'Confirmar') {
@@ -273,10 +300,16 @@ class BingoMusical {
             this.confirmMessage.textContent = message;
             this.confirmModal.classList.remove('hidden');
             
+            // Guardar el elemento con foco actual
+            this.previouslyFocusedElement = document.activeElement;
+
             if (this.confirmModal.showModal) {
                 this.confirmModal.showModal();
             }
             
+            // Enfocar el botón de cancelar por defecto
+            setTimeout(() => this.confirmCancelBtn.focus(), 100);
+
             this.confirmCallback = resolve;
             this.playEffect('click');
         });
@@ -292,6 +325,12 @@ class BingoMusical {
         if (this.confirmCallback) {
             this.confirmCallback(result);
             this.confirmCallback = null;
+        }
+
+        // Restaurar foco al elemento anterior
+        if (this.previouslyFocusedElement) {
+            this.previouslyFocusedElement.focus();
+            this.previouslyFocusedElement = null;
         }
     }
 
@@ -689,10 +728,23 @@ class BingoMusical {
 
         this.iconModal.classList.remove('hidden');
         
+        // Guardar el elemento con foco actual
+        this.previouslyFocusedElement = document.activeElement;
+
         if (this.iconModal.showModal) {
             this.iconModal.showModal();
         }
         
+        // Enfocar el primer icono o el botón de subir
+        setTimeout(() => {
+            const firstIcon = this.iconPickerContainer.querySelector('.icon-option:not([disabled])');
+            if (firstIcon) {
+                firstIcon.focus();
+            } else {
+                this.uploadCustomIconBtn.focus();
+            }
+        }, 100);
+
         this.playEffect('click');
     }
 
@@ -763,6 +815,12 @@ class BingoMusical {
         
         this.iconModal.classList.add('hidden');
         this.currentEditingSongId = null;
+
+        // Restaurar foco al elemento anterior
+        if (this.previouslyFocusedElement) {
+            this.previouslyFocusedElement.focus();
+            this.previouslyFocusedElement = null;
+        }
     }
 
     addSongs(event) {
@@ -1285,10 +1343,16 @@ class BingoMusical {
 
         this.cartonModal.classList.remove('hidden');
         
+        // Guardar el elemento con foco actual
+        this.previouslyFocusedElement = document.activeElement;
+
         if (this.cartonModal.showModal) {
             this.cartonModal.showModal();
         }
         
+        // Enfocar el input de cantidad de cartones
+        setTimeout(() => this.cartonCountInput.focus(), 100);
+
         this.playEffect('click');
     }
 
@@ -1298,6 +1362,12 @@ class BingoMusical {
         }
         
         this.cartonModal.classList.add('hidden');
+
+        // Restaurar foco al elemento anterior
+        if (this.previouslyFocusedElement) {
+            this.previouslyFocusedElement.focus();
+            this.previouslyFocusedElement = null;
+        }
     }
 
     async generateCartones() {

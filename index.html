@@ -22,10 +22,15 @@
 </head>
 
 <body>
+  <!-- Skip Links para accesibilidad -->
+  <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+  <a href="#songs-list" class="skip-link">Saltar a lista de canciones</a>
+  <a href="#history-grid" class="skip-link">Saltar a historial</a>
+
   <!-- Barra de herramientas superior -->
   <header class="toolbar" role="banner">
     <div class="toolbar-left">
-      <img id="toolbar-logo" class="toolbar-logo" src="icon.png" alt="Logo del Bingo Musical">
+      <img id="toolbar-logo" class="toolbar-logo" src="icon.png" alt="" role="presentation">
       <h1 class="app-title">Bingo Musical</h1>
     </div>
     <div class="toolbar-right">
@@ -103,9 +108,9 @@
     <aside class="history-panel" aria-label="Historial de canciones reproducidas">
       <h2>🎵 Canciones Reproducidas</h2>
       <div class="history-container">
-        <nav id="history-grid" class="history-grid" aria-label="Canciones reproducidas">
+        <div id="history-grid" class="history-grid" aria-label="Canciones reproducidas" role="list">
           <!-- Los iconos de las canciones reproducidas aparecerán aquí -->
-        </nav>
+        </div>
       </div>
       <output class="history-counter" for="history-grid" aria-live="polite">
         <span id="played-counter">0</span>/<span id="total-counter">0</span>
@@ -114,18 +119,18 @@
     </aside>
 
     <!-- Contenido principal (derecha) -->
-    <main class="main-content">
+    <main id="main-content" class="main-content" role="main">
       <!-- Reproductor de música -->
       <section class="player-section" aria-label="Reproductor de música">
         <figure class="player-container">
           <div class="song-icon-wrapper">
             <div class="song-icon">
-              <img id="current-icon" src="icon.png" alt="Canción actual">
+              <img id="current-icon" src="icon.png" alt="Sin canción seleccionada" aria-live="polite">
               <div class="pulse-animation" aria-hidden="true"></div>
             </div>
           </div>
           <figcaption class="player-info">
-            <h2 id="song-title">Selecciona una canción o presiona reproducir</h2>
+            <h2 id="song-title" aria-live="polite" aria-atomic="true">Selecciona una canción o presiona reproducir</h2>
             <nav class="controls" aria-label="Controles de reproducción">
               <button id="play-btn" class="btn btn-play" type="button" aria-label="Iniciar Bingo">
                 <span aria-hidden="true">▶️</span>
@@ -235,7 +240,7 @@
   </div>
 
   <!-- Modal para generar cartones -->
-  <dialog id="carton-modal" class="modal hidden" aria-labelledby="carton-modal-title">
+    <dialog id="carton-modal" class="modal" aria-labelledby="carton-modal-title">
     <article class="modal-content">
       <header class="modal-header">
         <h2 id="carton-modal-title">🎴 Generar Cartones de Bingo</h2>
@@ -288,7 +293,7 @@
           <input id="custom-icon-upload"
                  type="file"
                  accept="image/png, image/svg+xml"
-                 style="display: none;"
+                                  class="custom-icon-upload"
                  aria-label="Seleccionar imagen personalizada"
           >
           <button id="upload-custom-icon-btn" class="btn btn-secondary btn-icon btn-fullwidth" type="button">
@@ -296,10 +301,9 @@
             Subir Imagen PNG o SVG Personalizada
           </button>
         </div>
-
-        <nav class="icon-picker" aria-label="Selector de iconos">
+        <div class="icon-picker" role="radiogroup" aria-label="Selector de iconos">
           <!-- Los iconos se generarán dinámicamente -->
-        </nav>
+        </div>
       </section>
     </article>
   </dialog>
@@ -355,7 +359,7 @@
   </dialog>
 
   <!-- Overlay de celebración para LÍNEA -->
-  <aside id="linea-overlay" class="celebration-overlay hidden" aria-labelledby="linea-title">
+  <section id="linea-overlay" class="celebration-overlay hidden" aria-labelledby="linea-title" aria-live="polite">
     <article class="celebration-content">
       <h1 id="linea-title" class="celebration-title celebration-title-linea">📏 ¡LÍNEA! 📏</h1>
       <p class="celebration-text">¡Felicidades, has completado una línea!</p>
@@ -364,10 +368,10 @@
         Continuar Jugando
       </button>
     </article>
-  </aside>
+  </section>
 
   <!-- Overlay de celebración para BINGO -->
-  <aside id="celebration-overlay" class="celebration-overlay hidden" aria-labelledby="celebration-title">
+  <section id="celebration-overlay" class="celebration-overlay hidden" aria-labelledby="celebration-title" aria-live="polite">
     <article class="celebration-content">
       <h1 id="celebration-title" class="celebration-title">🎉 ¡BINGO! 🎉</h1>
       <p class="celebration-text">¡Felicidades, has completado el bingo!</p>
@@ -376,7 +380,7 @@
         Comenzar de Nuevo
       </button>
     </article>
-  </aside>
+  </section>
 
   <script src="js/carton-generator.js" defer></script>
   <script src="js/app.js" defer></script>
