@@ -39,8 +39,6 @@ Fecha de inicio: 2025-11-13
 - [ ] 6.2. Feedback visual mejorado en botones
 - [ ] 6.3. Tooltips informativos
 - [ ] 6.4. Loading states claros
-- [ ] 6.5. Animaciones de entrada/salida de modales
-- [ ] 6.6. Indicador de carga de audio
 
 ---
 
