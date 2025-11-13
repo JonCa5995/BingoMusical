@@ -32,7 +32,7 @@ Fecha de inicio: 2025-11-13
 - ✅ 4.1. Modo oscuro/claro manual
 
 ### 5. ⚡ Mejoras Técnicas (Performance)
-- [ ] 5.1. Optimización de renderizado
+- ✅ 5.1. Optimización de renderizado
 
 ### 6. 🎨 Animaciones y Feedback Visual
 - [ ] 6.1. Transiciones suaves al cambiar de canción

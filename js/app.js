@@ -162,9 +162,18 @@ class BingoMusical {
         this.setupDragAndDrop();
         this.generateSoundEffects();
         this.loadThemePreference();
+        this.setupDebouncing();
         this.renderSongsList();
         this.updateCounters();
         this.updateControls(false);
+    }
+
+    setupDebouncing() {
+        let debounceTimer;
+        this.debouncedFilterAndSort = () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => this.filterAndSortSongs(), 300);
+        };
     }
 
     _setupPlayerEventListeners() {
@@ -186,8 +195,8 @@ class BingoMusical {
         this.clearHistoryBtn.addEventListener('click', () => this.reiniciarJuego());
         this.shuffleAllBtn.addEventListener('click', () => this.toggleContinuousMode());
         
-        // Event listeners para búsqueda y filtrado
-        this.searchInput.addEventListener('input', () => this.filterAndSortSongs());
+        // Event listeners para búsqueda y filtrado con debouncing
+        this.searchInput.addEventListener('input', () => this.debouncedFilterAndSort());
         this.filterStatus.addEventListener('change', () => this.filterAndSortSongs());
         this.sortOrder.addEventListener('change', () => this.filterAndSortSongs());
         
@@ -825,7 +834,9 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
         this.currentEditingSongId = songId;
         this.modalSongTitle.textContent = song.title;
-        this.iconPickerContainer.innerHTML = '';
+
+        // Usar DocumentFragment para renderizado en batch
+        const fragment = document.createDocumentFragment();
 
         for (const icon of this.availableIcons) {
             const iconOption = document.createElement('button');
@@ -849,16 +860,20 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
                 iconOption.title = 'Este icono ya está en uso';
                 iconOption.disabled = true;
             } else {
-                iconOption.addEventListener('click', () => {
+                iconOption.onclick = () => {
                     if (!isUsed || isCurrentSongIcon) {
                         this.selectIcon(icon);
                     }
-                });
+                };
             }
 
             iconOption.textContent = icon;
-            this.iconPickerContainer.appendChild(iconOption);
+            fragment.appendChild(iconOption);
         }
+
+        // Una sola operación DOM
+        this.iconPickerContainer.innerHTML = '';
+        this.iconPickerContainer.appendChild(fragment);
 
         this.iconModal.classList.remove('hidden');
         
@@ -1036,16 +1051,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         }
     }
 
-    showMissingSongsWarning(songsList) {
-        const totalSongs = this.getTotalSongsWithFiles();
-        if (totalSongs < BingoMusical.MIN_SONGS_REQUIRED) {
-            const warning = document.createElement('li');
-            warning.setAttribute('role', 'alert');
-            warning.style.cssText = 'text-align:center;padding:1rem;margin-bottom:1rem;background:rgba(245,158,11,0.1);border-radius:8px;color:var(--warning-color);list-style:none;';
-            warning.innerHTML = `<strong>⚠️ Tienes ${totalSongs}/${BingoMusical.MIN_SONGS_REQUIRED} canciones.</strong> Necesitas al menos ${BingoMusical.MIN_SONGS_REQUIRED} para jugar.`;
-            songsList.appendChild(warning);
-        }
-    }
+
 
     setRenderSongIconTitle(song) {
         if (song.played) return 'Icono bloqueado (canción ya reproducida)';
@@ -1078,17 +1084,35 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             songStateLabel = '⚠ Sin archivo';
         }
 
-        li.innerHTML = `
-          <button type="button" class="song-item-icon" data-song-id="${song.id}" title="${iconTitle}" style="cursor:${iconCursor};" aria-label="Cambiar icono de ${song.title}" ${iconDisabled}>${iconHtml}</button>
-          <div class="song-item-info">
+        // Usar template fragment para mejor rendimiento
+        const fragment = document.createDocumentFragment();
+        
+        const iconBtn = document.createElement('button');
+        iconBtn.type = 'button';
+        iconBtn.className = 'song-item-icon';
+        iconBtn.dataset.songId = song.id;
+        iconBtn.title = iconTitle;
+        iconBtn.style.cursor = iconCursor;
+        iconBtn.setAttribute('aria-label', `Cambiar icono de ${song.title}`);
+        if (iconDisabled) iconBtn.disabled = true;
+        iconBtn.innerHTML = iconHtml;
+        
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'song-item-info';
+        infoDiv.innerHTML = `
             <strong class="song-item-title">${song.title}</strong>
             <div class="song-item-status" role="status" aria-live="polite">${songStateLabel}</div>
-          </div>
-          <button type="button" class="song-item-delete" title="Eliminar canción" aria-label="Eliminar ${song.title}"><span aria-hidden="true">❌</span></button>
         `;
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'song-item-delete';
+        deleteBtn.title = 'Eliminar canción';
+        deleteBtn.setAttribute('aria-label', `Eliminar ${song.title}`);
+        deleteBtn.innerHTML = '<span aria-hidden="true">❌</span>';
 
-        const iconEl = li.querySelector('.song-item-icon');
-        iconEl.addEventListener('click', (e) => {
+        // Delegación de eventos optimizada
+        iconBtn.onclick = (e) => {
             e.stopPropagation();
             if (!song.played && !this.gameStarted) {
                 this.openIconPicker(song.id);
@@ -1097,43 +1121,64 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             } else {
                 this.showAlert('No puedes cambiar el icono de una canción que ya fue reproducida.', 'Canción Ya Reproducida');
             }
-        });
+        };
 
-        li.addEventListener('click', (e) => {
+        li.onclick = () => {
             if (song.file && !this.gameStarted) {
                 this.playEffect('click');
                 this.playSong(song.id);
             }
-        });
+        };
 
-        li.querySelector('.song-item-delete').addEventListener('click', (e) => {
+        deleteBtn.onclick = (e) => {
             e.stopPropagation();
             this.deleteSong(song.id);
-        });
+        };
+
+        li.appendChild(iconBtn);
+        li.appendChild(infoDiv);
+        li.appendChild(deleteBtn);
 
         return li;
     }
 
     renderSongsList() {
-        this.songsListElement.innerHTML = '';
+        // Usar DocumentFragment para renderizado en batch
+        const fragment = document.createDocumentFragment();
 
         if (this.songs.length === 0) {
-            this.songsListElement.innerHTML = `
-      <li role="listitem" style="text-align:center;padding:2rem;color:var(--text-muted);list-style:none;">
-        <strong style="font-size:1.2rem;margin-bottom:0.5rem;display:block;">No hay canciones cargadas</strong>
-        <p style="font-size:0.9rem;margin:0.5rem 0;">Arrastra archivos de audio o usa el botón "Agregar Canciones"</p>
-        <p role="alert" style="font-size:0.85rem;margin-top:1rem;color:var(--warning-color);"><strong>⚠️ Necesitas al menos ${BingoMusical.MIN_SONGS_REQUIRED} canciones para jugar</strong></p>
-      </li>
-    `;
+            const emptyLi = document.createElement('li');
+            emptyLi.setAttribute('role', 'listitem');
+            emptyLi.style.cssText = 'text-align:center;padding:2rem;color:var(--text-muted);list-style:none;';
+            emptyLi.innerHTML = `
+                <strong style="font-size:1.2rem;margin-bottom:0.5rem;display:block;">No hay canciones cargadas</strong>
+                <p style="font-size:0.9rem;margin:0.5rem 0;">Arrastra archivos de audio o usa el botón "Agregar Canciones"</p>
+                <p role="alert" style="font-size:0.85rem;margin-top:1rem;color:var(--warning-color);"><strong>⚠️ Necesitas al menos ${BingoMusical.MIN_SONGS_REQUIRED} canciones para jugar</strong></p>
+            `;
+            fragment.appendChild(emptyLi);
+            this.songsListElement.innerHTML = '';
+            this.songsListElement.appendChild(fragment);
             return;
         }
 
-        this.showMissingSongsWarning(this.songsListElement);
+        const totalSongs = this.getTotalSongsWithFiles();
+        if (totalSongs < BingoMusical.MIN_SONGS_REQUIRED) {
+            const warning = document.createElement('li');
+            warning.setAttribute('role', 'alert');
+            warning.style.cssText = 'text-align:center;padding:1rem;margin-bottom:1rem;background:rgba(245,158,11,0.1);border-radius:8px;color:var(--warning-color);list-style:none;';
+            warning.innerHTML = `<strong>⚠️ Tienes ${totalSongs}/${BingoMusical.MIN_SONGS_REQUIRED} canciones.</strong> Necesitas al menos ${BingoMusical.MIN_SONGS_REQUIRED} para jugar.`;
+            fragment.appendChild(warning);
+        }
 
+        // Renderizar todas las canciones en un solo batch
         for (const song of this.songs) {
             const li = this.createSongItemElement(song);
-            this.songsListElement.appendChild(li);
+            fragment.appendChild(li);
         }
+
+        // Una sola operación DOM
+        this.songsListElement.innerHTML = '';
+        this.songsListElement.appendChild(fragment);
     }
 
     filterAndSortSongs() {
@@ -1187,24 +1232,41 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     renderFilteredSongsList(songsToShow) {
-        this.songsListElement.innerHTML = '';
+        // Usar DocumentFragment para renderizado en batch
+        const fragment = document.createDocumentFragment();
 
         if (songsToShow.length === 0) {
-            this.songsListElement.innerHTML = `
-                <li role="listitem" style="text-align:center;padding:2rem;color:var(--text-muted);list-style:none;">
-                    <strong style="font-size:1.2rem;margin-bottom:0.5rem;display:block;">No se encontraron canciones</strong>
-                    <p style="font-size:0.9rem;margin:0.5rem 0;">Intenta con otro término de búsqueda o cambia los filtros</p>
-                </li>
+            const emptyLi = document.createElement('li');
+            emptyLi.setAttribute('role', 'listitem');
+            emptyLi.style.cssText = 'text-align:center;padding:2rem;color:var(--text-muted);list-style:none;';
+            emptyLi.innerHTML = `
+                <strong style="font-size:1.2rem;margin-bottom:0.5rem;display:block;">No se encontraron canciones</strong>
+                <p style="font-size:0.9rem;margin:0.5rem 0;">Intenta con otro término de búsqueda o cambia los filtros</p>
             `;
+            fragment.appendChild(emptyLi);
+            this.songsListElement.innerHTML = '';
+            this.songsListElement.appendChild(fragment);
             return;
         }
 
-        this.showMissingSongsWarning(this.songsListElement);
+        const totalSongs = this.getTotalSongsWithFiles();
+        if (totalSongs < BingoMusical.MIN_SONGS_REQUIRED) {
+            const warning = document.createElement('li');
+            warning.setAttribute('role', 'alert');
+            warning.style.cssText = 'text-align:center;padding:1rem;margin-bottom:1rem;background:rgba(245,158,11,0.1);border-radius:8px;color:var(--warning-color);list-style:none;';
+            warning.innerHTML = `<strong>⚠️ Tienes ${totalSongs}/${BingoMusical.MIN_SONGS_REQUIRED} canciones.</strong> Necesitas al menos ${BingoMusical.MIN_SONGS_REQUIRED} para jugar.`;
+            fragment.appendChild(warning);
+        }
 
+        // Renderizar todas las canciones en un solo batch
         for (const song of songsToShow) {
             const li = this.createSongItemElement(song);
-            this.songsListElement.appendChild(li);
+            fragment.appendChild(li);
         }
+
+        // Una sola operación DOM
+        this.songsListElement.innerHTML = '';
+        this.songsListElement.appendChild(fragment);
     }
 
     updateCounters() {
