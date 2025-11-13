@@ -13,10 +13,10 @@ Fecha de inicio: 2025-11-13
 - [ ] 1.4. Implementar función "Reanudar juego" al recargar
 
 ### 2. 🔍 Búsqueda y Filtrado
-- [ ] 2.1. Agregar buscador de canciones en la lista
-- [ ] 2.2. Implementar filtro por estado (reproducidas/pendientes)
-- [ ] 2.3. Agregar ordenamiento alfabético
-- [ ] 2.4. Implementar ordenamiento por estado de reproducción
+- ✅ 2.1. Agregar buscador de canciones en la lista
+- ✅ 2.2. Implementar filtro por estado (reproducidas/pendientes)
+- ✅ 2.3. Agregar ordenamiento alfabético
+- ✅ 2.4. Implementar ordenamiento por estado de reproducción
 
 ### 3. ⌨️ Atajos de Teclado
 - [ ] 3.1. Espacio → Play/Pause
@@ -123,15 +123,20 @@ Fecha de inicio: 2025-11-13
 
 ## 🎯 Tarea Actual
 
-**Pendiente de asignación**
+**✅ Completada: Búsqueda y Filtrado**
 
-Esperando instrucciones para comenzar con la primera mejora.
+Esperando la siguiente tarea a implementar.
 
 ---
 
 ## ✅ Tareas Completadas
 
-*Ninguna aún*
+### ✅ 2. Búsqueda y Filtrado (2025-11-13)
+- ✅ Buscador en tiempo real por nombre de canción
+- ✅ Filtro por estado: Todas / Pendientes / Reproducidas
+- ✅ Ordenamiento: Original / A-Z / Z-A / Reproducidas primero / Pendientes primero
+- ✅ Interfaz integrada con estilos coherentes
+- ✅ Controles accesibles con ARIA labels
 
 ---
 
@@ -144,4 +149,4 @@ Esperando instrucciones para comenzar con la primera mejora.
 
 ---
 
-**Última actualización:** 2025-11-13 19:11
+**Última actualización:** 2025-11-13 19:45

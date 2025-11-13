@@ -227,6 +227,32 @@
             Reiniciar Juego
           </button>
         </div>
+        
+        <!-- Buscador y filtros -->
+        <div class="search-filter-container">
+          <div class="search-box">
+            <label for="song-search" class="sr-only">Buscar canción</label>
+            <input id="song-search"
+                   class="search-input"
+                   type="text"
+                   placeholder="🔍 Buscar canción..."
+                   aria-label="Buscar en la lista de canciones"
+            >
+          </div>
+          <select id="filter-status" class="filter-select" aria-label="Filtrar por estado">
+            <option value="all">Todas</option>
+            <option value="pending">Pendientes</option>
+            <option value="played">Reproducidas</option>
+          </select>
+          <select id="sort-order" class="filter-select" aria-label="Ordenar canciones">
+            <option value="default">Orden original</option>
+            <option value="alphabetical">A-Z</option>
+            <option value="alphabetical-reverse">Z-A</option>
+            <option value="played-first">Reproducidas primero</option>
+            <option value="pending-first">Pendientes primero</option>
+          </select>
+        </div>
+        
         <ul id="songs-list" class="songs-list">
           <!-- La lista de canciones se generará dinámicamente -->
         </ul>

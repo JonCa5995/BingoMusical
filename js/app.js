@@ -83,6 +83,11 @@ class BingoMusical {
         this.iconPickerContainer = document.querySelector('.icon-picker');
         this.cartonCountInput = document.getElementById('carton-count');
         this.songsSection = document.querySelector('.songs-section');
+        
+        // Elementos de búsqueda y filtrado
+        this.searchInput = document.getElementById('song-search');
+        this.filterStatus = document.getElementById('filter-status');
+        this.sortOrder = document.getElementById('sort-order');
     }
 
     initializeIcons() {
@@ -163,6 +168,11 @@ class BingoMusical {
         this.addSongsInput.addEventListener('change', (e) => this.addSongs(e));
         this.clearHistoryBtn.addEventListener('click', () => this.reiniciarJuego());
         this.shuffleAllBtn.addEventListener('click', () => this.toggleContinuousMode());
+        
+        // Event listeners para búsqueda y filtrado
+        this.searchInput.addEventListener('input', () => this.filterAndSortSongs());
+        this.filterStatus.addEventListener('change', () => this.filterAndSortSongs());
+        this.sortOrder.addEventListener('change', () => this.filterAndSortSongs());
     }
 
     _setupCartonEventListeners() {
@@ -185,6 +195,7 @@ class BingoMusical {
         this._setupModalEventListeners();
         this._setupCelebrationEventListeners();
         this._setupFullscreenEventListeners();
+        this._setupKeyboardShortcuts();
 
         this.exportListBtn.addEventListener('click', () => this.exportPlaylist());
         this.importListBtn.addEventListener('click', () => this.importFileInput.click());
@@ -903,6 +914,127 @@ class BingoMusical {
         this.showMissingSongsWarning(this.songsListElement);
 
         for (const song of this.songs) {
+            const li = document.createElement('li');
+            li.className = `song-item ${song.played ? 'played' : ''} ${this.currentSongIndex === song.id ? 'playing' : ''}`;
+            li.setAttribute('role', 'listitem');
+
+            const iconTitle = this.setRenderSongIconTitle(song);
+            const iconCursor = (song.played || this.gameStarted) ? 'not-allowed' : 'pointer';
+            const iconHtml = this.setRenderSongIconHtml(song);
+            const iconDisabled = (song.played || this.gameStarted) ? 'disabled' : '';
+
+            let songStateLabel;
+            if (song.played) {
+                songStateLabel = '✓ Ya reproducida';
+            } else if (song.file) {
+                songStateLabel = '○ Pendiente';
+            } else {
+                songStateLabel = '⚠ Sin archivo';
+            }
+
+            li.innerHTML = `
+              <button type="button" class="song-item-icon" data-song-id="${song.id}" title="${iconTitle}" style="cursor:${iconCursor};" aria-label="Cambiar icono de ${song.title}" ${iconDisabled}>${iconHtml}</button>
+              <div class="song-item-info">
+                <strong class="song-item-title">${song.title}</strong>
+                <div class="song-item-status" role="status" aria-live="polite">${songStateLabel}</div>
+              </div>
+              <button type="button" class="song-item-delete" title="Eliminar canción" aria-label="Eliminar ${song.title}"><span aria-hidden="true">❌</span></button>
+            `;
+
+            const iconEl = li.querySelector('.song-item-icon');
+            iconEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!song.played && !this.gameStarted) {
+                    this.openIconPicker(song.id);
+                } else if (this.gameStarted) {
+                    this.showAlert('No puedes cambiar iconos una vez que el juego ha iniciado.', 'Juego Iniciado');
+                } else {
+                    this.showAlert('No puedes cambiar el icono de una canción que ya fue reproducida.', 'Canción Ya Reproducida');
+                }
+            });
+
+            li.addEventListener('click', () => {
+                if (song.file && !this.gameStarted) {
+                    this.playEffect('click');
+                    this.playSong(song.id);
+                }
+            });
+
+            li.querySelector('.song-item-delete').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteSong(song.id);
+            });
+
+            this.songsListElement.appendChild(li);
+        }
+    }
+
+    filterAndSortSongs() {
+        // Obtener valores de filtros
+        const searchTerm = this.searchInput.value.toLowerCase().trim();
+        const filterStatus = this.filterStatus.value;
+        const sortOrder = this.sortOrder.value;
+
+        // Filtrar canciones
+        let filteredSongs = [...this.songs];
+
+        // Filtro por búsqueda
+        if (searchTerm) {
+            filteredSongs = filteredSongs.filter(song => 
+                song.title.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        // Filtro por estado
+        if (filterStatus === 'played') {
+            filteredSongs = filteredSongs.filter(song => song.played);
+        } else if (filterStatus === 'pending') {
+            filteredSongs = filteredSongs.filter(song => !song.played);
+        }
+
+        // Ordenamiento
+        switch (sortOrder) {
+            case 'alphabetical':
+                filteredSongs.sort((a, b) => a.title.localeCompare(b.title));
+                break;
+            case 'alphabetical-reverse':
+                filteredSongs.sort((a, b) => b.title.localeCompare(a.title));
+                break;
+            case 'played-first':
+                filteredSongs.sort((a, b) => {
+                    if (a.played === b.played) return 0;
+                    return a.played ? -1 : 1;
+                });
+                break;
+            case 'pending-first':
+                filteredSongs.sort((a, b) => {
+                    if (a.played === b.played) return 0;
+                    return a.played ? 1 : -1;
+                });
+                break;
+            // 'default' mantiene el orden original
+        }
+
+        // Renderizar lista filtrada
+        this.renderFilteredSongsList(filteredSongs);
+    }
+
+    renderFilteredSongsList(songsToShow) {
+        this.songsListElement.innerHTML = '';
+
+        if (songsToShow.length === 0) {
+            this.songsListElement.innerHTML = `
+                <li role="listitem" style="text-align:center;padding:2rem;color:var(--text-muted);list-style:none;">
+                    <strong style="font-size:1.2rem;margin-bottom:0.5rem;display:block;">No se encontraron canciones</strong>
+                    <p style="font-size:0.9rem;margin:0.5rem 0;">Intenta con otro término de búsqueda o cambia los filtros</p>
+                </li>
+            `;
+            return;
+        }
+
+        this.showMissingSongsWarning(this.songsListElement);
+
+        for (const song of songsToShow) {
             const li = document.createElement('li');
             li.className = `song-item ${song.played ? 'played' : ''} ${this.currentSongIndex === song.id ? 'playing' : ''}`;
             li.setAttribute('role', 'listitem');
