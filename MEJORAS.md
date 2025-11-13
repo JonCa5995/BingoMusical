@@ -29,7 +29,7 @@ Fecha de inicio: 2025-11-13
 - ✅ 3.5. Números de cartón más visibles (1.25x)
 
 ### 4. 🛠️ Calidad de Vida
-- [ ] 4.1. Modo oscuro/claro manual
+- ✅ 4.1. Modo oscuro/claro manual
 
 ### 5. ⚡ Mejoras Técnicas (Performance)
 - [ ] 5.1. Implementar Service Worker para modo offline

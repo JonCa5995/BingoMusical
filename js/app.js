@@ -98,6 +98,10 @@ class BingoMusical {
         // Botón de ayuda de atajos
         this.shortcutsHelpBtn = document.getElementById('shortcuts-help-btn');
         
+        // Botón de cambio de tema
+        this.themeToggleBtn = document.getElementById('theme-toggle-btn');
+        this.themeIcon = document.getElementById('theme-icon');
+        
         // Botón de gestión de playlist
         this.deleteAllBtn = document.getElementById('delete-all-btn');
     }
@@ -157,6 +161,7 @@ class BingoMusical {
         this.setupEventListeners();
         this.setupDragAndDrop();
         this.generateSoundEffects();
+        this.loadThemePreference();
         this.renderSongsList();
         this.updateCounters();
         this.updateControls(false);
@@ -231,6 +236,7 @@ class BingoMusical {
         this.bingoBtn.addEventListener('click', () => this.triggerBingo());
         this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
         this.shortcutsHelpBtn.addEventListener('click', () => this.showKeyboardShortcutsHelp());
+        this.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
     }
 
     _setupVolumeControls() {
@@ -383,6 +389,28 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         `.trim();
         
         this.showAlert(helpMessage, '⌨️ Atajos de Teclado');
+    }
+
+    // Sistema de temas (claro/oscuro)
+    loadThemePreference() {
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        this.applyTheme(savedTheme);
+    }
+
+    toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        this.applyTheme(newTheme);
+        localStorage.setItem('theme', newTheme);
+        this.playEffect('click');
+    }
+
+    applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        this.themeIcon.textContent = theme === 'dark' ? '🌙' : '☀️';
+        this.themeToggleBtn.setAttribute('title', 
+            theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+        );
     }
 
     // Sistema de modales personalizados
