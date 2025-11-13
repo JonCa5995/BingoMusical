@@ -19,13 +19,13 @@ Fecha de inicio: 2025-11-13
 - ✅ 2.4. Implementar ordenamiento por estado de reproducción
 
 ### 3. ⌨️ Atajos de Teclado
-- [ ] 3.1. Espacio → Play/Pause
-- [ ] 3.2. R → Reiniciar canción
-- [ ] 3.3. N → Siguiente canción
-- [ ] 3.4. F → Pantalla completa
-- [ ] 3.5. L → Cantar línea
-- [ ] 3.6. B → Cantar bingo
-- [ ] 3.7. Agregar indicador visual de atajos disponibles
+- ✅ 3.1. Espacio → Play/Pause
+- ✅ 3.2. R → Reiniciar canción
+- ✅ 3.3. N → Siguiente canción
+- ✅ 3.4. F → Pantalla completa
+- ✅ 3.5. L → Cantar línea
+- ✅ 3.6. B → Cantar bingo
+- ✅ 3.7. Agregar indicador visual de atajos disponibles
 
 ### 4. 🎵 Control de Reproducción Avanzado
 - [ ] 4.1. Selector de velocidad de reproducción (0.5x, 1x, 1.5x, 2x)
@@ -123,7 +123,7 @@ Fecha de inicio: 2025-11-13
 
 ## 🎯 Tarea Actual
 
-**✅ Completada: Búsqueda y Filtrado**
+**✅ Completada: Atajos de Teclado**
 
 Esperando la siguiente tarea a implementar.
 
@@ -138,6 +138,18 @@ Esperando la siguiente tarea a implementar.
 - ✅ Interfaz integrada con estilos coherentes
 - ✅ Controles accesibles con ARIA labels
 
+### ✅ 3. Atajos de Teclado (2025-11-13)
+- ✅ ESPACIO → Reproducir/Pausar canción actual
+- ✅ R → Reiniciar canción desde el inicio
+- ✅ N → Siguiente canción (solo en modo continuo)
+- ✅ F → Activar/desactivar pantalla completa
+- ✅ L → Cantar LÍNEA
+- ✅ B → Cantar BINGO
+- ✅ ESC → Cerrar modales abiertos
+- ✅ ? → Mostrar ayuda de atajos
+- ✅ Botón de ayuda visible en la barra de herramientas
+- ✅ Los atajos se desactivan cuando se escribe en inputs
+
 ---
 
 ## 🚀 Próximos Pasos
@@ -149,4 +161,4 @@ Esperando la siguiente tarea a implementar.
 
 ---
 
-**Última actualización:** 2025-11-13 19:45
+**Última actualización:** 2025-11-13 20:05

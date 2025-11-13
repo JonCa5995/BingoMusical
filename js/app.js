@@ -88,6 +88,9 @@ class BingoMusical {
         this.searchInput = document.getElementById('song-search');
         this.filterStatus = document.getElementById('filter-status');
         this.sortOrder = document.getElementById('sort-order');
+        
+        // Botón de ayuda de atajos
+        this.shortcutsHelpBtn = document.getElementById('shortcuts-help-btn');
     }
 
     initializeIcons() {
@@ -203,6 +206,7 @@ class BingoMusical {
         this.lineaBtn.addEventListener('click', () => this.triggerLinea());
         this.bingoBtn.addEventListener('click', () => this.triggerBingo());
         this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+        this.shortcutsHelpBtn.addEventListener('click', () => this.showKeyboardShortcutsHelp());
     }
 
     _setupVolumeControls() {
@@ -251,10 +255,112 @@ class BingoMusical {
         document.addEventListener('fullscreenchange', () => this.onFullscreenChange());
     }
 
+    _setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Ignorar atajos si estamos escribiendo en un input o textarea
+            const tagName = e.target.tagName.toLowerCase();
+            if (tagName === 'input' || tagName === 'textarea' || e.target.isContentEditable) {
+                return;
+            }
+
+            // Ignorar si hay un modal abierto (excepto para Escape)
+            const hasModalOpen = !this.iconModal.classList.contains('hidden') || 
+                                  !this.cartonModal.classList.contains('hidden') ||
+                                  !this.confirmModal.classList.contains('hidden') ||
+                                  !this.alertModal.classList.contains('hidden');
+            
+            if (hasModalOpen && e.key !== 'Escape') {
+                return;
+            }
+
+            const key = e.key.toLowerCase();
+
+            switch (key) {
+                case ' ': // Espacio → Play/Pause
+                    e.preventDefault();
+                    if (this.isPlaying) {
+                        this.pauseSong();
+                    } else if (this.currentSongIndex !== null) {
+                        this.pauseSong(); // Esto actúa como resume
+                    } else if (this.songs.length >= BingoMusical.MIN_SONGS_REQUIRED) {
+                        this.playRandomSong();
+                    }
+                    break;
+
+                case 'r': // R → Reiniciar canción
+                    e.preventDefault();
+                    if (this.currentSongIndex !== null) {
+                        this.stopSong();
+                    }
+                    break;
+
+                case 'n': // N → Siguiente canción
+                    e.preventDefault();
+                    if (this.gameStarted && !this.bingoCompleted) {
+                        this.playRandomSong();
+                    }
+                    break;
+
+                case 'f': // F → Pantalla completa
+                    e.preventDefault();
+                    this.toggleFullscreen();
+                    break;
+
+                case 'l': // L → Cantar línea
+                    e.preventDefault();
+                    if (!this.lineaBtn.disabled) {
+                        this.triggerLinea();
+                    }
+                    break;
+
+                case 'b': // B → Cantar bingo
+                    e.preventDefault();
+                    if (!this.bingoBtn.disabled) {
+                        this.triggerBingo();
+                    }
+                    break;
+
+                case 'escape': // ESC → Cerrar modales
+                    if (!this.iconModal.classList.contains('hidden')) {
+                        this.closeIconModal();
+                    } else if (!this.cartonModal.classList.contains('hidden')) {
+                        this.closeCartonModal();
+                    } else if (!this.confirmModal.classList.contains('hidden')) {
+                        this.closeConfirmModal(false);
+                    } else if (!this.alertModal.classList.contains('hidden')) {
+                        this.closeAlertModal();
+                    }
+                    break;
+
+                case '?': // ? → Mostrar ayuda de atajos
+                    e.preventDefault();
+                    this.showKeyboardShortcutsHelp();
+                    break;
+            }
+        });
+    }
+
+    showKeyboardShortcutsHelp() {
+        const helpMessage = `
+ATAJOS DE TECLADO DISPONIBLES:<br><br>
+
+▶ ESPACIO → Reproducir/Pausar<br>
+🔄 R → Reiniciar canción actual<br>
+⏭ N → Siguiente canción (en modo continuo)<br>
+⛶ F → Pantalla completa<br>
+📏 L → Cantar LÍNEA<br>
+🎉 B → Cantar BINGO<br>
+❌ ESC → Cerrar modal<br>
+❓ ? → Mostrar esta ayuda
+        `.trim();
+        
+        this.showAlert(helpMessage, '⌨️ Atajos de Teclado');
+    }
+
     // Sistema de modales personalizados
     showAlert(message, title = 'Información') {
         this.alertTitle.textContent = title;
-        this.alertMessage.textContent = message;
+        this.alertMessage.innerHTML = message;
         this.alertModal.classList.remove('hidden');
         
         if (this.alertModal.showModal) {
