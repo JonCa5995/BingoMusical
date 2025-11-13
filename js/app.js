@@ -91,6 +91,9 @@ class BingoMusical {
         
         // Botón de ayuda de atajos
         this.shortcutsHelpBtn = document.getElementById('shortcuts-help-btn');
+        
+        // Botón de gestión de playlist
+        this.deleteAllBtn = document.getElementById('delete-all-btn');
     }
 
     initializeIcons() {
@@ -176,6 +179,9 @@ class BingoMusical {
         this.searchInput.addEventListener('input', () => this.filterAndSortSongs());
         this.filterStatus.addEventListener('change', () => this.filterAndSortSongs());
         this.sortOrder.addEventListener('change', () => this.filterAndSortSongs());
+        
+        // Event listener para eliminar todas las canciones
+        this.deleteAllBtn.addEventListener('click', () => this.deleteAllSongs());
     }
 
     _setupCartonEventListeners() {
@@ -296,8 +302,12 @@ class BingoMusical {
 
                 case 'n': // N → Siguiente canción
                     e.preventDefault();
-                    if (this.gameStarted && !this.bingoCompleted) {
-                        this.playRandomSong();
+                    if (this.gameStarted) {
+                        if (!this.bingoCompleted) {
+                            this.playRandomSong();
+                        }
+                    } else {
+                        this.playRandomContinuousSong();
                     }
                     break;
 
@@ -1003,6 +1013,61 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         return `<span role="img" aria-label="${song.title}">${song.icon}</span>`;
     }
 
+    createSongItemElement(song) {
+        const li = document.createElement('li');
+        li.className = `song-item ${song.played ? 'played' : ''} ${this.currentSongIndex === song.id ? 'playing' : ''}`;
+        li.setAttribute('role', 'listitem');
+
+        const iconTitle = this.setRenderSongIconTitle(song);
+        const iconCursor = (song.played || this.gameStarted) ? 'not-allowed' : 'pointer';
+        const iconHtml = this.setRenderSongIconHtml(song);
+        const iconDisabled = (song.played || this.gameStarted) ? 'disabled' : '';
+
+        let songStateLabel;
+        if (song.played) {
+            songStateLabel = '✓ Ya reproducida';
+        } else if (song.file) {
+            songStateLabel = '○ Pendiente';
+        } else {
+            songStateLabel = '⚠ Sin archivo';
+        }
+
+        li.innerHTML = `
+          <button type="button" class="song-item-icon" data-song-id="${song.id}" title="${iconTitle}" style="cursor:${iconCursor};" aria-label="Cambiar icono de ${song.title}" ${iconDisabled}>${iconHtml}</button>
+          <div class="song-item-info">
+            <strong class="song-item-title">${song.title}</strong>
+            <div class="song-item-status" role="status" aria-live="polite">${songStateLabel}</div>
+          </div>
+          <button type="button" class="song-item-delete" title="Eliminar canción" aria-label="Eliminar ${song.title}"><span aria-hidden="true">❌</span></button>
+        `;
+
+        const iconEl = li.querySelector('.song-item-icon');
+        iconEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!song.played && !this.gameStarted) {
+                this.openIconPicker(song.id);
+            } else if (this.gameStarted) {
+                this.showAlert('No puedes cambiar iconos una vez que el juego ha iniciado.', 'Juego Iniciado');
+            } else {
+                this.showAlert('No puedes cambiar el icono de una canción que ya fue reproducida.', 'Canción Ya Reproducida');
+            }
+        });
+
+        li.addEventListener('click', (e) => {
+            if (song.file && !this.gameStarted) {
+                this.playEffect('click');
+                this.playSong(song.id);
+            }
+        });
+
+        li.querySelector('.song-item-delete').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.deleteSong(song.id);
+        });
+
+        return li;
+    }
+
     renderSongsList() {
         this.songsListElement.innerHTML = '';
 
@@ -1020,57 +1085,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         this.showMissingSongsWarning(this.songsListElement);
 
         for (const song of this.songs) {
-            const li = document.createElement('li');
-            li.className = `song-item ${song.played ? 'played' : ''} ${this.currentSongIndex === song.id ? 'playing' : ''}`;
-            li.setAttribute('role', 'listitem');
-
-            const iconTitle = this.setRenderSongIconTitle(song);
-            const iconCursor = (song.played || this.gameStarted) ? 'not-allowed' : 'pointer';
-            const iconHtml = this.setRenderSongIconHtml(song);
-            const iconDisabled = (song.played || this.gameStarted) ? 'disabled' : '';
-
-            let songStateLabel;
-            if (song.played) {
-                songStateLabel = '✓ Ya reproducida';
-            } else if (song.file) {
-                songStateLabel = '○ Pendiente';
-            } else {
-                songStateLabel = '⚠ Sin archivo';
-            }
-
-            li.innerHTML = `
-              <button type="button" class="song-item-icon" data-song-id="${song.id}" title="${iconTitle}" style="cursor:${iconCursor};" aria-label="Cambiar icono de ${song.title}" ${iconDisabled}>${iconHtml}</button>
-              <div class="song-item-info">
-                <strong class="song-item-title">${song.title}</strong>
-                <div class="song-item-status" role="status" aria-live="polite">${songStateLabel}</div>
-              </div>
-              <button type="button" class="song-item-delete" title="Eliminar canción" aria-label="Eliminar ${song.title}"><span aria-hidden="true">❌</span></button>
-            `;
-
-            const iconEl = li.querySelector('.song-item-icon');
-            iconEl.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (!song.played && !this.gameStarted) {
-                    this.openIconPicker(song.id);
-                } else if (this.gameStarted) {
-                    this.showAlert('No puedes cambiar iconos una vez que el juego ha iniciado.', 'Juego Iniciado');
-                } else {
-                    this.showAlert('No puedes cambiar el icono de una canción que ya fue reproducida.', 'Canción Ya Reproducida');
-                }
-            });
-
-            li.addEventListener('click', () => {
-                if (song.file && !this.gameStarted) {
-                    this.playEffect('click');
-                    this.playSong(song.id);
-                }
-            });
-
-            li.querySelector('.song-item-delete').addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.deleteSong(song.id);
-            });
-
+            const li = this.createSongItemElement(song);
             this.songsListElement.appendChild(li);
         }
     }
@@ -1141,57 +1156,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         this.showMissingSongsWarning(this.songsListElement);
 
         for (const song of songsToShow) {
-            const li = document.createElement('li');
-            li.className = `song-item ${song.played ? 'played' : ''} ${this.currentSongIndex === song.id ? 'playing' : ''}`;
-            li.setAttribute('role', 'listitem');
-
-            const iconTitle = this.setRenderSongIconTitle(song);
-            const iconCursor = (song.played || this.gameStarted) ? 'not-allowed' : 'pointer';
-            const iconHtml = this.setRenderSongIconHtml(song);
-            const iconDisabled = (song.played || this.gameStarted) ? 'disabled' : '';
-
-            let songStateLabel;
-            if (song.played) {
-                songStateLabel = '✓ Ya reproducida';
-            } else if (song.file) {
-                songStateLabel = '○ Pendiente';
-            } else {
-                songStateLabel = '⚠ Sin archivo';
-            }
-
-            li.innerHTML = `
-              <button type="button" class="song-item-icon" data-song-id="${song.id}" title="${iconTitle}" style="cursor:${iconCursor};" aria-label="Cambiar icono de ${song.title}" ${iconDisabled}>${iconHtml}</button>
-              <div class="song-item-info">
-                <strong class="song-item-title">${song.title}</strong>
-                <div class="song-item-status" role="status" aria-live="polite">${songStateLabel}</div>
-              </div>
-              <button type="button" class="song-item-delete" title="Eliminar canción" aria-label="Eliminar ${song.title}"><span aria-hidden="true">❌</span></button>
-            `;
-
-            const iconEl = li.querySelector('.song-item-icon');
-            iconEl.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (!song.played && !this.gameStarted) {
-                    this.openIconPicker(song.id);
-                } else if (this.gameStarted) {
-                    this.showAlert('No puedes cambiar iconos una vez que el juego ha iniciado.', 'Juego Iniciado');
-                } else {
-                    this.showAlert('No puedes cambiar el icono de una canción que ya fue reproducida.', 'Canción Ya Reproducida');
-                }
-            });
-
-            li.addEventListener('click', () => {
-                if (song.file && !this.gameStarted) {
-                    this.playEffect('click');
-                    this.playSong(song.id);
-                }
-            });
-
-            li.querySelector('.song-item-delete').addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.deleteSong(song.id);
-            });
-
+            const li = this.createSongItemElement(song);
             this.songsListElement.appendChild(li);
         }
     }
@@ -1199,6 +1164,33 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     updateCounters() {
         this.playedCounterSpan.textContent = this.playedSongs.length.toString();
         this.totalCounterSpan.textContent = this.getTotalSongsWithFiles();
+    }
+
+    // Gestión de playlist
+    async deleteAllSongs() {
+        if (this.gameStarted) {
+            this.showAlert('No puedes eliminar canciones una vez iniciado el juego.', 'Juego Iniciado');
+            return;
+        }
+        
+        if (this.songs.length === 0) {
+            this.showAlert('No hay canciones para eliminar.', 'Lista Vacía');
+            return;
+        }
+        
+        const confirmed = await this.showConfirm(
+            `¿Estás seguro de eliminar TODAS las ${this.songs.length} canciones de la lista?`,
+            'Confirmar Eliminación Total'
+        );
+        
+        if (confirmed) {
+            this.songs = [];
+            this.playEffect('click');
+            this.filterAndSortSongs();
+            this.updateCounters();
+            this.updateUIState();
+            this.showAlert('Todas las canciones han sido eliminadas.', 'Lista Vacía');
+        }
     }
 
     toggleContinuousMode() {
@@ -1391,16 +1383,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
         // Handle continuous PREVIEW mode
         if (this.continuousMode && !this.gameStarted) {
-            setTimeout(() => {
-                const availableSongs = this.songs.filter(song => song.file);
-                if (availableSongs.length > 0) {
-                    const randomSong = availableSongs[Math.floor(Math.random() * availableSongs.length)];
-                    this.playSong(randomSong.id);
-                } else {
-                    // No songs to play, turn off the mode
-                    this.toggleContinuousMode();
-                }
-            }, 1000);
+            this.playRandomContinuousSong();
             return; // End execution here for this case
         }
 
@@ -1419,6 +1402,19 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
         // Default behavior: update controls to show song has stopped
         this.updateControls(false);
+    }
+
+    playRandomContinuousSong() {
+        setTimeout(() => {
+            const availableSongs = this.songs.filter(song => song.file);
+            if (availableSongs.length > 0) {
+                const randomSong = availableSongs[Math.floor(Math.random() * availableSongs.length)];
+                this.playSong(randomSong.id);
+            } else {
+                // No songs to play, turn off the mode
+                this.toggleContinuousMode();
+            }
+        }, 1000);
     }
 
     addToHistory(song) {
