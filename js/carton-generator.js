@@ -118,14 +118,14 @@ class BingoCartonGenerator {
         return row.cells.filter(c => c.type === 'song').map(c => `${c.song.id}-${c.position}`).join('|');
     }
 
-    generatePrintableHTML(cartones) {
-        const header = this._generateHTMLHeader(cartones.length);
-        const cartonesHTML = cartones.map(carton => this._generateCartonHTML(carton)).join('\n');
+    generatePrintableHTML(cartones, config = {}) {
+        const header = this._generateHTMLHeader(cartones.length, config);
+        const cartonesHTML = cartones.map(carton => this._generateCartonHTML(carton, config)).join('\n');
 
         return `${header}\n  <main class="cartones-grid">\n${cartonesHTML}  </main>\n</body>\n</html>`;
     }
 
-    _generateHTMLHeader(count) {
+    _generateHTMLHeader(count, config = {}) {
         return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -133,7 +133,7 @@ class BingoCartonGenerator {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Cartones de Bingo Musical generados - ${count} cartones únicos">
   <title>Cartones de Bingo Musical</title>
-  <style>${this._generateCSS()}</style>
+  <style>${this._generateCSS(config)}</style>
 </head>
 <body>
   <header class="print-info no-print">
@@ -142,7 +142,10 @@ class BingoCartonGenerator {
   </header>`;
     }
 
-    _generateCSS() {
+    _generateCSS(config = {}) {
+        const primaryColor = config.primaryColor || '#6366f1';
+        const secondaryColor = config.secondaryColor || '#f8faff';
+        
         return `
     @page { size: A4; margin: 0; }
     @media print {
@@ -155,12 +158,12 @@ class BingoCartonGenerator {
     body { font-family: 'Arial', sans-serif; background: white; margin: 0; padding: 0; }
     .cartones-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 1rem; width: 210mm; margin: 0 auto; }
     .carton-container { background: white; border: 2px solid #000; padding: 12px; display: flex; flex-direction: column; }
-    .carton-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #6366f1; }
-    .carton-title { font-size: 14px; font-weight: bold; color: #6366f1; text-transform: uppercase; }
-    .carton-number { font-size: 14px; font-weight: bold; color: #64748b; background: #f1f5f9; padding: 3px 10px; border-radius: 4px; }
+    .carton-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid ${primaryColor}; }
+    .carton-title { font-size: 20px; font-weight: bold; color: ${primaryColor}; text-transform: uppercase; }
+    .carton-number { font-size: 25px; font-weight: bold; color: #64748b; background: #f1f5f9; padding: 3px 10px; border-radius: 4px; }
     .carton-grid { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(3, 1fr); gap: 4px; width: 100%; height: 100%; border-collapse: separate; border-spacing: 4px; }
     .carton-cell { aspect-ratio: 1 / 1; border: 2px solid #e2e8f0; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: white; }
-    .carton-cell.song { border-color: #6366f1; background: #f8faff; }
+    .carton-cell.song { border-color: ${primaryColor}; background: ${secondaryColor}; }
     .carton-cell.decorative { background: #fafafa; border-color: #e2e8f0; border-style: dashed; }
     .cell-icon { font-size: 72px; line-height: 1; display: flex; align-items: center; justify-content: center; height: 100%; }
     .cell-icon img { max-width: 90%; max-height: 90%; object-fit: contain; }
@@ -176,7 +179,7 @@ class BingoCartonGenerator {
     }`;
     }
 
-    _generateCartonHTML(carton) {
+    _generateCartonHTML(carton, config = {}) {
         const rowsHTML = carton.rows.map(row =>
             row.cells.map(cell => this._generateCellHTML(cell)).join('')
         ).join('\n        \n');
@@ -203,8 +206,8 @@ ${rowsHTML}
         return `          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true">${cell.icon}</div></div>\n`;
     }
 
-    downloadAsHTML(cartones, filename = 'cartones-bingo-musical.html') {
-        const html = this.generatePrintableHTML(cartones);
+    downloadAsHTML(cartones, config = {}, filename = 'cartones-bingo-musical.html') {
+        const html = this.generatePrintableHTML(cartones, config);
         const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
         const url = URL.createObjectURL(blob);
 
@@ -218,6 +221,28 @@ ${rowsHTML}
         link.remove();
 
         URL.revokeObjectURL(url);
+    }
+    
+    async downloadAsPDF(cartones, config = {}) {
+        // Para generar PDF, primero generamos el HTML y luego lo abrimos para imprimir
+        // El usuario puede usar "Guardar como PDF" desde el diálogo de impresión del navegador
+        const html = this.generatePrintableHTML(cartones, config);
+        const printWindow = window.open('', '_blank');
+        
+        if (!printWindow) {
+            throw new Error('No se pudo abrir la ventana de impresión. Por favor, permite ventanas emergentes.');
+        }
+        
+        printWindow.document.write(html);
+        printWindow.document.close();
+        
+        // Esperar a que se cargue el contenido
+        printWindow.onload = function() {
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+            }, 250);
+        };
     }
 }
 

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Cartones de Bingo Musical generados - 10 cartones únicos">
+  <title>Cartones de Bingo Musical</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    @media print {
+        html, body { margin: 0 !important; padding: 0 !important; print-color-adjust: exact; color-adjust: exact; overflow: visible !important; }
+        .no-print { display: none; }
+        .cartones-grid { margin: 0 !important; padding: 0 !important; display: block; gap: 0; position: static; }
+        .carton-container { box-shadow: none; border-width: 1px; page-break-inside: avoid; break-inside: avoid; }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Arial', sans-serif; background: white; margin: 0; padding: 0; }
+    .cartones-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 1rem; width: 210mm; margin: 0 auto; }
+    .carton-container { background: white; border: 2px solid #000; padding: 12px; display: flex; flex-direction: column; }
+    .carton-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #ff0000; }
+    .carton-title { font-size: 20px; font-weight: bold; color: #ff0000; text-transform: uppercase; }
+    .carton-number { font-size: 25px; font-weight: bold; color: #64748b; background: #f1f5f9; padding: 3px 10px; border-radius: 4px; }
+    .carton-grid { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(3, 1fr); gap: 4px; width: 100%; height: 100%; border-collapse: separate; border-spacing: 4px; }
+    .carton-cell { aspect-ratio: 1 / 1; border: 2px solid #e2e8f0; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: white; }
+    .carton-cell.song { border-color: #ff0000; background: #8000ff; }
+    .carton-cell.decorative { background: #fafafa; border-color: #e2e8f0; border-style: dashed; }
+    .cell-icon { font-size: 72px; line-height: 1; display: flex; align-items: center; justify-content: center; height: 100%; }
+    .cell-icon img { max-width: 90%; max-height: 90%; object-fit: contain; }
+    .image-icon { height: 56px; aspect-ratio: 1; }
+    .song .image-icon { height: 72px; }
+    .decorative-icon { font-size: 40px; opacity: 0.2; filter: grayscale(100%); }
+    .print-info { text-align: center; padding: 20px; margin: 20px; background: #fef3c7; border-radius: 8px; border: 2px solid #f59e0b; }
+    .print-info h1 { color: #92400e; margin-bottom: 10px; font-size: 1.25rem; }
+    .print-info p { color: #78350f; line-height: 1.6; }
+    @media screen {
+      body { background: #f5f5f5; padding: 10px; }
+      .carton-container:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); transform: translateY(-2px); transition: all 0.2s; }
+    }</style>
+</head>
+<body>
+  <header class="print-info no-print">
+    <h1>ℹ️ Información de Impresión</h1>
+    <p><strong>10 cartones generados</strong> • Configuración recomendada: A4, márgenes 0 mm • 4 página(s)</p>
+  </header>
+  <main class="cartones-grid">
+    <article class="carton-container" role="region" aria-labelledby="carton-title-1">
+      <header class="carton-header">
+        <h2 id="carton-title-1" class="carton-title">🎵 Bingo Musical</h2>
+        <span class="carton-number" aria-label="Cartón número 1">#1</span>
+      </header>
+      <div class="carton-grid" role="grid" aria-label="Cuadrícula de bingo con 3 filas y 8 columnas">
+        
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="05 Desde Mi Interior">🧝</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01_Digo_s_">👩‍⚖️</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02 Creeré">💒</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="04 Te Amo (feat. T-Bone) @Hremix26">🌄</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+
+        
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01. Más (feat. Blanca)">✈️</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 No Hay Vuelta Atrás (feat. Coalo Zamorano & Funky) @Hremix26">🎲</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01 Increíble (feat. Evan Craft)">🔕</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Como En El Cielo (En Vivo)">😂</span></div></div>
+
+        
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="1.Mi Fortaleza">😳</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Tómalo">🍇</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02 Es Tiempo">🏅</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="05 - En Espíritu Y En Verdad - Sublime Gracia">🚕</span></div></div>
+        
+      </div>
+    </article>
+    <article class="carton-container" role="region" aria-labelledby="carton-title-2">
+      <header class="carton-header">
+        <h2 id="carton-title-2" class="carton-title">🎵 Bingo Musical</h2>
+        <span class="carton-number" aria-label="Cartón número 2">#2</span>
+      </header>
+      <div class="carton-grid" role="grid" aria-label="Cuadrícula de bingo con 3 filas y 8 columnas">
+        
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01 Increíble (feat. Evan Craft)">🔕</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Tómalo">🍇</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01. Más (feat. Blanca)">✈️</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 No Hay Vuelta Atrás (feat. Coalo Zamorano & Funky) @Hremix26">🎲</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+
+        
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Como En El Cielo (En Vivo)">😂</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="1.Mi Fortaleza">😳</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01_Digo_s_">👩‍⚖️</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="04 Te Amo (feat. T-Bone) @Hremix26">🌄</span></div></div>
+
+        
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="04. Gracia Sublime Es">👩‍🚀</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="05 CON SALTOS DE ALEGRIA">🚚</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="05 Desde Mi Interior">🧝</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02 Es Tiempo">🏅</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+        
+      </div>
+    </article>
+    <article class="carton-container" role="region" aria-labelledby="carton-title-3">
+      <header class="carton-header">
+        <h2 id="carton-title-3" class="carton-title">🎵 Bingo Musical</h2>
+        <span class="carton-number" aria-label="Cartón número 3">#3</span>
+      </header>
+      <div class="carton-grid" role="grid" aria-label="Cuadrícula de bingo con 3 filas y 8 columnas">
+        
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02 Creeré">💒</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="1.Mi Fortaleza">😳</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01. Más (feat. Blanca)">✈️</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01 Increíble (feat. Evan Craft)">🔕</span></div></div>
+
+        
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02 Es Tiempo">🏅</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="2. Ahora Vivo Para Ti">🥝</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02. Tu Eres Bueno">😱</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01_Digo_s_">👩‍⚖️</span></div></div>
+
+        
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 No Hay Vuelta Atrás (feat. Coalo Zamorano & Funky) @Hremix26">🎲</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Tómalo">🍇</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Como En El Cielo (En Vivo)">😂</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="04 Te Amo (feat. T-Bone) @Hremix26">🌄</span></div></div>
+        
+      </div>
+    </article>
+    <article class="carton-container" role="region" aria-labelledby="carton-title-4">
+      <header class="carton-header">
+        <h2 id="carton-title-4" class="carton-title">🎵 Bingo Musical</h2>
+        <span class="carton-number" aria-label="Cartón número 4">#4</span>
+      </header>
+      <div class="carton-grid" role="grid" aria-label="Cuadrícula de bingo con 3 filas y 8 columnas">
+        
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01 Increíble (feat. Evan Craft)">🔕</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01. Más (feat. Blanca)">✈️</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="1.Mi Fortaleza">😳</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01_Digo_s_">👩‍⚖️</span></div></div>
+
+        
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02 Creeré">💒</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="2. Ahora Vivo Para Ti">🥝</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02. Tu Eres Bueno">😱</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02 Es Tiempo">🏅</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+
+        
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 No Hay Vuelta Atrás (feat. Coalo Zamorano & Funky) @Hremix26">🎲</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Como En El Cielo (En Vivo)">😂</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Tómalo">🍇</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="04 Te Amo (feat. T-Bone) @Hremix26">🌄</span></div></div>
+        
+      </div>
+    </article>
+    <article class="carton-container" role="region" aria-labelledby="carton-title-5">
+      <header class="carton-header">
+        <h2 id="carton-title-5" class="carton-title">🎵 Bingo Musical</h2>
+        <span class="carton-number" aria-label="Cartón número 5">#5</span>
+      </header>
+      <div class="carton-grid" role="grid" aria-label="Cuadrícula de bingo con 3 filas y 8 columnas">
+        
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01. Más (feat. Blanca)">✈️</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01 Increíble (feat. Evan Craft)">🔕</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01_Digo_s_">👩‍⚖️</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="1.Mi Fortaleza">😳</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+
+        
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02 Creeré">💒</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="2. Ahora Vivo Para Ti">🥝</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02 Es Tiempo">🏅</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02. Tu Eres Bueno">😱</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+
+        
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Como En El Cielo (En Vivo)">😂</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Tómalo">🍇</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="04 Te Amo (feat. T-Bone) @Hremix26">🌄</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 No Hay Vuelta Atrás (feat. Coalo Zamorano & Funky) @Hremix26">🎲</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+        
+      </div>
+    </article>
+    <article class="carton-container" role="region" aria-labelledby="carton-title-6">
+      <header class="carton-header">
+        <h2 id="carton-title-6" class="carton-title">🎵 Bingo Musical</h2>
+        <span class="carton-number" aria-label="Cartón número 6">#6</span>
+      </header>
+      <div class="carton-grid" role="grid" aria-label="Cuadrícula de bingo con 3 filas y 8 columnas">
+        
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01_Digo_s_">👩‍⚖️</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 No Hay Vuelta Atrás (feat. Coalo Zamorano & Funky) @Hremix26">🎲</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Como En El Cielo (En Vivo)">😂</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01. Más (feat. Blanca)">✈️</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+
+        
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="05 - En Espíritu Y En Verdad - Sublime Gracia">🚕</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="05 Desde Mi Interior">🧝</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01 Increíble (feat. Evan Craft)">🔕</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="04 Te Amo (feat. T-Bone) @Hremix26">🌄</span></div></div>
+
+        
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="1.Mi Fortaleza">😳</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02 Es Tiempo">🏅</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02 Creeré">💒</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="2. Ahora Vivo Para Ti">🥝</span></div></div>
+        
+      </div>
+    </article>
+    <article class="carton-container" role="region" aria-labelledby="carton-title-7">
+      <header class="carton-header">
+        <h2 id="carton-title-7" class="carton-title">🎵 Bingo Musical</h2>
+        <span class="carton-number" aria-label="Cartón número 7">#7</span>
+      </header>
+      <div class="carton-grid" role="grid" aria-label="Cuadrícula de bingo con 3 filas y 8 columnas">
+        
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Como En El Cielo (En Vivo)">😂</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01 Increíble (feat. Evan Craft)">🔕</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 No Hay Vuelta Atrás (feat. Coalo Zamorano & Funky) @Hremix26">🎲</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="04 Te Amo (feat. T-Bone) @Hremix26">🌄</span></div></div>
+
+        
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Tómalo">🍇</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="05 Desde Mi Interior">🧝</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="05 CON SALTOS DE ALEGRIA">🚚</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01. Más (feat. Blanca)">✈️</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+
+        
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="04. Gracia Sublime Es">👩‍🚀</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="05 - En Espíritu Y En Verdad - Sublime Gracia">🚕</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01_Digo_s_">👩‍⚖️</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="1.Mi Fortaleza">😳</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+        
+      </div>
+    </article>
+    <article class="carton-container" role="region" aria-labelledby="carton-title-8">
+      <header class="carton-header">
+        <h2 id="carton-title-8" class="carton-title">🎵 Bingo Musical</h2>
+        <span class="carton-number" aria-label="Cartón número 8">#8</span>
+      </header>
+      <div class="carton-grid" role="grid" aria-label="Cuadrícula de bingo con 3 filas y 8 columnas">
+        
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="05 - En Espíritu Y En Verdad - Sublime Gracia">🚕</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="04 Te Amo (feat. T-Bone) @Hremix26">🌄</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="04. Gracia Sublime Es">👩‍🚀</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Tómalo">🍇</span></div></div>
+
+        
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02 Creeré">💒</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02 Es Tiempo">🏅</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Como En El Cielo (En Vivo)">😂</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 No Hay Vuelta Atrás (feat. Coalo Zamorano & Funky) @Hremix26">🎲</span></div></div>
+
+        
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="05 CON SALTOS DE ALEGRIA">🚚</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="05 Desde Mi Interior">🧝</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="2. Ahora Vivo Para Ti">🥝</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01. Más (feat. Blanca)">✈️</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+        
+      </div>
+    </article>
+    <article class="carton-container" role="region" aria-labelledby="carton-title-9">
+      <header class="carton-header">
+        <h2 id="carton-title-9" class="carton-title">🎵 Bingo Musical</h2>
+        <span class="carton-number" aria-label="Cartón número 9">#9</span>
+      </header>
+      <div class="carton-grid" role="grid" aria-label="Cuadrícula de bingo con 3 filas y 8 columnas">
+        
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Tómalo">🍇</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 Como En El Cielo (En Vivo)">😂</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="08 Como en el Cielo">🏈</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="12 Tu Bandera">🎇</span></div></div>
+
+        
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="11 La Revolución">👨‍👩‍👦</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="04 Te Amo (feat. T-Bone) @Hremix26">🌄</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="06 Me Viniste A Rescatar">🏐</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="17 Alleluya">🤴</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+
+        
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="05. Hermoso Amor (En Vivo)">✌️</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="03 No Hay Vuelta Atrás (feat. Coalo Zamorano & Funky) @Hremix26">🎲</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="06 Gracia Sublime Es">👶</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="06. Soy Perdónado">🌙</span></div></div>
+        
+      </div>
+    </article>
+    <article class="carton-container" role="region" aria-labelledby="carton-title-10">
+      <header class="carton-header">
+        <h2 id="carton-title-10" class="carton-title">🎵 Bingo Musical</h2>
+        <span class="carton-number" aria-label="Cartón número 10">#10</span>
+      </header>
+      <div class="carton-grid" role="grid" aria-label="Cuadrícula de bingo con 3 filas y 8 columnas">
+        
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01. Más (feat. Blanca)">✈️</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="06 Me Viniste A Rescatar">🏐</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="01 Increíble (feat. Evan Craft)">🔕</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="06 Gracia Sublime Es">👶</span></div></div>
+
+        
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="05. Hermoso Amor (En Vivo)">✌️</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="02 Es Tiempo">🏅</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="06. Soy Perdónado">🌙</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="12 Tu Bandera">🎇</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+
+        
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="08 Como en el Cielo">🏈</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="11 La Revolución">👨‍👩‍👦</span></div></div>
+          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true"><img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración"></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="1.Mi Fortaleza">😳</span></div></div>
+          <div class="carton-cell song" role="gridcell"><div class="cell-icon"><span role="img" aria-label="17 Alleluya">🤴</span></div></div>
+        
+      </div>
+    </article>  </main>
+</body>
+</html>

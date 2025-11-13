@@ -277,9 +277,9 @@
     </main>
   </div>
 
-  <!-- Modal para generar cartones -->
+  <!-- Modal para generar cartones con personalización -->
   <dialog id="carton-modal" class="modal hidden" aria-labelledby="carton-modal-title">
-    <article class="modal-content">
+    <article class="modal-content modal-wide">
       <header class="modal-header">
         <h2 id="carton-modal-title">🎴 Generar Cartones de Bingo</h2>
         <button id="close-carton-modal" class="close-btn" type="button" aria-label="Cerrar modal">
@@ -287,29 +287,81 @@
         </button>
       </header>
       <section class="modal-body">
-        <p class="modal-description">
-          Genera cartones únicos para imprimir y repartir a los jugadores.
-        </p>
-        <form class="carton-input-group">
-          <label class="carton-label" for="carton-count">
-            Número de cartones:
-          </label>
-          <input id="carton-count"
-                 class="modal-carton-input"
-                 type="number"
-                 min="1"
-                 max="1500"
-                 value="10"
-                 aria-describedby="carton-hint"
-          >
-          <small id="carton-hint" class="carton-hint">
-            Cada cartón contiene 12 canciones únicas distribuidas en 3 filas
-          </small>
-        </form>
+        <div class="carton-settings-grid">
+          <!-- Columna izquierda: Configuración -->
+          <div class="carton-config-section">
+            <h3>⚙️ Configuración</h3>
+            
+            <!-- Número de cartones -->
+            <div class="config-group">
+              <label class="config-label" for="carton-count">
+                📊 Número de cartones:
+              </label>
+              <input id="carton-count"
+                     class="config-input"
+                     type="number"
+                     min="1"
+                     max="1500"
+                     value="10"
+                     aria-describedby="carton-hint"
+              >
+              <small id="carton-hint" class="config-hint">
+                Cada cartón contiene 12 canciones únicas
+              </small>
+            </div>
+
+            <!-- Color principal -->
+            <div class="config-group">
+              <label class="config-label" for="carton-primary-color">
+                🎨 Color principal:
+              </label>
+              <div class="color-picker-wrapper">
+                <input id="carton-primary-color"
+                       class="config-color-input"
+                       type="color"
+                       value="#6366f1"
+                >
+                <span class="color-preview" style="background-color: #6366f1"></span>
+              </div>
+            </div>
+
+            <!-- Color secundario -->
+            <div class="config-group">
+              <label class="config-label" for="carton-secondary-color">
+                🎨 Color secundario:
+              </label>
+              <div class="color-picker-wrapper">
+                <input id="carton-secondary-color"
+                       class="config-color-input"
+                       type="color"
+                       value="#f8faff"
+                >
+                <span class="color-preview" style="background-color: #f8faff"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna derecha: Vista previa -->
+          <div class="carton-preview-section">
+            <h3>👁️ Vista Previa</h3>
+            <div id="carton-preview" class="carton-preview-container">
+              <!-- La vista previa se generará dinámicamente -->
+            </div>
+          </div>
+        </div>
+
         <footer class="modal-actions">
+          <button id="preview-carton-btn" class="btn btn-secondary btn-icon" type="button">
+            <span aria-hidden="true">👁️</span>
+            Actualizar Vista Previa
+          </button>
+          <button id="generate-pdf-cartones" class="btn btn-secondary btn-icon" type="button">
+            <span aria-hidden="true">📄</span>
+            Generar PDF
+          </button>
           <button id="generate-html-cartones" class="btn btn-play btn-icon" type="button">
             <span aria-hidden="true">🎴</span>
-            Generar Cartones
+            Generar HTML
           </button>
         </footer>
       </section>

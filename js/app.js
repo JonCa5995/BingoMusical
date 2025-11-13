@@ -40,6 +40,12 @@ class BingoMusical {
         this.generateCartonesBtn = document.getElementById('generate-cartones');
         this.closeCartonModalBtn = document.getElementById('close-carton-modal');
         this.generateHtmlCartonesBtn = document.getElementById('generate-html-cartones');
+        this.generatePdfCartonesBtn = document.getElementById('generate-pdf-cartones');
+        this.previewCartonBtn = document.getElementById('preview-carton-btn');
+        this.cartonCountInput = document.getElementById('carton-count');
+        this.cartonPrimaryColorInput = document.getElementById('carton-primary-color');
+        this.cartonSecondaryColorInput = document.getElementById('carton-secondary-color');
+        this.cartonPreviewContainer = document.getElementById('carton-preview');
         this.cartonModal = document.getElementById('carton-modal');
         this.exportListBtn = document.getElementById('export-list');
         this.importListBtn = document.getElementById('import-list');
@@ -187,7 +193,19 @@ class BingoMusical {
     _setupCartonEventListeners() {
         this.generateCartonesBtn.addEventListener('click', () => this.openCartonModal());
         this.closeCartonModalBtn.addEventListener('click', () => this.closeCartonModal());
-        this.generateHtmlCartonesBtn.addEventListener('click', () => this.generateCartones());
+        this.generateHtmlCartonesBtn.addEventListener('click', () => this.generateCartones('html'));
+        this.generatePdfCartonesBtn.addEventListener('click', () => this.generateCartones('pdf'));
+        this.previewCartonBtn.addEventListener('click', () => this.updateCartonPreview());
+        
+        // Actualizar preview al cambiar configuración
+        this.cartonPrimaryColorInput.addEventListener('input', (e) => {
+            document.querySelector('.color-preview').style.backgroundColor = e.target.value;
+            this.updateCartonPreview();
+        });
+        this.cartonSecondaryColorInput.addEventListener('input', (e) => {
+            document.querySelectorAll('.color-preview')[1].style.backgroundColor = e.target.value;
+            this.updateCartonPreview();
+        });
 
         this.cartonModal.addEventListener('click', (e) => {
             if (e.target.id === 'carton-modal') {
@@ -1523,6 +1541,9 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             this.cartonModal.showModal();
         }
         
+        // Generar vista previa inicial
+        this.updateCartonPreview();
+        
         this.playEffect('click');
     }
 
@@ -1534,7 +1555,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         this.cartonModal.classList.add('hidden');
     }
 
-    async generateCartones() {
+    async generateCartones(format = 'html') {
         const count = Number.parseInt(this.cartonCountInput.value);
 
         if (Number.isNaN(count) || count < 1 || count > BingoMusical.MAX_CARTONS_GENERATED) {
@@ -1551,14 +1572,81 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         this.playEffect('start');
 
         try {
+            // Obtener configuración de personalización
+            const config = {
+                primaryColor: this.cartonPrimaryColorInput.value,
+                secondaryColor: this.cartonSecondaryColorInput.value
+            };
+            
             const cartones = this.cartonGenerator.generateCartones(this.songs, count);
-            this.cartonGenerator.downloadAsHTML(cartones);
-            this.showAlert(`${count} cartón(es) generado(s) exitosamente.\n\nEl archivo HTML está listo para imprimir.`, 'Cartones Generados');
+            
+            if (format === 'pdf') {
+                await this.cartonGenerator.downloadAsPDF(cartones, config);
+                this.showAlert(`${count} cartón(es) generado(s) en PDF exitosamente.`, 'Cartones Generados');
+            } else {
+                this.cartonGenerator.downloadAsHTML(cartones, config);
+                this.showAlert(`${count} cartón(es) generado(s) exitosamente.\n\nEl archivo HTML está listo para imprimir.`, 'Cartones Generados');
+            }
+            
             this.playEffect('win');
             this.closeCartonModal();
         } catch (error) {
             this.showAlert(`Error al generar cartones: ${error.message}`, 'Error');
         }
+    }
+    
+    updateCartonPreview() {
+        try {
+            // Obtener configuración
+            const config = {
+                primaryColor: this.cartonPrimaryColorInput.value,
+                secondaryColor: this.cartonSecondaryColorInput.value
+            };
+            
+            // Generar un cartón de ejemplo
+            const previewCarton = this.cartonGenerator.generateSingleCarton(this.songs, 1);
+            
+            // Renderizar vista previa
+            this.cartonPreviewContainer.innerHTML = this.generatePreviewHTML(previewCarton, config);
+        } catch (error) {
+            this.cartonPreviewContainer.innerHTML = `
+                <div class="carton-preview-placeholder">
+                    <p>❌ Error al generar vista previa</p>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        }
+    }
+    
+    generatePreviewHTML(carton, config) {
+        const { primaryColor, secondaryColor } = config;
+        
+        const cellsHTML = carton.rows.flatMap(row => 
+            row.cells.map(cell => {
+                const cellClass = cell.type === 'song' ? 'song' : 'decorative';
+                const icon = cell.type === 'song' 
+                    ? (cell.song.iconType === 'image' 
+                        ? `<img src="${cell.song.icon}" alt="${cell.song.title}" style="max-width: 90%; max-height: 90%;">` 
+                        : cell.song.icon)
+                    : `<span class="decorative-icon">${cell.icon}</span>`;
+                    
+                return `<div class="preview-cell ${cellClass}">
+                    ${icon}
+                </div>`;
+            })
+        ).join('');
+        
+        return `
+            <div class="preview-carton" style="color: ${primaryColor}; border-color: ${primaryColor};">
+                <div class="preview-carton-header" style="border-color: ${primaryColor};">
+                    <div class="preview-carton-title" style="color: ${primaryColor};">🎵 Bingo Musical</div>
+                    <div class="preview-carton-number" style="background-color: ${secondaryColor};">#1</div>
+                </div>
+                <div class="preview-carton-grid">
+                    ${cellsHTML}
+                </div>
+            </div>
+        `;
     }
 }
 

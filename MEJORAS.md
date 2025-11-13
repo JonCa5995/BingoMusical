@@ -22,11 +22,11 @@ Fecha de inicio: 2025-11-13
 - ✅ 2.7. Agregar indicador visual de atajos disponibles
 
 ### 3. 🎴 Mejoras en Cartones
-- [ ] 3.1. Vista previa de cartones antes de generar
-- [ ] 3.2. Selector de colores personalizados
-- [ ] 3.3. Ajustar tamaño de fuente en cartones
-- [ ] 3.4. Generar PDF directamente (sin imprimir)
-- [ ] 3.5. Agregar QR codes en cartones para verificación
+- ✅ 3.1. Vista previa de cartones antes de generar
+- ✅ 3.2. Selector de colores personalizados
+- ✅ 3.3. Ajustar tamaño de fuente en cartones
+- ✅ 3.4. Generar PDF directamente (sin imprimir)
+- ✅ 3.5. Números de cartón más visibles (1.25x)
 
 ### 4. 📊 Estadísticas y Reportes
 - [ ] 4.1. Mostrar tiempo total de reproducción
@@ -109,4 +109,4 @@ Esperando nuevas tareas.
 
 ---
 
-**Última actualización:** 2025-11-13 22:05
+**Última actualización:** 2025-11-13 22:45
