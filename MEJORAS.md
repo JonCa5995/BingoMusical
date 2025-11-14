@@ -34,12 +34,6 @@ Fecha de inicio: 2025-11-13
 ### 5. ⚡ Mejoras Técnicas (Performance)
 - ✅ 5.1. Optimización de renderizado
 
-### 6. 🎨 Animaciones y Feedback Visual
-- [ ] 6.1. Transiciones suaves al cambiar de canción
-- [ ] 6.2. Feedback visual mejorado en botones
-- [ ] 6.3. Tooltips informativos
-- [ ] 6.4. Loading states claros
-
 ---
 
 **Última actualización:** 2025-11-13 22:45
