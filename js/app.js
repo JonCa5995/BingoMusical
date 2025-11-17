@@ -1,5 +1,6 @@
 // Bingo Musical Application
 import {BingoCartonGenerator} from "./bingoCartonGenerator.js";
+import {DOMElements} from "./modules/DOMElements.js";
 
 export const MIN_SONGS_REQUIRED = 24;
 
@@ -25,89 +26,11 @@ class BingoMusical {
         
         this.cartonGenerator = new BingoCartonGenerator();
         this.songsFolder = 'canciones/';
-        this.initializeElements();
+        this.dom = new DOMElements();
         this.initializeIcons();
         this.soundEffects = { start: null, win: null, click: null, complete: null, error: null };
         
         this.init();
-    }
-
-    initializeElements() {
-        this.audioPlayer = document.getElementById('audio-player');
-        this.playBtn = document.getElementById('play-btn');
-        this.pauseBtn = document.getElementById('pause-btn');
-        this.stopBtn = document.getElementById('stop-btn');
-        this.addSongsInput = document.getElementById('add-songs');
-        this.addSongsLabel = document.querySelector('label[for="add-songs"]');
-        this.clearHistoryBtn = document.getElementById('clear-history');
-        this.shuffleAllBtn = document.getElementById('shuffle-all');
-        this.generateCartonesBtn = document.getElementById('generate-cartones');
-        this.closeCartonModalBtn = document.getElementById('close-carton-modal');
-        this.generateHtmlCartonesBtn = document.getElementById('generate-html-cartones');
-        this.generatePdfCartonesBtn = document.getElementById('generate-pdf-cartones');
-        this.previewCartonBtn = document.getElementById('preview-carton-btn');
-        this.cartonCountInput = document.getElementById('carton-count');
-        this.cartonPrimaryColorInput = document.getElementById('carton-primary-color');
-        this.cartonSecondaryColorInput = document.getElementById('carton-secondary-color');
-        this.cartonPreviewContainer = document.getElementById('carton-preview');
-        this.cartonModal = document.getElementById('carton-modal');
-        this.exportListBtn = document.getElementById('export-list');
-        this.importListBtn = document.getElementById('import-list');
-        this.importFileInput = document.getElementById('import-file');
-        this.lineaBtn = document.getElementById('linea-btn');
-        this.bingoBtn = document.getElementById('bingo-btn');
-        this.fullscreenBtn = document.getElementById('fullscreen-btn');
-        this.musicVolumeSlider = document.getElementById('music-volume');
-        this.musicVolumeValueSpan = document.getElementById('music-volume-value');
-        this.effectsVolumeSlider = document.getElementById('effects-volume');
-        this.effectsVolumeValueSpan = document.getElementById('effects-volume-value');
-        this.progressBar = document.querySelector('.progress-bar');
-        this.closeIconModalBtn = document.getElementById('close-modal');
-        this.iconModal = document.getElementById('icon-modal');
-        this.uploadCustomIconBtn = document.getElementById('upload-custom-icon-btn');
-        this.customIconUploadInput = document.getElementById('custom-icon-upload');
-        this.confirmCancelBtn = document.getElementById('confirm-cancel');
-        this.confirmAcceptBtn = document.getElementById('confirm-accept');
-        this.alertOkBtn = document.getElementById('alert-ok');
-        this.lineaOverlay = document.getElementById('linea-overlay');
-        this.continueLineaBtn = document.getElementById('continue-linea-btn');
-        this.celebrationOverlay = document.getElementById('celebration-overlay');
-        this.restartBtn = document.getElementById('restart-btn');
-        this.alertTitle = document.getElementById('alert-title');
-        this.alertMessage = document.getElementById('alert-message');
-        this.alertModal = document.getElementById('alert-modal');
-        this.confirmTitle = document.getElementById('confirm-title');
-        this.confirmMessage = document.getElementById('confirm-message');
-        this.confirmModal = document.getElementById('confirm-modal');
-        this.songTitleElement = document.getElementById('song-title');
-        this.currentIconImg = document.getElementById('current-icon');
-        this.progressFill = document.getElementById('progress-fill');
-        this.currentTimeSpan = document.getElementById('current-time');
-        this.durationSpan = document.getElementById('duration');
-        this.songIconContainer = document.querySelector('.song-icon');
-        this.songsListElement = document.getElementById('songs-list');
-        this.historyGrid = document.getElementById('history-grid');
-        this.playedCounterSpan = document.getElementById('played-counter');
-        this.totalCounterSpan = document.getElementById('total-counter');
-        this.modalSongTitle = document.getElementById('modal-song-title');
-        this.iconPickerContainer = document.querySelector('.icon-picker');
-        this.cartonCountInput = document.getElementById('carton-count');
-        this.songsSection = document.querySelector('.songs-section');
-        
-        // Elementos de búsqueda y filtrado
-        this.searchInput = document.getElementById('song-search');
-        this.filterStatus = document.getElementById('filter-status');
-        this.sortOrder = document.getElementById('sort-order');
-        
-        // Botón de ayuda de atajos
-        this.shortcutsHelpBtn = document.getElementById('shortcuts-help-btn');
-        
-        // Botón de cambio de tema
-        this.themeToggleBtn = document.getElementById('theme-toggle-btn');
-        this.themeIcon = document.getElementById('theme-icon');
-        
-        // Botón de gestión de playlist
-        this.deleteAllBtn = document.getElementById('delete-all-btn');
     }
 
     initializeIcons() {
@@ -181,51 +104,51 @@ class BingoMusical {
     }
 
     _setupPlayerEventListeners() {
-        this.playBtn.addEventListener('click', () => this.playRandomSong());
-        this.pauseBtn.addEventListener('click', () => this.pauseSong());
-        this.stopBtn.addEventListener('click', () => this.stopSong());
+        this.dom.playBtn.addEventListener('click', () => this.playRandomSong());
+        this.dom.pauseBtn.addEventListener('click', () => this.pauseSong());
+        this.dom.stopBtn.addEventListener('click', () => this.stopSong());
 
         // Eventos del reproductor de audio
-        this.audioPlayer.addEventListener('timeupdate', () => this.updateProgress());
-        this.audioPlayer.addEventListener('ended', () => this.onSongEnded());
-        this.audioPlayer.addEventListener('loadedmetadata', () => this.updateDuration());
+        this.dom.audioPlayer.addEventListener('timeupdate', () => this.updateProgress());
+        this.dom.audioPlayer.addEventListener('ended', () => this.onSongEnded());
+        this.dom.audioPlayer.addEventListener('loadedmetadata', () => this.updateDuration());
 
         // Clic en barra de progreso
-        this.progressBar.addEventListener('click', (e) => this.seekTo(e));
+        this.dom.progressBar.addEventListener('click', (e) => this.seekTo(e));
     }
 
     _setupSongManagementEventListeners() {
-        this.addSongsInput.addEventListener('change', (e) => this.addSongs(e));
-        this.clearHistoryBtn.addEventListener('click', () => this.reiniciarJuego());
-        this.shuffleAllBtn.addEventListener('click', () => this.toggleContinuousMode());
+        this.dom.addSongsInput.addEventListener('change', (e) => this.addSongs(e));
+        this.dom.clearHistoryBtn.addEventListener('click', () => this.reiniciarJuego());
+        this.dom.shuffleAllBtn.addEventListener('click', () => this.toggleContinuousMode());
         
         // Event listeners para búsqueda y filtrado con debouncing
-        this.searchInput.addEventListener('input', () => this.debouncedFilterAndSort());
-        this.filterStatus.addEventListener('change', () => this.filterAndSortSongs());
-        this.sortOrder.addEventListener('change', () => this.filterAndSortSongs());
+        this.dom.searchInput.addEventListener('input', () => this.debouncedFilterAndSort());
+        this.dom.filterStatus.addEventListener('change', () => this.filterAndSortSongs());
+        this.dom.sortOrder.addEventListener('change', () => this.filterAndSortSongs());
         
         // Event listener para eliminar todas las canciones
-        this.deleteAllBtn.addEventListener('click', () => this.deleteAllSongs());
+        this.dom.deleteAllBtn.addEventListener('click', () => this.deleteAllSongs());
     }
 
     _setupCartonEventListeners() {
-        this.generateCartonesBtn.addEventListener('click', () => this.openCartonModal());
-        this.closeCartonModalBtn.addEventListener('click', () => this.closeCartonModal());
-        this.generateHtmlCartonesBtn.addEventListener('click', () => this.generateCartones('html'));
-        this.generatePdfCartonesBtn.addEventListener('click', () => this.generateCartones('pdf'));
-        this.previewCartonBtn.addEventListener('click', () => this.updateCartonPreview());
+        this.dom.generateCartonesBtn.addEventListener('click', () => this.openCartonModal());
+        this.dom.closeCartonModalBtn.addEventListener('click', () => this.closeCartonModal());
+        this.dom.generateHtmlCartonesBtn.addEventListener('click', () => this.generateCartones('html'));
+        this.dom.generatePdfCartonesBtn.addEventListener('click', () => this.generateCartones('pdf'));
+        this.dom.previewCartonBtn.addEventListener('click', () => this.updateCartonPreview());
         
         // Actualizar preview al cambiar configuración
-        this.cartonPrimaryColorInput.addEventListener('input', (e) => {
+        this.dom.cartonPrimaryColorInput.addEventListener('input', (e) => {
             document.querySelector('.color-preview').style.backgroundColor = e.target.value;
             this.updateCartonPreview();
         });
-        this.cartonSecondaryColorInput.addEventListener('input', (e) => {
+        this.dom.cartonSecondaryColorInput.addEventListener('input', (e) => {
             document.querySelectorAll('.color-preview')[1].style.backgroundColor = e.target.value;
             this.updateCartonPreview();
         });
 
-        this.cartonModal.addEventListener('click', (e) => {
+        this.dom.cartonModal.addEventListener('click', (e) => {
             if (e.target.id === 'carton-modal') {
                 this.closeCartonModal();
             }
@@ -242,55 +165,55 @@ class BingoMusical {
         this._setupFullscreenEventListeners();
         this._setupKeyboardShortcuts();
 
-        this.exportListBtn.addEventListener('click', () => this.exportPlaylist());
-        this.importListBtn.addEventListener('click', () => this.importFileInput.click());
-        this.importFileInput.addEventListener('change', (e) => this.importPlaylist(e));
-        this.lineaBtn.addEventListener('click', () => this.triggerLinea());
-        this.bingoBtn.addEventListener('click', () => this.triggerBingo());
-        this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
-        this.shortcutsHelpBtn.addEventListener('click', () => this.showKeyboardShortcutsHelp());
-        this.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
+        this.dom.exportListBtn.addEventListener('click', () => this.exportPlaylist());
+        this.dom.importListBtn.addEventListener('click', () => this.dom.importFileInput.click());
+        this.dom.importFileInput.addEventListener('change', (e) => this.importPlaylist(e));
+        this.dom.lineaBtn.addEventListener('click', () => this.triggerLinea());
+        this.dom.bingoBtn.addEventListener('click', () => this.triggerBingo());
+        this.dom.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+        this.dom.shortcutsHelpBtn.addEventListener('click', () => this.showKeyboardShortcutsHelp());
+        this.dom.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
     }
 
     _setupVolumeControls() {
-        this.musicVolumeSlider.addEventListener('input', (e) => {
+        this.dom.musicVolumeSlider.addEventListener('input', (e) => {
             this.musicVolume = e.target.value / 100;
-            this.audioPlayer.volume = this.musicVolume;
-            this.musicVolumeValueSpan.textContent = `${e.target.value}%`;
+            this.dom.audioPlayer.volume = this.musicVolume;
+            this.dom.musicVolumeValueSpan.textContent = `${e.target.value}%`;
             e.target.setAttribute('aria-valuenow', e.target.value);
         });
 
-        this.effectsVolumeSlider.addEventListener('input', (e) => {
+        this.dom.effectsVolumeSlider.addEventListener('input', (e) => {
             this.effectsVolume = e.target.value / 100;
-            this.effectsVolumeValueSpan.textContent = `${e.target.value}%`;
+            this.dom.effectsVolumeValueSpan.textContent = `${e.target.value}%`;
             e.target.setAttribute('aria-valuenow', e.target.value);
         });
     }
 
     _setupModalEventListeners() {
-        this.closeIconModalBtn.addEventListener('click', () => this.closeIconModal());
-        this.iconModal.addEventListener('click', (e) => {
+        this.dom.closeIconModalBtn.addEventListener('click', () => this.closeIconModal());
+        this.dom.iconModal.addEventListener('click', (e) => {
             if (e.target.id === 'icon-modal') this.closeIconModal();
         });
 
-        this.uploadCustomIconBtn.addEventListener('click', () => this.customIconUploadInput.click());
-        this.customIconUploadInput.addEventListener('change', (e) => this.uploadCustomIcon(e));
+        this.dom.uploadCustomIconBtn.addEventListener('click', () => this.dom.customIconUploadInput.click());
+        this.dom.customIconUploadInput.addEventListener('change', (e) => this.uploadCustomIcon(e));
         
-        this.confirmCancelBtn.addEventListener('click', () => this.closeConfirmModal(false));
-        this.confirmAcceptBtn.addEventListener('click', () => this.closeConfirmModal(true));
-        this.alertOkBtn.addEventListener('click', () => this.closeAlertModal());
+        this.dom.confirmCancelBtn.addEventListener('click', () => this.closeConfirmModal(false));
+        this.dom.confirmAcceptBtn.addEventListener('click', () => this.closeConfirmModal(true));
+        this.dom.alertOkBtn.addEventListener('click', () => this.closeAlertModal());
     }
 
     _setupCelebrationEventListeners() {
-        this.continueLineaBtn.addEventListener('click', () => {
-            this.lineaOverlay.classList.add('hidden');
+        this.dom.continueLineaBtn.addEventListener('click', () => {
+            this.dom.lineaOverlay.classList.add('hidden');
         });
 
-        this.restartBtn.addEventListener('click', () => {
+        this.dom.restartBtn.addEventListener('click', () => {
             this.reiniciarJuego().then();
             this.bingoCompleted = false;
             this.lineaCompleted = false;
-            this.celebrationOverlay.classList.add('hidden');
+            this.dom.celebrationOverlay.classList.add('hidden');
         });
     }
 
@@ -299,20 +222,20 @@ class BingoMusical {
     }
 
     checkOpenModals() {
-        return !this.iconModal.classList.contains('hidden') ||
-            !this.cartonModal.classList.contains('hidden') ||
-            !this.confirmModal.classList.contains('hidden') ||
-            !this.alertModal.classList.contains('hidden');
+        return !this.dom.iconModal.classList.contains('hidden') ||
+            !this.dom.cartonModal.classList.contains('hidden') ||
+            !this.dom.confirmModal.classList.contains('hidden') ||
+            !this.dom.alertModal.classList.contains('hidden');
     }
 
     closeModalsOnEscape() {
-        if (!this.iconModal.classList.contains('hidden')) {
+        if (!this.dom.iconModal.classList.contains('hidden')) {
             this.closeIconModal();
-        } else if (!this.cartonModal.classList.contains('hidden')) {
+        } else if (!this.dom.cartonModal.classList.contains('hidden')) {
             this.closeCartonModal();
-        } else if (!this.confirmModal.classList.contains('hidden')) {
+        } else if (!this.dom.confirmModal.classList.contains('hidden')) {
             this.closeConfirmModal(false);
-        } else if (!this.alertModal.classList.contains('hidden')) {
+        } else if (!this.dom.alertModal.classList.contains('hidden')) {
             this.closeAlertModal();
         }
     }
@@ -379,14 +302,14 @@ class BingoMusical {
 
                 case 'l': // L → Cantar línea
                     e.preventDefault();
-                    if (!this.lineaBtn.disabled) {
+                    if (!this.dom.lineaBtn.disabled) {
                         this.triggerLinea().then();
                     }
                     break;
 
                 case 'b': // B → Cantar bingo
                     e.preventDefault();
-                    if (!this.bingoBtn.disabled) {
+                    if (!this.dom.bingoBtn.disabled) {
                         this.triggerBingo().then();
                     }
                     break;
@@ -436,20 +359,20 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
     applyTheme(theme) {
         document.documentElement.dataset.theme = theme;
-        this.themeIcon.textContent = theme === 'dark' ? '🌙' : '☀️';
-        this.themeToggleBtn.setAttribute('title', 
+        this.dom.themeIcon.textContent = theme === 'dark' ? '🌙' : '☀️';
+        this.dom.themeToggleBtn.setAttribute('title', 
             theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
         );
     }
 
     // Sistema de modales personalizados
     showAlert(message, title = 'Información') {
-        this.alertTitle.textContent = title;
-        this.alertMessage.innerHTML = message;
-        this.alertModal.classList.remove('hidden');
+        this.dom.alertTitle.textContent = title;
+        this.dom.alertMessage.innerHTML = message;
+        this.dom.alertModal.classList.remove('hidden');
         
-        if (this.alertModal.showModal) {
-            this.alertModal.showModal();
+        if (this.dom.alertModal.showModal) {
+            this.dom.alertModal.showModal();
         }
         
         const isError = /error|inválido|insuficientes/i.test(title);
@@ -462,21 +385,21 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             this.shouldRender = false;
         }
         
-        if (this.alertModal.close) {
-            this.alertModal.close();
+        if (this.dom.alertModal.close) {
+            this.dom.alertModal.close();
         }
         
-        this.alertModal.classList.add('hidden');
+        this.dom.alertModal.classList.add('hidden');
     }
 
     showConfirm(message, title = 'Confirmar') {
         return new Promise((resolve) => {
-            this.confirmTitle.textContent = title;
-            this.confirmMessage.textContent = message;
-            this.confirmModal.classList.remove('hidden');
+            this.dom.confirmTitle.textContent = title;
+            this.dom.confirmMessage.textContent = message;
+            this.dom.confirmModal.classList.remove('hidden');
             
-            if (this.confirmModal.showModal) {
-                this.confirmModal.showModal();
+            if (this.dom.confirmModal.showModal) {
+                this.dom.confirmModal.showModal();
             }
             
             this.confirmCallback = resolve;
@@ -485,11 +408,11 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     closeConfirmModal(result) {
-        if (this.confirmModal.close) {
-            this.confirmModal.close();
+        if (this.dom.confirmModal.close) {
+            this.dom.confirmModal.close();
         }
         
-        this.confirmModal.classList.add('hidden');
+        this.dom.confirmModal.classList.add('hidden');
         
         if (this.confirmCallback) {
             this.confirmCallback(result);
@@ -500,7 +423,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     setupDragAndDrop() {
         const dropZones = [
             ...document.querySelectorAll('.file-label'),
-            this.songsSection
+            this.dom.songsSection
         ];
 
         const events = {
@@ -532,8 +455,8 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             zone.addEventListener('drop', (e) => {
                 if (this.gameStarted) return;
 
-                this.addSongsInput.files = e.dataTransfer.files;
-                this.addSongsInput.dispatchEvent(new Event('change', { bubbles: true }));
+                this.dom.addSongsInput.files = e.dataTransfer.files;
+                this.dom.addSongsInput.dispatchEvent(new Event('change', { bubbles: true }));
             }, false);
         }
     }
@@ -636,7 +559,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
         this.lineaCompleted = true;
         this.playEffect('win');
-        setTimeout(() => this.lineaOverlay.classList.remove('hidden'), 500);
+        setTimeout(() => this.dom.lineaOverlay.classList.remove('hidden'), 500);
     }
 
     async triggerBingo() {
@@ -664,7 +587,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
         this.bingoCompleted = true;
         this.playEffect('complete');
-        setTimeout(() => this.celebrationOverlay.classList.remove('hidden'), 500);
+        setTimeout(() => this.dom.celebrationOverlay.classList.remove('hidden'), 500);
     }
 
     exportPlaylist() {
@@ -853,7 +776,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         }
 
         this.currentEditingSongId = songId;
-        this.modalSongTitle.textContent = song.title;
+        this.dom.modalSongTitle.textContent = song.title;
 
         // Usar DocumentFragment para renderizado en batch
         const fragment = document.createDocumentFragment();
@@ -892,13 +815,13 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         }
 
         // Una sola operación DOM
-        this.iconPickerContainer.innerHTML = '';
-        this.iconPickerContainer.appendChild(fragment);
+        this.dom.iconPickerContainer.innerHTML = '';
+        this.dom.iconPickerContainer.appendChild(fragment);
 
-        this.iconModal.classList.remove('hidden');
+        this.dom.iconModal.classList.remove('hidden');
         
-        if (this.iconModal.showModal) {
-            this.iconModal.showModal();
+        if (this.dom.iconModal.showModal) {
+            this.dom.iconModal.showModal();
         }
         
         this.playEffect('click');
@@ -965,11 +888,11 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     closeIconModal() {
-        if (this.iconModal.close) {
-            this.iconModal.close();
+        if (this.dom.iconModal.close) {
+            this.dom.iconModal.close();
         }
         
-        this.iconModal.classList.add('hidden');
+        this.dom.iconModal.classList.add('hidden');
         this.currentEditingSongId = null;
     }
 
@@ -1043,31 +966,31 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     updateUIState() {
         const isDisabled = this.gameStarted;
 
-        this.addSongsInput.disabled = isDisabled;
-        this.addSongsLabel.style.opacity = isDisabled ? '0.5' : '1';
-        this.addSongsLabel.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
-        this.addSongsLabel.style.pointerEvents = isDisabled ? 'none' : 'auto';
+        this.dom.addSongsInput.disabled = isDisabled;
+        this.dom.addSongsLabel.style.opacity = isDisabled ? '0.5' : '1';
+        this.dom.addSongsLabel.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+        this.dom.addSongsLabel.style.pointerEvents = isDisabled ? 'none' : 'auto';
 
-        this.importListBtn.disabled = isDisabled;
-        this.importListBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+        this.dom.importListBtn.disabled = isDisabled;
+        this.dom.importListBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
 
-        this.clearHistoryBtn.disabled = !isDisabled; // Habilitar solo si el juego ha iniciado
-        this.clearHistoryBtn.style.opacity = isDisabled ? '1' : '0.5';
-        this.clearHistoryBtn.style.cursor = isDisabled ? 'pointer' : 'not-allowed';
+        this.dom.clearHistoryBtn.disabled = !isDisabled; // Habilitar solo si el juego ha iniciado
+        this.dom.clearHistoryBtn.style.opacity = isDisabled ? '1' : '0.5';
+        this.dom.clearHistoryBtn.style.cursor = isDisabled ? 'pointer' : 'not-allowed';
 
-        this.shuffleAllBtn.disabled = isDisabled;
-        this.shuffleAllBtn.style.opacity = isDisabled ? '0.5' : '1';
-        this.shuffleAllBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+        this.dom.shuffleAllBtn.disabled = isDisabled;
+        this.dom.shuffleAllBtn.style.opacity = isDisabled ? '0.5' : '1';
+        this.dom.shuffleAllBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
         if (isDisabled && this.continuousMode) {
             this.toggleContinuousMode();
         }
 
         if (this.gameStarted) {
-            this.playBtn.innerHTML = '<span aria-hidden="true">🔀</span> Canción Aleatoria';
-            this.playBtn.setAttribute('aria-label', 'Canción Aleatoria');
+            this.dom.playBtn.innerHTML = '<span aria-hidden="true">🔀</span> Canción Aleatoria';
+            this.dom.playBtn.setAttribute('aria-label', 'Canción Aleatoria');
         } else {
-            this.playBtn.innerHTML = '<span aria-hidden="true">▶️</span> Iniciar Juego';
-            this.playBtn.setAttribute('aria-label', 'Iniciar Juego');
+            this.dom.playBtn.innerHTML = '<span aria-hidden="true">▶️</span> Iniciar Juego';
+            this.dom.playBtn.setAttribute('aria-label', 'Iniciar Juego');
         }
     }
 
@@ -1176,8 +1099,8 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
                 <p role="alert" style="font-size:0.85rem;margin-top:1rem;color:var(--warning-color);"><strong>⚠️ Necesitas al menos ${MIN_SONGS_REQUIRED} canciones para jugar</strong></p>
             `;
             fragment.appendChild(emptyLi);
-            this.songsListElement.innerHTML = '';
-            this.songsListElement.appendChild(fragment);
+            this.dom.songsListElement.innerHTML = '';
+            this.dom.songsListElement.appendChild(fragment);
             return;
         }
 
@@ -1197,15 +1120,15 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         }
 
         // Una sola operación DOM
-        this.songsListElement.innerHTML = '';
-        this.songsListElement.appendChild(fragment);
+        this.dom.songsListElement.innerHTML = '';
+        this.dom.songsListElement.appendChild(fragment);
     }
 
     filterAndSortSongs() {
         // Obtener valores de filtros
-        const searchTerm = this.searchInput.value.toLowerCase().trim();
-        const filterStatus = this.filterStatus.value;
-        const sortOrder = this.sortOrder.value;
+        const searchTerm = this.dom.searchInput.value.toLowerCase().trim();
+        const filterStatus = this.dom.filterStatus.value;
+        const sortOrder = this.dom.sortOrder.value;
 
         // Filtrar canciones
         let filteredSongs = [...this.songs];
@@ -1264,8 +1187,8 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
                 <p style="font-size:0.9rem;margin:0.5rem 0;">Intenta con otro término de búsqueda o cambia los filtros</p>
             `;
             fragment.appendChild(emptyLi);
-            this.songsListElement.innerHTML = '';
-            this.songsListElement.appendChild(fragment);
+            this.dom.songsListElement.innerHTML = '';
+            this.dom.songsListElement.appendChild(fragment);
             return;
         }
 
@@ -1285,13 +1208,13 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         }
 
         // Una sola operación DOM
-        this.songsListElement.innerHTML = '';
-        this.songsListElement.appendChild(fragment);
+        this.dom.songsListElement.innerHTML = '';
+        this.dom.songsListElement.appendChild(fragment);
     }
 
     updateCounters() {
-        this.playedCounterSpan.textContent = this.playedSongs.length.toString();
-        this.totalCounterSpan.textContent = this.getTotalSongsWithFiles();
+        this.dom.playedCounterSpan.textContent = this.playedSongs.length.toString();
+        this.dom.totalCounterSpan.textContent = this.getTotalSongsWithFiles();
     }
 
     // Gestión de playlist
@@ -1323,7 +1246,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
     toggleContinuousMode() {
         this.continuousMode = !this.continuousMode;
-        const btn = this.shuffleAllBtn;
+        const btn = this.dom.shuffleAllBtn;
 
         if (this.continuousMode) {
             btn.innerHTML = '<span aria-hidden="true">⏸</span> Detener Modo Continuo';
@@ -1358,7 +1281,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         }
 
         if (unplayedSongs.length === 1) {
-            this.playBtn.disabled = true;
+            this.dom.playBtn.disabled = true;
         }
 
         const randomSong = unplayedSongs[Math.floor(Math.random() * unplayedSongs.length)];
@@ -1373,10 +1296,10 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         }
 
         this.playEffect('start');
-        this.audioPlayer.pause();
-        this.audioPlayer.src = URL.createObjectURL(song.file);
-        this.audioPlayer.volume = this.musicVolume;
-        this.audioPlayer.play();
+        this.dom.audioPlayer.pause();
+        this.dom.audioPlayer.src = URL.createObjectURL(song.file);
+        this.dom.audioPlayer.volume = this.musicVolume;
+        this.dom.audioPlayer.play();
 
         this.currentSongIndex = songId;
         this.isPlaying = true;
@@ -1401,11 +1324,11 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         this.playEffect('click');
 
         if (this.isPlaying) {
-            this.audioPlayer.pause();
+            this.dom.audioPlayer.pause();
             this.isPlaying = false;
             this.updateControls(false);
         } else {
-            this.audioPlayer.play();
+            this.dom.audioPlayer.play();
             this.isPlaying = true;
             this.updateControls(true);
         }
@@ -1413,23 +1336,23 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
     stopSong() {
         this.playEffect('click');
-        this.audioPlayer.pause();
-        this.audioPlayer.currentTime = 0;
+        this.dom.audioPlayer.pause();
+        this.dom.audioPlayer.currentTime = 0;
         this.isPlaying = false;
         this.updateControls(false);
 
-        this.progressFill.value = 0;
-        this.progressFill.setAttribute('aria-valuenow', '0');
-        this.songIconContainer.classList.remove('playing');
+        this.dom.progressFill.value = 0;
+        this.dom.progressFill.setAttribute('aria-valuenow', '0');
+        this.dom.songIconContainer.classList.remove('playing');
         this.renderSongsList();
     }
 
     updatePlayerUI(song) {
-        this.songTitleElement.textContent = song.title;
-        this.currentIconImg.alt = song.title;
+        this.dom.songTitleElement.textContent = song.title;
+        this.dom.currentIconImg.alt = song.title;
 
         if (song.iconType === 'image' && song.icon) {
-            this.currentIconImg.src = song.icon;
+            this.dom.currentIconImg.src = song.icon;
         } else {
             const canvas = document.createElement('canvas');
             canvas.width = 200;
@@ -1439,51 +1362,51 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(song.icon, 100, 100);
-            this.currentIconImg.src = canvas.toDataURL();
+            this.dom.currentIconImg.src = canvas.toDataURL();
         }
 
-        this.songIconContainer.classList.add('playing');
+        this.dom.songIconContainer.classList.add('playing');
     }
 
     updateControls(playing) {
         const noSongSelected = this.currentSongIndex === null;
 
-        this.playBtn.disabled = playing && this.gameStarted;
-        this.pauseBtn.disabled = noSongSelected;
-        this.stopBtn.disabled = noSongSelected;
+        this.dom.playBtn.disabled = playing && this.gameStarted;
+        this.dom.pauseBtn.disabled = noSongSelected;
+        this.dom.stopBtn.disabled = noSongSelected;
 
         if (noSongSelected) {
-            this.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reproducir';
-            this.pauseBtn.setAttribute('aria-label', 'Reproducir');
+            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reproducir';
+            this.dom.pauseBtn.setAttribute('aria-label', 'Reproducir');
             return;
         }
 
         if (playing) {
-            this.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span> Pausar';
-            this.pauseBtn.setAttribute('aria-label', 'Pausar reproducción');
-        } else if (this.audioPlayer.currentTime > 0) {
-            this.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reanudar';
-            this.pauseBtn.setAttribute('aria-label', 'Reanudar reproducción');
+            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span> Pausar';
+            this.dom.pauseBtn.setAttribute('aria-label', 'Pausar reproducción');
+        } else if (this.dom.audioPlayer.currentTime > 0) {
+            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reanudar';
+            this.dom.pauseBtn.setAttribute('aria-label', 'Reanudar reproducción');
         } else {
-            this.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reproducir';
-            this.pauseBtn.setAttribute('aria-label', 'Reproducir canción seleccionada');
+            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reproducir';
+            this.dom.pauseBtn.setAttribute('aria-label', 'Reproducir canción seleccionada');
         }
     }
 
     updateProgress() {
-        const progress = (this.audioPlayer.currentTime / this.audioPlayer.duration) * 100;
+        const progress = (this.dom.audioPlayer.currentTime / this.dom.audioPlayer.duration) * 100;
         if (Number.isFinite(progress)) {
-            this.progressFill.value = progress;
-            this.progressFill.setAttribute('aria-valuenow', Math.round(progress).toString());
+            this.dom.progressFill.value = progress;
+            this.dom.progressFill.setAttribute('aria-valuenow', Math.round(progress).toString());
 
-            this.currentTimeSpan.textContent = this.formatTime(this.audioPlayer.currentTime);
-            this.currentTimeSpan.setAttribute('datetime', `PT${Math.floor(this.audioPlayer.currentTime)}S`);
+            this.dom.currentTimeSpan.textContent = this.formatTime(this.dom.audioPlayer.currentTime);
+            this.dom.currentTimeSpan.setAttribute('datetime', `PT${Math.floor(this.dom.audioPlayer.currentTime)}S`);
         }
     }
 
     updateDuration() {
-        this.durationSpan.textContent = this.formatTime(this.audioPlayer.duration);
-        this.durationSpan.setAttribute('datetime', `PT${Math.floor(this.audioPlayer.duration)}S`);
+        this.dom.durationSpan.textContent = this.formatTime(this.dom.audioPlayer.duration);
+        this.dom.durationSpan.setAttribute('datetime', `PT${Math.floor(this.dom.audioPlayer.duration)}S`);
     }
 
     formatTime(seconds) {
@@ -1494,20 +1417,20 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     seekTo(event) {
-        if (!this.audioPlayer.src) return;
+        if (!this.dom.audioPlayer.src) return;
 
         const progressBar = event.currentTarget;
         const clickX = event.offsetX;
         const width = progressBar.offsetWidth;
         const percentage = clickX / width;
 
-        this.audioPlayer.currentTime = percentage * this.audioPlayer.duration;
+        this.dom.audioPlayer.currentTime = percentage * this.dom.audioPlayer.duration;
         this.playEffect('click');
     }
 
     onSongEnded() {
         this.isPlaying = false;
-        this.songIconContainer.classList.remove('playing');
+        this.dom.songIconContainer.classList.remove('playing');
 
         // Handle continuous PREVIEW mode
         if (this.continuousMode && !this.gameStarted) {
@@ -1523,7 +1446,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
                 this.bingoCompleted = true;
                 setTimeout(() => {
                     this.playEffect('complete');
-                    this.celebrationOverlay.classList.remove('hidden');
+                    this.dom.celebrationOverlay.classList.remove('hidden');
                 }, 500);
             }
         }
@@ -1575,8 +1498,8 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
         img.alt = song.title;
         historyItem.appendChild(img);
-        this.historyGrid.appendChild(historyItem);
-        this.historyGrid.scrollTop = this.historyGrid.scrollHeight;
+        this.dom.historyGrid.appendChild(historyItem);
+        this.dom.historyGrid.scrollTop = this.dom.historyGrid.scrollHeight;
     }
 
     async reiniciarJuego() {
@@ -1596,7 +1519,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             for (const song of this.songs) {
                 song.played = false;
             }
-            this.historyGrid.innerHTML = '';
+            this.dom.historyGrid.innerHTML = '';
             this.renderSongsList();
             this.updateCounters();
             this.updateUIState();
@@ -1606,8 +1529,8 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
                 this.toggleContinuousMode();
             }
             
-            this.currentIconImg.alt = 'Canción actual';
-            this.currentIconImg.src = BingoMusical.SRC_LOGO_PNG;
+            this.dom.currentIconImg.alt = 'Canción actual';
+            this.dom.currentIconImg.src = BingoMusical.SRC_LOGO_PNG;
         }
     }
 
@@ -1628,12 +1551,12 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
         if (isFullscreen) {
             document.body.classList.add('fullscreen');
-            this.fullscreenBtn.innerHTML = '<span class="fullscreen-icon" aria-hidden="true">⊗</span> Salir Pantalla Completa';
-            this.fullscreenBtn.setAttribute('aria-label', 'Salir de pantalla completa');
+            this.dom.fullscreenBtn.innerHTML = '<span class="fullscreen-icon" aria-hidden="true">⊗</span> Salir Pantalla Completa';
+            this.dom.fullscreenBtn.setAttribute('aria-label', 'Salir de pantalla completa');
         } else {
             document.body.classList.remove('fullscreen');
-            this.fullscreenBtn.innerHTML = '<span class="fullscreen-icon" aria-hidden="true">⛶</span> Pantalla Completa';
-            this.fullscreenBtn.setAttribute('aria-label', 'Activar pantalla completa');
+            this.dom.fullscreenBtn.innerHTML = '<span class="fullscreen-icon" aria-hidden="true">⛶</span> Pantalla Completa';
+            this.dom.fullscreenBtn.setAttribute('aria-label', 'Activar pantalla completa');
         }
     }
 
@@ -1645,10 +1568,10 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             return;
         }
 
-        this.cartonModal.classList.remove('hidden');
+        this.dom.cartonModal.classList.remove('hidden');
         
-        if (this.cartonModal.showModal) {
-            this.cartonModal.showModal();
+        if (this.dom.cartonModal.showModal) {
+            this.dom.cartonModal.showModal();
         }
         
         // Generar vista previa inicial
@@ -1658,15 +1581,15 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     closeCartonModal() {
-        if (this.cartonModal.close) {
-            this.cartonModal.close();
+        if (this.dom.cartonModal.close) {
+            this.dom.cartonModal.close();
         }
         
-        this.cartonModal.classList.add('hidden');
+        this.dom.cartonModal.classList.add('hidden');
     }
 
     async generateCartones(format = 'html') {
-        const count = Number.parseInt(this.cartonCountInput.value);
+        const count = Number.parseInt(this.dom.cartonCountInput.value);
 
         if (Number.isNaN(count) || count < 1 || count > BingoMusical.MAX_CARTONS_GENERATED) {
             this.showAlert(`Por favor ingresa un número válido entre 1 y ${BingoMusical.MAX_CARTONS_GENERATED}.`, 'Número Inválido');
@@ -1684,8 +1607,8 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         try {
             // Obtener configuración de personalización
             const config = {
-                primaryColor: this.cartonPrimaryColorInput.value,
-                secondaryColor: this.cartonSecondaryColorInput.value
+                primaryColor: this.dom.cartonPrimaryColorInput.value,
+                secondaryColor: this.dom.cartonSecondaryColorInput.value
             };
             
             const cartones = this.cartonGenerator.generateCartones(this.songs, count);
@@ -1709,17 +1632,17 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         try {
             // Obtener configuración
             const config = {
-                primaryColor: this.cartonPrimaryColorInput.value,
-                secondaryColor: this.cartonSecondaryColorInput.value
+                primaryColor: this.dom.cartonPrimaryColorInput.value,
+                secondaryColor: this.dom.cartonSecondaryColorInput.value
             };
             
             // Generar un cartón de ejemplo
             const previewCarton = this.cartonGenerator.generateSingleCarton(this.songs, 1);
             
             // Renderizar vista previa
-            this.cartonPreviewContainer.innerHTML = this.generatePreviewHTML(previewCarton, config);
+            this.dom.cartonPreviewContainer.innerHTML = this.generatePreviewHTML(previewCarton, config);
         } catch (error) {
-            this.cartonPreviewContainer.innerHTML = `
+            this.dom.cartonPreviewContainer.innerHTML = `
                 <div class="carton-preview-placeholder">
                     <p>❌ Error al generar vista previa</p>
                     <p>${error.message}</p>
