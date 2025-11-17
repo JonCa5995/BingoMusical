@@ -6,6 +6,7 @@ import {StorageManager} from "./modules/StorageManager.js";
 import {IconManager} from "./modules/IconManager.js";
 import {SongManager} from "./modules/SongManager.js";
 import {GameManager} from "./modules/GameManager.js";
+import {UIManager} from "./modules/UIManager.js";
 
 export const MIN_SONGS_REQUIRED = 24;
 
@@ -27,6 +28,7 @@ class BingoMusical {
         this.icons = new IconManager(this.dom, this.audio, () => this.songs);
         this.songManager = new SongManager();
         this.game = new GameManager();
+        this.ui = new UIManager(this.dom, MIN_SONGS_REQUIRED);
         
         this.init();
     }
@@ -608,48 +610,21 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     updateUIState() {
-        const isDisabled = this.game.isGameStarted();
-
-        this.dom.addSongsInput.disabled = isDisabled;
-        this.dom.addSongsLabel.style.opacity = isDisabled ? '0.5' : '1';
-        this.dom.addSongsLabel.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
-        this.dom.addSongsLabel.style.pointerEvents = isDisabled ? 'none' : 'auto';
-
-        this.dom.importListBtn.disabled = isDisabled;
-        this.dom.importListBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
-
-        this.dom.clearHistoryBtn.disabled = !isDisabled;
-        this.dom.clearHistoryBtn.style.opacity = isDisabled ? '1' : '0.5';
-        this.dom.clearHistoryBtn.style.cursor = isDisabled ? 'pointer' : 'not-allowed';
-
-        this.dom.shuffleAllBtn.disabled = isDisabled;
-        this.dom.shuffleAllBtn.style.opacity = isDisabled ? '0.5' : '1';
-        this.dom.shuffleAllBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
-        if (isDisabled && this.continuousMode) {
-            this.toggleContinuousMode();
-        }
-
-        if (this.game.isGameStarted()) {
-            this.dom.playBtn.innerHTML = '<span aria-hidden="true">🔀</span> Canción Aleatoria';
-            this.dom.playBtn.setAttribute('aria-label', 'Canción Aleatoria');
-        } else {
-            this.dom.playBtn.innerHTML = '<span aria-hidden="true">▶️</span> Iniciar Juego';
-            this.dom.playBtn.setAttribute('aria-label', 'Iniciar Juego');
-        }
+        this.ui.updateUIState(
+            this.game.isGameStarted(),
+            this.continuousMode,
+            () => this.toggleContinuousMode()
+        );
     }
 
 
 
     setRenderSongIconTitle(song) {
-        if (song.played) return 'Icono bloqueado (canción ya reproducida)';
-        return this.game.isGameStarted() ? 'Icono bloqueado (juego iniciado)' : 'Click para cambiar icono';
+        return this.ui.getSongIconTitle(song, this.game.isGameStarted());
     }
 
     setRenderSongIconHtml(song) {
-        if (song.iconType === 'image') {
-            return `<img src="${song.icon}" alt="${song.title}" style="width:1.75rem;aspect-ratio:1;object-fit:contain;">`;
-        }
-        return `<span role="img" aria-label="${song.title}">${song.icon}</span>`;
+        return this.ui.getSongIconHtml(song);
     }
 
     createSongItemElement(song) {
@@ -662,14 +637,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         const iconHtml = this.setRenderSongIconHtml(song);
         const iconDisabled = (song.played || this.game.isGameStarted()) ? 'disabled' : '';
 
-        let songStateLabel;
-        if (song.played) {
-            songStateLabel = '✓ Ya reproducida';
-        } else if (song.file) {
-            songStateLabel = '○ Pendiente';
-        } else {
-            songStateLabel = '⚠ Sin archivo';
-        }
+        let songStateLabel = this.ui.getSongStateLabel(song);
 
         // Usar template fragment para mejor rendimiento
         const fragment = document.createDocumentFragment();
@@ -730,42 +698,11 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     renderSongsList() {
-        // Usar DocumentFragment para renderizado en batch
-        const fragment = document.createDocumentFragment();
-
-        if (this.songs.length === 0) {
-            const emptyLi = document.createElement('li');
-            emptyLi.setAttribute('role', 'listitem');
-            emptyLi.style.cssText = 'text-align:center;padding:2rem;color:var(--text-muted);list-style:none;';
-            emptyLi.innerHTML = `
-                <strong style="font-size:1.2rem;margin-bottom:0.5rem;display:block;">No hay canciones cargadas</strong>
-                <p style="font-size:0.9rem;margin:0.5rem 0;">Arrastra archivos de audio o usa el botón "Agregar Canciones"</p>
-                <p role="alert" style="font-size:0.85rem;margin-top:1rem;color:var(--warning-color);"><strong>⚠️ Necesitas al menos ${MIN_SONGS_REQUIRED} canciones para jugar</strong></p>
-            `;
-            fragment.appendChild(emptyLi);
-            this.dom.songsListElement.innerHTML = '';
-            this.dom.songsListElement.appendChild(fragment);
-            return;
-        }
-
-        const totalSongs = this.getTotalSongsWithFiles();
-        if (totalSongs < MIN_SONGS_REQUIRED) {
-            const warning = document.createElement('li');
-            warning.setAttribute('role', 'alert');
-            warning.style.cssText = 'text-align:center;padding:1rem;margin-bottom:1rem;background:rgba(245,158,11,0.1);border-radius:8px;color:var(--warning-color);list-style:none;';
-            warning.innerHTML = `<strong>⚠️ Tienes ${totalSongs}/${MIN_SONGS_REQUIRED} canciones.</strong> Necesitas al menos ${MIN_SONGS_REQUIRED} para jugar.`;
-            fragment.appendChild(warning);
-        }
-
-        // Renderizar todas las canciones en un solo batch
-        for (const song of this.songs) {
-            const li = this.createSongItemElement(song);
-            fragment.appendChild(li);
-        }
-
-        // Una sola operación DOM
-        this.dom.songsListElement.innerHTML = '';
-        this.dom.songsListElement.appendChild(fragment);
+        this.ui.renderSongsList(
+            this.songs,
+            this.getTotalSongsWithFiles(),
+            (song) => this.createSongItemElement(song)
+        );
     }
 
     filterAndSortSongs() {
@@ -781,47 +718,16 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     renderFilteredSongsList(songsToShow) {
-        // Usar DocumentFragment para renderizado en batch
-        const fragment = document.createDocumentFragment();
-
-        if (songsToShow.length === 0) {
-            const emptyLi = document.createElement('li');
-            emptyLi.setAttribute('role', 'listitem');
-            emptyLi.style.cssText = 'text-align:center;padding:2rem;color:var(--text-muted);list-style:none;';
-            emptyLi.innerHTML = `
-                <strong style="font-size:1.2rem;margin-bottom:0.5rem;display:block;">No se encontraron canciones</strong>
-                <p style="font-size:0.9rem;margin:0.5rem 0;">Intenta con otro término de búsqueda o cambia los filtros</p>
-            `;
-            fragment.appendChild(emptyLi);
-            this.dom.songsListElement.innerHTML = '';
-            this.dom.songsListElement.appendChild(fragment);
-            return;
-        }
-
-        const totalSongs = this.getTotalSongsWithFiles();
-        if (totalSongs < MIN_SONGS_REQUIRED) {
-            const warning = document.createElement('li');
-            warning.setAttribute('role', 'alert');
-            warning.style.cssText = 'text-align:center;padding:1rem;margin-bottom:1rem;background:rgba(245,158,11,0.1);border-radius:8px;color:var(--warning-color);list-style:none;';
-            warning.innerHTML = `<strong>⚠️ Tienes ${totalSongs}/${MIN_SONGS_REQUIRED} canciones.</strong> Necesitas al menos ${MIN_SONGS_REQUIRED} para jugar.`;
-            fragment.appendChild(warning);
-        }
-
-        // Renderizar todas las canciones en un solo batch
-        for (const song of songsToShow) {
-            const li = this.createSongItemElement(song);
-            fragment.appendChild(li);
-        }
-
-        // Una sola operación DOM
-        this.dom.songsListElement.innerHTML = '';
-        this.dom.songsListElement.appendChild(fragment);
+        this.ui.renderFilteredSongsList(
+            songsToShow,
+            this.getTotalSongsWithFiles(),
+            (song) => this.createSongItemElement(song)
+        );
     }
 
     updateCounters() {
         const history = this.game.getHistory();
-        this.dom.playedCounterSpan.textContent = history.length.toString();
-        this.dom.totalCounterSpan.textContent = this.getTotalSongsWithFiles();
+        this.ui.updateCounters(history.length, this.getTotalSongsWithFiles());
     }
 
     // Gestión de playlist
@@ -1018,37 +924,13 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     addToHistory(song) {
-        const historyItem = document.createElement('div');
-        historyItem.className = 'history-item';
-        historyItem.title = song.title;
-        historyItem.setAttribute('role', 'img');
-        historyItem.setAttribute('aria-label', `Canción reproducida: ${song.title}`);
-
+        const historyItem = this.ui.addToHistory(song);
+        
+        // Agregar evento click para reproducir
         historyItem.addEventListener('click', () => {
             this.audio.playEffect('click');
             this.playSong(song.id);
         });
-
-        const img = document.createElement('img');
-
-        if (song.iconType === 'image' && song.icon) {
-            img.src = song.icon;
-        } else {
-            const canvas = document.createElement('canvas');
-            canvas.width = 120;
-            canvas.height = 120;
-            const ctx = canvas.getContext('2d');
-            ctx.font = '80px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(song.icon, 60, 60);
-            img.src = canvas.toDataURL();
-        }
-
-        img.alt = song.title;
-        historyItem.appendChild(img);
-        this.dom.historyGrid.appendChild(historyItem);
-        this.dom.historyGrid.scrollTop = this.dom.historyGrid.scrollHeight;
     }
 
     async reiniciarJuego() {
