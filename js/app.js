@@ -4,6 +4,7 @@ import {DOMElements} from "./modules/DOMElements.js";
 import {AudioManager} from "./modules/AudioManager.js";
 import {StorageManager} from "./modules/StorageManager.js";
 import {IconManager} from "./modules/IconManager.js";
+import {SongManager} from "./modules/SongManager.js";
 
 export const MIN_SONGS_REQUIRED = 24;
 
@@ -21,7 +22,6 @@ class BingoMusical {
         this.gameStarted = false;
         this.confirmCallback = null;
         this.shouldRender = false;
-        this.songId = 1;
         
         this.cartonGenerator = new BingoCartonGenerator();
         this.songsFolder = 'canciones/';
@@ -29,6 +29,7 @@ class BingoMusical {
         this.audio = new AudioManager(this.dom);
         this.storage = new StorageManager();
         this.icons = new IconManager(this.dom, this.audio, () => this.songs);
+        this.songManager = new SongManager();
         
         this.init();
     }
@@ -386,7 +387,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     getTotalSongsWithFiles() {
-        return this.songs.filter(s => s.file).length;
+        return this.songManager.getTotalSongsWithFiles(this.songs);
     }
 
     async triggerLinea() {
@@ -481,7 +482,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         // Reset lists for replacement behavior
         this.songs = [];
         this.playedSongs = [];
-        this.songId = 1;
+        this.songManager.resetIdCounter();
 
         const duplicates = [];
         const newSongs = [];
@@ -515,7 +516,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
                 const blob = await resp.blob();
 
                 newSongs.push({
-                    id: this.songId++,
+                    id: this.songManager.getNextId(),
                     title: title,
                     icon,
                     iconType,
@@ -594,42 +595,23 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             return;
         }
 
-        const duplicates = [];
-        const newSongs = [];
-        const existingTitles = new Set(this.songs.map(s => s.title));
+        // Usar SongManager para procesar las canciones
+        const result = this.songManager.addSongsFromFiles(
+            files, 
+            this.songs,
+            (songs) => this.icons.getRandomAvailableIcon(songs)
+        );
 
-        for (const file of files) {
-            const fileName = file.name.replace(/\.[^/.]+$/, "");
-
-            if (existingTitles.has(fileName)) {
-                duplicates.push(fileName);
-                continue;
-            }
-
-            const randomIcon = this.icons.getRandomAvailableIcon(this.songs);
-
-            newSongs.push({
-                id: this.songId++,
-                title: fileName,
-                icon: randomIcon,
-                iconType: 'emoji',
-                audioPath: this.songsFolder + file.name, // Use original file.name
-                file: file,
-                played: false
-            });
-            existingTitles.add(fileName); // Avoid duplicates within the same batch
-        }
-
-        if (newSongs.length > 0) {
-            this.songs.push(...newSongs);
+        if (result.newSongs.length > 0) {
+            this.songs.push(...result.newSongs);
             this.audio.playEffect('click');
             this.renderSongsList();
             this.updateCounters();
             this.updateUIState();
         }
 
-        if (duplicates.length > 0) {
-            const message = `Las siguientes canciones ya existen y no se han añadido:\n\n- ${duplicates.join('\n- ')}`;
+        if (result.duplicates.length > 0) {
+            const message = `Las siguientes canciones ya existen y no se han añadido:\n\n- ${result.duplicates.join('\n- ')}`;
             this.showAlert(message, 'Canciones Duplicadas');
         }
 
@@ -640,7 +622,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         if (this.gameStarted) {
             this.showAlert('No puedes eliminar canciones una vez que el juego ha iniciado. Debes limpiar el historial primero.', 'Juego Iniciado');
         } else {
-            this.songs = this.songs.filter(s => s.id !== songId);
+            this.songs = this.songManager.deleteSong(this.songs, songId);
             this.renderSongsList();
             this.updateCounters();
             this.audio.playEffect('click');
@@ -810,52 +792,14 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     filterAndSortSongs() {
-        // Obtener valores de filtros
-        const searchTerm = this.dom.searchInput.value.toLowerCase().trim();
-        const filterStatus = this.dom.filterStatus.value;
-        const sortOrder = this.dom.sortOrder.value;
+        // Usar SongManager para filtrar y ordenar
+        const filters = {
+            searchTerm: this.dom.searchInput.value,
+            filterStatus: this.dom.filterStatus.value,
+            sortOrder: this.dom.sortOrder.value
+        };
 
-        // Filtrar canciones
-        let filteredSongs = [...this.songs];
-
-        // Filtro por búsqueda
-        if (searchTerm) {
-            filteredSongs = filteredSongs.filter(song => 
-                song.title.toLowerCase().includes(searchTerm)
-            );
-        }
-
-        // Filtro por estado
-        if (filterStatus === 'played') {
-            filteredSongs = filteredSongs.filter(song => song.played);
-        } else if (filterStatus === 'pending') {
-            filteredSongs = filteredSongs.filter(song => !song.played);
-        }
-
-        // Ordenamiento
-        switch (sortOrder) {
-            case 'alphabetical':
-                filteredSongs.sort((a, b) => a.title.localeCompare(b.title));
-                break;
-            case 'alphabetical-reverse':
-                filteredSongs.sort((a, b) => b.title.localeCompare(a.title));
-                break;
-            case 'played-first':
-                filteredSongs.sort((a, b) => {
-                    if (a.played === b.played) return 0;
-                    return a.played ? -1 : 1;
-                });
-                break;
-            case 'pending-first':
-                filteredSongs.sort((a, b) => {
-                    if (a.played === b.played) return 0;
-                    return a.played ? 1 : -1;
-                });
-                break;
-            // 'default' mantiene el orden original
-        }
-
-        // Renderizar lista filtrada
+        const filteredSongs = this.songManager.filterAndSort(this.songs, filters);
         this.renderFilteredSongsList(filteredSongs);
     }
 
@@ -920,7 +864,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         );
         
         if (confirmed) {
-            this.songs = [];
+            this.songs = this.songManager.deleteAllSongs();
             this.audio.playEffect('click');
             this.filterAndSortSongs();
             this.updateCounters();
@@ -1146,9 +1090,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             this.lineaCompleted = false;
             this.gameStarted = false;
             
-            for (const song of this.songs) {
-                song.played = false;
-            }
+            this.songs = this.songManager.resetPlayedStatus(this.songs);
             this.dom.historyGrid.innerHTML = '';
             this.renderSongsList();
             this.updateCounters();
