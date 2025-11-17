@@ -1,4 +1,6 @@
-class BingoCartonGenerator {
+import {MIN_SONGS_REQUIRED} from "./app.js";
+
+export class BingoCartonGenerator {
     static SONGS_PER_CARTON = 12;
     static ROWS_PER_CARTON = 3;
     static CELLS_PER_ROW = 8;
@@ -9,7 +11,7 @@ class BingoCartonGenerator {
     emptyIcon = '<img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración">';
 
     generateCartones(songs, count = 1) {
-        if (songs.length < BingoMusical.MIN_SONGS_REQUIRED) {
+        if (songs.length < MIN_SONGS_REQUIRED) {
             throw new Error('Se necesitan al menos 24 canciones para generar cartones');
         }
 
@@ -244,8 +246,4 @@ ${rowsHTML}
             }, 250);
         };
     }
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = BingoCartonGenerator;
 }

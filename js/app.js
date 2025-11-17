@@ -1,8 +1,12 @@
 // Bingo Musical Application
+import {BingoCartonGenerator} from "./bingoCartonGenerator.js";
+
+export const MIN_SONGS_REQUIRED = 24;
+
 class BingoMusical {
     static SRC_LOGO_PNG = 'icon.png';
-    static MIN_SONGS_REQUIRED = 24;
     static MAX_CARTONS_GENERATED = 1500;
+
     constructor() {
         this.songs = [];
         this.playedSongs = [];
@@ -294,6 +298,45 @@ class BingoMusical {
         document.addEventListener('fullscreenchange', () => this.onFullscreenChange());
     }
 
+    checkOpenModals() {
+        return !this.iconModal.classList.contains('hidden') ||
+            !this.cartonModal.classList.contains('hidden') ||
+            !this.confirmModal.classList.contains('hidden') ||
+            !this.alertModal.classList.contains('hidden');
+    }
+
+    closeModalsOnEscape() {
+        if (!this.iconModal.classList.contains('hidden')) {
+            this.closeIconModal();
+        } else if (!this.cartonModal.classList.contains('hidden')) {
+            this.closeCartonModal();
+        } else if (!this.confirmModal.classList.contains('hidden')) {
+            this.closeConfirmModal(false);
+        } else if (!this.alertModal.classList.contains('hidden')) {
+            this.closeAlertModal();
+        }
+    }
+
+    playPauseOnSpace() {
+        if (this.isPlaying) {
+            this.pauseSong();
+        } else if (this.currentSongIndex !== null) {
+            this.pauseSong(); // Esto actúa como resume
+        } else if (this.songs.length >= MIN_SONGS_REQUIRED) {
+            this.playRandomSong();
+        }
+    }
+
+    nextSongOnN() {
+        if (this.gameStarted) {
+            if (!this.bingoCompleted) {
+                this.playRandomSong();
+            }
+        } else {
+            this.playRandomContinuousSong();
+        }
+    }
+
     _setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
             // Ignorar atajos si estamos escribiendo en un input o textarea
@@ -303,10 +346,7 @@ class BingoMusical {
             }
 
             // Ignorar si hay un modal abierto (excepto para Escape)
-            const hasModalOpen = !this.iconModal.classList.contains('hidden') || 
-                                  !this.cartonModal.classList.contains('hidden') ||
-                                  !this.confirmModal.classList.contains('hidden') ||
-                                  !this.alertModal.classList.contains('hidden');
+            const hasModalOpen = this.checkOpenModals();
             
             if (hasModalOpen && e.key !== 'Escape') {
                 return;
@@ -317,13 +357,7 @@ class BingoMusical {
             switch (key) {
                 case ' ': // Espacio → Play/Pause
                     e.preventDefault();
-                    if (this.isPlaying) {
-                        this.pauseSong();
-                    } else if (this.currentSongIndex !== null) {
-                        this.pauseSong(); // Esto actúa como resume
-                    } else if (this.songs.length >= BingoMusical.MIN_SONGS_REQUIRED) {
-                        this.playRandomSong();
-                    }
+                    this.playPauseOnSpace();
                     break;
 
                 case 'r': // R → Reiniciar canción
@@ -335,13 +369,7 @@ class BingoMusical {
 
                 case 'n': // N → Siguiente canción
                     e.preventDefault();
-                    if (this.gameStarted) {
-                        if (!this.bingoCompleted) {
-                            this.playRandomSong();
-                        }
-                    } else {
-                        this.playRandomContinuousSong();
-                    }
+                    this.nextSongOnN();
                     break;
 
                 case 'f': // F → Pantalla completa
@@ -352,27 +380,19 @@ class BingoMusical {
                 case 'l': // L → Cantar línea
                     e.preventDefault();
                     if (!this.lineaBtn.disabled) {
-                        this.triggerLinea();
+                        this.triggerLinea().then();
                     }
                     break;
 
                 case 'b': // B → Cantar bingo
                     e.preventDefault();
                     if (!this.bingoBtn.disabled) {
-                        this.triggerBingo();
+                        this.triggerBingo().then();
                     }
                     break;
 
                 case 'escape': // ESC → Cerrar modales
-                    if (!this.iconModal.classList.contains('hidden')) {
-                        this.closeIconModal();
-                    } else if (!this.cartonModal.classList.contains('hidden')) {
-                        this.closeCartonModal();
-                    } else if (!this.confirmModal.classList.contains('hidden')) {
-                        this.closeConfirmModal(false);
-                    } else if (!this.alertModal.classList.contains('hidden')) {
-                        this.closeAlertModal();
-                    }
+                    this.closeModalsOnEscape();
                     break;
 
                 case '?': // ? → Mostrar ayuda de atajos
@@ -407,7 +427,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const currentTheme = document.documentElement.dataset.theme || 'dark';
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         this.applyTheme(newTheme);
         localStorage.setItem('theme', newTheme);
@@ -415,7 +435,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.dataset.theme = theme;
         this.themeIcon.textContent = theme === 'dark' ? '🌙' : '☀️';
         this.themeToggleBtn.setAttribute('title', 
             theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
@@ -593,8 +613,8 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
     async triggerLinea() {
         const totalSongs = this.getTotalSongsWithFiles();
-        if (totalSongs < BingoMusical.MIN_SONGS_REQUIRED) {
-            const message = `Necesitas al menos ${BingoMusical.MIN_SONGS_REQUIRED} ` +
+        if (totalSongs < MIN_SONGS_REQUIRED) {
+            const message = `Necesitas al menos ${MIN_SONGS_REQUIRED} ` +
                           `canciones cargadas para poder jugar.`;
             this.showAlert(message, 'Canciones Insuficientes');
             return;
@@ -621,8 +641,8 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
     async triggerBingo() {
         const totalSongs = this.getTotalSongsWithFiles();
-        if (totalSongs < BingoMusical.MIN_SONGS_REQUIRED) {
-            const message = `Necesitas al menos ${BingoMusical.MIN_SONGS_REQUIRED} ` +
+        if (totalSongs < MIN_SONGS_REQUIRED) {
+            const message = `Necesitas al menos ${MIN_SONGS_REQUIRED} ` +
                           `canciones cargadas para poder jugar.`;
             this.showAlert(message, 'Canciones Insuficientes');
             return;
@@ -676,7 +696,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        link.remove();
 
         URL.revokeObjectURL(url);
         this.playEffect('click');
@@ -1153,7 +1173,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             emptyLi.innerHTML = `
                 <strong style="font-size:1.2rem;margin-bottom:0.5rem;display:block;">No hay canciones cargadas</strong>
                 <p style="font-size:0.9rem;margin:0.5rem 0;">Arrastra archivos de audio o usa el botón "Agregar Canciones"</p>
-                <p role="alert" style="font-size:0.85rem;margin-top:1rem;color:var(--warning-color);"><strong>⚠️ Necesitas al menos ${BingoMusical.MIN_SONGS_REQUIRED} canciones para jugar</strong></p>
+                <p role="alert" style="font-size:0.85rem;margin-top:1rem;color:var(--warning-color);"><strong>⚠️ Necesitas al menos ${MIN_SONGS_REQUIRED} canciones para jugar</strong></p>
             `;
             fragment.appendChild(emptyLi);
             this.songsListElement.innerHTML = '';
@@ -1162,11 +1182,11 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         }
 
         const totalSongs = this.getTotalSongsWithFiles();
-        if (totalSongs < BingoMusical.MIN_SONGS_REQUIRED) {
+        if (totalSongs < MIN_SONGS_REQUIRED) {
             const warning = document.createElement('li');
             warning.setAttribute('role', 'alert');
             warning.style.cssText = 'text-align:center;padding:1rem;margin-bottom:1rem;background:rgba(245,158,11,0.1);border-radius:8px;color:var(--warning-color);list-style:none;';
-            warning.innerHTML = `<strong>⚠️ Tienes ${totalSongs}/${BingoMusical.MIN_SONGS_REQUIRED} canciones.</strong> Necesitas al menos ${BingoMusical.MIN_SONGS_REQUIRED} para jugar.`;
+            warning.innerHTML = `<strong>⚠️ Tienes ${totalSongs}/${MIN_SONGS_REQUIRED} canciones.</strong> Necesitas al menos ${MIN_SONGS_REQUIRED} para jugar.`;
             fragment.appendChild(warning);
         }
 
@@ -1250,11 +1270,11 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         }
 
         const totalSongs = this.getTotalSongsWithFiles();
-        if (totalSongs < BingoMusical.MIN_SONGS_REQUIRED) {
+        if (totalSongs < MIN_SONGS_REQUIRED) {
             const warning = document.createElement('li');
             warning.setAttribute('role', 'alert');
             warning.style.cssText = 'text-align:center;padding:1rem;margin-bottom:1rem;background:rgba(245,158,11,0.1);border-radius:8px;color:var(--warning-color);list-style:none;';
-            warning.innerHTML = `<strong>⚠️ Tienes ${totalSongs}/${BingoMusical.MIN_SONGS_REQUIRED} canciones.</strong> Necesitas al menos ${BingoMusical.MIN_SONGS_REQUIRED} para jugar.`;
+            warning.innerHTML = `<strong>⚠️ Tienes ${totalSongs}/${MIN_SONGS_REQUIRED} canciones.</strong> Necesitas al menos ${MIN_SONGS_REQUIRED} para jugar.`;
             fragment.appendChild(warning);
         }
 
@@ -1319,8 +1339,8 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
     playRandomSong() {
         const totalSongs = this.getTotalSongsWithFiles();
-        if (totalSongs < BingoMusical.MIN_SONGS_REQUIRED) {
-            this.showAlert(`Necesitas al menos ${BingoMusical.MIN_SONGS_REQUIRED} canciones cargadas para poder comenzar a jugar.`, 'Canciones Insuficientes');
+        if (totalSongs < MIN_SONGS_REQUIRED) {
+            this.showAlert(`Necesitas al menos ${MIN_SONGS_REQUIRED} canciones cargadas para poder comenzar a jugar.`, 'Canciones Insuficientes');
             return;
         }
 
@@ -1620,8 +1640,8 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     openCartonModal() {
         const totalSongs = this.getTotalSongsWithFiles();
 
-        if (totalSongs < BingoMusical.MIN_SONGS_REQUIRED) {
-            this.showAlert(`Necesitas al menos ${BingoMusical.MIN_SONGS_REQUIRED} canciones cargadas para poder generar cartones.`, 'Canciones Insuficientes');
+        if (totalSongs < MIN_SONGS_REQUIRED) {
+            this.showAlert(`Necesitas al menos ${MIN_SONGS_REQUIRED} canciones cargadas para poder generar cartones.`, 'Canciones Insuficientes');
             return;
         }
 
@@ -1654,8 +1674,8 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         }
 
         const totalSongs = this.getTotalSongsWithFiles();
-        if (totalSongs < BingoMusical.MIN_SONGS_REQUIRED) {
-            this.showAlert(`Necesitas al menos ${BingoMusical.MIN_SONGS_REQUIRED} canciones cargadas para poder generar cartones.`, 'Canciones Insuficientes');
+        if (totalSongs < MIN_SONGS_REQUIRED) {
+            this.showAlert(`Necesitas al menos ${MIN_SONGS_REQUIRED} canciones cargadas para poder generar cartones.`, 'Canciones Insuficientes');
             return;
         }
 
@@ -1714,11 +1734,16 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         const cellsHTML = carton.rows.flatMap(row => 
             row.cells.map(cell => {
                 const cellClass = cell.type === 'song' ? 'song' : 'decorative';
-                const icon = cell.type === 'song' 
-                    ? (cell.song.iconType === 'image' 
-                        ? `<img src="${cell.song.icon}" alt="${cell.song.title}" style="max-width: 90%; max-height: 90%;">` 
-                        : cell.song.icon)
-                    : `<span class="decorative-icon">${cell.icon}</span>`;
+                let icon;
+                if (cell.song.iconType === 'image') {
+                    icon = cell.type === 'song'
+                        ? `<img src="${cell.song.icon}" alt="${cell.song.title}" style="max-width: 90%; max-height: 90%;">`
+                        : `<span class="decorative-icon">${cell.icon}</span>`;
+                } else {
+                    icon = cell.type === 'song'
+                        ? cell.song.icon
+                        : `<span class="decorative-icon">${cell.icon}</span>`;
+                }
                     
                 return `<div class="preview-cell ${cellClass}">
                     ${icon}
@@ -1742,9 +1767,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
 // Inicializar la aplicación cuando el DOM esté listo
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        new BingoMusical();
-    });
+    document.addEventListener('DOMContentLoaded', () => new BingoMusical());
 } else {
     new BingoMusical();
 }
