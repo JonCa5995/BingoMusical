@@ -8,6 +8,7 @@ import {SongManager} from "./modules/SongManager.js";
 import {GameManager} from "./modules/GameManager.js";
 import {UIManager} from "./modules/UIManager.js";
 import {ModalManager} from "./modules/ModalManager.js";
+import {SettingsManager} from "./modules/SettingsManager.js";
 
 export const MIN_SONGS_REQUIRED = 24;
 
@@ -29,6 +30,7 @@ class BingoMusical {
         this.game = new GameManager();
         this.ui = new UIManager(this.dom, MIN_SONGS_REQUIRED);
         this.modal = new ModalManager(this.dom, this.audio);
+        this.settings = new SettingsManager(this.dom, this.audio, this.storage);
         
         this.init();
     }
@@ -238,42 +240,21 @@ class BingoMusical {
     }
 
     showKeyboardShortcutsHelp() {
-        const helpMessage = `
-ATAJOS DE TECLADO DISPONIBLES:<br><br>
-
-▶ ESPACIO → Reproducir/Pausar<br>
-🔄 R → Reiniciar canción actual<br>
-⏭ N → Siguiente canción (en modo continuo)<br>
-⛶ F → Pantalla completa<br>
-📏 L → Cantar LÍNEA<br>
-🎉 B → Cantar BINGO<br>
-❌ ESC → Cerrar modal<br>
-❓ ? → Mostrar esta ayuda
-        `.trim();
-        
+        const helpMessage = this.settings.getKeyboardShortcutsHelp();
         this.showAlert(helpMessage, '⌨️ Atajos de Teclado');
     }
 
     // Sistema de temas (claro/oscuro)
     loadThemePreference() {
-        const savedTheme = this.storage.loadTheme('dark');
-        this.applyTheme(savedTheme);
+        this.settings.loadThemePreference();
     }
 
     toggleTheme() {
-        const currentTheme = document.documentElement.dataset.theme || 'dark';
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        this.applyTheme(newTheme);
-        this.storage.saveTheme(newTheme);
-        this.audio.playEffect('click');
+        this.settings.toggleTheme();
     }
 
     applyTheme(theme) {
-        document.documentElement.dataset.theme = theme;
-        this.dom.themeIcon.textContent = theme === 'dark' ? '🌙' : '☀️';
-        this.dom.themeToggleBtn.setAttribute('title', 
-            theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
-        );
+        this.settings.applyTheme(theme);
     }
 
     // Sistema de modales personalizados
@@ -294,44 +275,10 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     setupDragAndDrop() {
-        const dropZones = [
-            ...document.querySelectorAll('.file-label'),
-            this.dom.songsSection
-        ];
-
-        const events = {
-            prevent: ['dragenter', 'dragover', 'dragleave', 'drop'],
-            highlight: ['dragenter', 'dragover'],
-            unhighlight: ['dragleave', 'drop']
-        };
-
-        for (const zone of dropZones) {
-            for (const eventName of events.prevent) {
-                zone.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }, false);
-            }
-
-            for (const eventName of events.highlight) {
-                zone.addEventListener(eventName, () => {
-                    if (!this.game.isGameStarted()) {
-                        zone.classList.add('dragover');
-                    }
-                }, false);
-            }
-
-            for (const eventName of events.unhighlight) {
-                zone.addEventListener(eventName, () => zone.classList.remove('dragover'), false);
-            }
-
-            zone.addEventListener('drop', (e) => {
-                if (this.game.isGameStarted()) return;
-
-                this.dom.addSongsInput.files = e.dataTransfer.files;
-                this.dom.addSongsInput.dispatchEvent(new Event('change', { bubbles: true }));
-            }, false);
-        }
+        this.settings.setupDragAndDrop(
+            () => this.game.isGameStarted(),
+            null
+        );
     }
 
     getTotalSongsWithFiles() {
@@ -911,29 +858,11 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     toggleFullscreen() {
-        this.audio.playEffect('click');
-
-        if (document.fullscreenElement) {
-            document.exitFullscreen().then();
-        } else {
-            document.documentElement.requestFullscreen().catch(err => {
-                console.warn('Error al entrar en pantalla completa:', err);
-            });
-        }
+        this.settings.toggleFullscreen();
     }
 
     onFullscreenChange() {
-        const isFullscreen = !!document.fullscreenElement;
-
-        if (isFullscreen) {
-            document.body.classList.add('fullscreen');
-            this.dom.fullscreenBtn.innerHTML = '<span class="fullscreen-icon" aria-hidden="true">⊗</span> Salir Pantalla Completa';
-            this.dom.fullscreenBtn.setAttribute('aria-label', 'Salir de pantalla completa');
-        } else {
-            document.body.classList.remove('fullscreen');
-            this.dom.fullscreenBtn.innerHTML = '<span class="fullscreen-icon" aria-hidden="true">⛶</span> Pantalla Completa';
-            this.dom.fullscreenBtn.setAttribute('aria-label', 'Activar pantalla completa');
-        }
+        this.settings.onFullscreenChange();
     }
 
     openCartonModal() {
