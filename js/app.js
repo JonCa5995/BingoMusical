@@ -5,6 +5,7 @@ import {AudioManager} from "./modules/AudioManager.js";
 import {StorageManager} from "./modules/StorageManager.js";
 import {IconManager} from "./modules/IconManager.js";
 import {SongManager} from "./modules/SongManager.js";
+import {GameManager} from "./modules/GameManager.js";
 
 export const MIN_SONGS_REQUIRED = 24;
 
@@ -14,12 +15,7 @@ class BingoMusical {
 
     constructor() {
         this.songs = [];
-        this.playedSongs = [];
-        this.currentSongIndex = null;
         this.continuousMode = false;
-        this.bingoCompleted = false;
-        this.lineaCompleted = false;
-        this.gameStarted = false;
         this.confirmCallback = null;
         this.shouldRender = false;
         
@@ -30,6 +26,7 @@ class BingoMusical {
         this.storage = new StorageManager();
         this.icons = new IconManager(this.dom, this.audio, () => this.songs);
         this.songManager = new SongManager();
+        this.game = new GameManager();
         
         this.init();
     }
@@ -136,8 +133,6 @@ class BingoMusical {
 
         this.dom.restartBtn.addEventListener('click', () => {
             this.reiniciarJuego().then();
-            this.bingoCompleted = false;
-            this.lineaCompleted = false;
             this.dom.celebrationOverlay.classList.add('hidden');
         });
     }
@@ -168,7 +163,7 @@ class BingoMusical {
     playPauseOnSpace() {
         if (this.audio.isPlaying) {
             this.pauseSong();
-        } else if (this.currentSongIndex !== null) {
+        } else if (this.game.currentSongIndex !== null) {
             this.pauseSong(); // Esto actúa como resume
         } else if (this.songs.length >= MIN_SONGS_REQUIRED) {
             this.playRandomSong();
@@ -176,8 +171,8 @@ class BingoMusical {
     }
 
     nextSongOnN() {
-        if (this.gameStarted) {
-            if (!this.bingoCompleted) {
+        if (this.game.isGameStarted()) {
+            if (!this.game.bingoCompleted) {
                 this.playRandomSong();
             }
         } else {
@@ -210,7 +205,7 @@ class BingoMusical {
 
                 case 'r': // R → Reiniciar canción
                     e.preventDefault();
-                    if (this.currentSongIndex !== null) {
+                    if (this.game.currentSongIndex !== null) {
                         this.stopSong();
                     }
                     break;
@@ -367,7 +362,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
             for (const eventName of events.highlight) {
                 zone.addEventListener(eventName, () => {
-                    if (!this.gameStarted) {
+                    if (!this.game.isGameStarted()) {
                         zone.classList.add('dragover');
                     }
                 }, false);
@@ -378,7 +373,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             }
 
             zone.addEventListener('drop', (e) => {
-                if (this.gameStarted) return;
+                if (this.game.isGameStarted()) return;
 
                 this.dom.addSongsInput.files = e.dataTransfer.files;
                 this.dom.addSongsInput.dispatchEvent(new Event('change', { bubbles: true }));
@@ -391,57 +386,39 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     async triggerLinea() {
-        const totalSongs = this.getTotalSongsWithFiles();
-        if (totalSongs < MIN_SONGS_REQUIRED) {
-            const message = `Necesitas al menos ${MIN_SONGS_REQUIRED} ` +
-                          `canciones cargadas para poder jugar.`;
-            this.showAlert(message, 'Canciones Insuficientes');
+        // Validar con GameManager
+        const validation = this.game.validateMinSongs(this.getTotalSongsWithFiles(), MIN_SONGS_REQUIRED);
+        if (!validation.valid) {
+            this.showAlert(validation.error, validation.title);
             return;
         }
 
-        if (this.lineaCompleted) {
-            const message = 'La línea ya fue cantada. ' +
-                          'Solo puedes cantar línea una vez por juego.';
-            this.showAlert(message, 'Línea Ya Cantada');
+        const canCall = this.game.canCallLinea();
+        if (!canCall.valid) {
+            this.showAlert(canCall.error, canCall.title);
             return;
         }
 
-        if (this.playedSongs.length < 4) {
-            const message = 'Debes reproducir al menos 4 canciones ' +
-                          'antes de cantar LÍNEA.';
-            this.showAlert(message, 'Canciones Insuficientes');
-            return;
-        }
-
-        this.lineaCompleted = true;
+        this.game.completeLinea();
         this.audio.playEffect('win');
         setTimeout(() => this.dom.lineaOverlay.classList.remove('hidden'), 500);
     }
 
     async triggerBingo() {
-        const totalSongs = this.getTotalSongsWithFiles();
-        if (totalSongs < MIN_SONGS_REQUIRED) {
-            const message = `Necesitas al menos ${MIN_SONGS_REQUIRED} ` +
-                          `canciones cargadas para poder jugar.`;
-            this.showAlert(message, 'Canciones Insuficientes');
+        // Validar con GameManager
+        const validation = this.game.validateMinSongs(this.getTotalSongsWithFiles(), MIN_SONGS_REQUIRED);
+        if (!validation.valid) {
+            this.showAlert(validation.error, validation.title);
             return;
         }
 
-        if (this.bingoCompleted) {
-            const message = 'El bingo ya fue completado. ' +
-                          'Reinicia el juego para comenzar de nuevo.';
-            this.showAlert(message, 'Bingo Ya Completado');
+        const canCall = this.game.canCallBingo();
+        if (!canCall.valid) {
+            this.showAlert(canCall.error, canCall.title);
             return;
         }
 
-        if (this.playedSongs.length < 12) {
-            const message = 'Debes reproducir al menos 12 canciones ' +
-                          'antes de cantar BINGO.';
-            this.showAlert(message, 'Canciones Insuficientes');
-            return;
-        }
-
-        this.bingoCompleted = true;
+        this.game.completeBingo();
         this.audio.playEffect('complete');
         setTimeout(() => this.dom.celebrationOverlay.classList.remove('hidden'), 500);
     }
@@ -461,7 +438,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         const file = event.target.files[0];
         if (!file) return;
 
-        if (this.gameStarted) {
+        if (this.game.isGameStarted()) {
             const message = 'No puedes importar una lista una vez que el juego ha iniciado. Debes reiniciar el juego primero.';
             this.showAlert(message, 'Juego Iniciado');
             event.target.value = '';
@@ -481,7 +458,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
         // Reset lists for replacement behavior
         this.songs = [];
-        this.playedSongs = [];
+        this.game.playedSongs = [];
         this.songManager.resetIdCounter();
 
         const duplicates = [];
@@ -570,7 +547,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     openIconPicker(songId) {
-        if (this.gameStarted) {
+        if (this.game.isGameStarted()) {
             const message = 'No puedes cambiar iconos una vez que el juego ha iniciado.';
             this.showAlert(message, 'Juego Iniciado');
             return;
@@ -589,7 +566,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         const files = Array.from(event.target.files);
         if (files.length === 0) return;
 
-        if (this.gameStarted) {
+        if (this.game.isGameStarted()) {
             this.showAlert('No puedes agregar canciones una vez que el juego ha iniciado. Debes reiniciar el juego primero.', 'Juego Iniciado');
             event.target.value = '';
             return;
@@ -619,7 +596,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     deleteSong(songId) {
-        if (this.gameStarted) {
+        if (this.game.isGameStarted()) {
             this.showAlert('No puedes eliminar canciones una vez que el juego ha iniciado. Debes limpiar el historial primero.', 'Juego Iniciado');
         } else {
             this.songs = this.songManager.deleteSong(this.songs, songId);
@@ -631,7 +608,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     updateUIState() {
-        const isDisabled = this.gameStarted;
+        const isDisabled = this.game.isGameStarted();
 
         this.dom.addSongsInput.disabled = isDisabled;
         this.dom.addSongsLabel.style.opacity = isDisabled ? '0.5' : '1';
@@ -641,7 +618,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         this.dom.importListBtn.disabled = isDisabled;
         this.dom.importListBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
 
-        this.dom.clearHistoryBtn.disabled = !isDisabled; // Habilitar solo si el juego ha iniciado
+        this.dom.clearHistoryBtn.disabled = !isDisabled;
         this.dom.clearHistoryBtn.style.opacity = isDisabled ? '1' : '0.5';
         this.dom.clearHistoryBtn.style.cursor = isDisabled ? 'pointer' : 'not-allowed';
 
@@ -652,7 +629,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             this.toggleContinuousMode();
         }
 
-        if (this.gameStarted) {
+        if (this.game.isGameStarted()) {
             this.dom.playBtn.innerHTML = '<span aria-hidden="true">🔀</span> Canción Aleatoria';
             this.dom.playBtn.setAttribute('aria-label', 'Canción Aleatoria');
         } else {
@@ -665,7 +642,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
     setRenderSongIconTitle(song) {
         if (song.played) return 'Icono bloqueado (canción ya reproducida)';
-        return this.gameStarted ? 'Icono bloqueado (juego iniciado)' : 'Click para cambiar icono';
+        return this.game.isGameStarted() ? 'Icono bloqueado (juego iniciado)' : 'Click para cambiar icono';
     }
 
     setRenderSongIconHtml(song) {
@@ -677,13 +654,13 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
     createSongItemElement(song) {
         const li = document.createElement('li');
-        li.className = `song-item ${song.played ? 'played' : ''} ${this.currentSongIndex === song.id ? 'playing' : ''}`;
+        li.className = `song-item ${song.played ? 'played' : ''} ${this.game.getCurrentSong() === song.id ? 'playing' : ''}`;
         li.setAttribute('role', 'listitem');
 
         const iconTitle = this.setRenderSongIconTitle(song);
-        const iconCursor = (song.played || this.gameStarted) ? 'not-allowed' : 'pointer';
+        const iconCursor = (song.played || this.game.isGameStarted()) ? 'not-allowed' : 'pointer';
         const iconHtml = this.setRenderSongIconHtml(song);
-        const iconDisabled = (song.played || this.gameStarted) ? 'disabled' : '';
+        const iconDisabled = (song.played || this.game.isGameStarted()) ? 'disabled' : '';
 
         let songStateLabel;
         if (song.played) {
@@ -724,9 +701,9 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         // Delegación de eventos optimizada
         iconBtn.onclick = (e) => {
             e.stopPropagation();
-            if (!song.played && !this.gameStarted) {
+            if (!song.played && !this.game.isGameStarted()) {
                 this.openIconPicker(song.id);
-            } else if (this.gameStarted) {
+            } else if (this.game.isGameStarted()) {
                 this.showAlert('No puedes cambiar iconos una vez que el juego ha iniciado.', 'Juego Iniciado');
             } else {
                 this.showAlert('No puedes cambiar el icono de una canción que ya fue reproducida.', 'Canción Ya Reproducida');
@@ -734,7 +711,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         };
 
         li.onclick = () => {
-            if (song.file && !this.gameStarted) {
+            if (song.file && !this.game.isGameStarted()) {
                 this.audio.playEffect('click');
                 this.playSong(song.id);
             }
@@ -842,13 +819,14 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     updateCounters() {
-        this.dom.playedCounterSpan.textContent = this.playedSongs.length.toString();
+        const history = this.game.getHistory();
+        this.dom.playedCounterSpan.textContent = history.length.toString();
         this.dom.totalCounterSpan.textContent = this.getTotalSongsWithFiles();
     }
 
     // Gestión de playlist
     async deleteAllSongs() {
-        if (this.gameStarted) {
+        if (this.game.isGameStarted()) {
             this.showAlert('No puedes eliminar canciones una vez iniciado el juego.', 'Juego Iniciado');
             return;
         }
@@ -874,7 +852,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     toggleContinuousMode() {
-        this.continuousMode = !this.continuousMode;
+        this.continuousMode = this.game.toggleContinuousMode();
         const btn = this.dom.shuffleAllBtn;
 
         if (this.continuousMode) {
@@ -890,30 +868,31 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     playRandomSong() {
-        const totalSongs = this.getTotalSongsWithFiles();
-        if (totalSongs < MIN_SONGS_REQUIRED) {
-            this.showAlert(`Necesitas al menos ${MIN_SONGS_REQUIRED} canciones cargadas para poder comenzar a jugar.`, 'Canciones Insuficientes');
+        // Validar con GameManager
+        const validation = this.game.validateMinSongs(this.getTotalSongsWithFiles(), MIN_SONGS_REQUIRED);
+        if (!validation.valid) {
+            this.showAlert(validation.error, validation.title);
             return;
         }
 
-        // This is now the official start of the game
-        if (!this.gameStarted) {
-            this.gameStarted = true;
+        // Iniciar juego si no ha comenzado
+        if (!this.game.isGameStarted()) {
+            this.game.startGame();
             this.updateUIState();
         }
 
-        const unplayedSongs = this.songs.filter(song => !song.played && song.file);
-
-        if (unplayedSongs.length === 0) {
+        // Obtener canción aleatoria no reproducida
+        const randomSong = this.game.getRandomUnplayedSong(this.songs);
+        
+        if (!randomSong) {
             this.showAlert('No hay más canciones disponibles. Limpia el historial para volver a empezar', 'Sin Canciones');
             return;
         }
 
-        if (unplayedSongs.length === 1) {
+        if (this.game.onlyOneSongLeft(this.songs)) {
             this.dom.playBtn.disabled = true;
         }
 
-        const randomSong = unplayedSongs[Math.floor(Math.random() * unplayedSongs.length)];
         this.playSong(randomSong.id);
     }
 
@@ -926,14 +905,12 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
         // Usar AudioManager para reproducir
         this.audio.play(song.file, () => {
-            this.currentSongIndex = songId;
+            this.game.setCurrentSong(songId);
             this.updatePlayerUI(song);
             this.updateControls(true);
 
-            // Only do game logic if the game has started
-            if (this.gameStarted && !song.played) {
-                song.played = true;
-                this.playedSongs.push(song);
+            // Marcar como reproducida usando GameManager
+            if (this.game.markSongAsPlayed(song)) {
                 this.addToHistory(song);
                 this.updateCounters();
                 this.audio.playEffect('win');
@@ -978,9 +955,9 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     updateControls(playing) {
-        const noSongSelected = this.currentSongIndex === null;
+        const noSongSelected = this.game.currentSongIndex === null;
 
-        this.dom.playBtn.disabled = playing && this.gameStarted;
+        this.dom.playBtn.disabled = playing && this.game.isGameStarted();
         this.dom.pauseBtn.disabled = noSongSelected;
         this.dom.stopBtn.disabled = noSongSelected;
 
@@ -1007,17 +984,16 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         this.dom.songIconContainer.classList.remove('playing');
 
         // Handle continuous PREVIEW mode
-        if (this.continuousMode && !this.gameStarted) {
+        if (this.continuousMode && !this.game.isGameStarted()) {
             this.playRandomContinuousSong();
             return; // End execution here for this case
         }
 
         // Handle song ending during the game
-        if (this.gameStarted) {
-            const unplayedSongs = this.songs.filter(song => !song.played && song.file);
-            if (unplayedSongs.length === 0 && !this.bingoCompleted) {
+        if (this.game.isGameStarted()) {
+            if (this.game.allSongsPlayed(this.songs) && !this.game.bingoCompleted) {
                 // All songs have been played, trigger BINGO automatically
-                this.bingoCompleted = true;
+                this.game.completeBingo();
                 setTimeout(() => {
                     this.audio.playEffect('complete');
                     this.dom.celebrationOverlay.classList.remove('hidden');
@@ -1031,9 +1007,8 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
     playRandomContinuousSong() {
         setTimeout(() => {
-            const availableSongs = this.songs.filter(song => song.file);
-            if (availableSongs.length > 0) {
-                const randomSong = availableSongs[Math.floor(Math.random() * availableSongs.length)];
+            const randomSong = this.game.getRandomSong(this.songs);
+            if (randomSong) {
                 this.playSong(randomSong.id);
             } else {
                 // No songs to play, turn off the mode
@@ -1085,11 +1060,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         );
 
         if (confirmed) {
-            this.playedSongs = [];
-            this.bingoCompleted = false;
-            this.lineaCompleted = false;
-            this.gameStarted = false;
-            
+            this.game.resetGame();
             this.songs = this.songManager.resetPlayedStatus(this.songs);
             this.dom.historyGrid.innerHTML = '';
             this.renderSongsList();

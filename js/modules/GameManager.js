@@ -1,0 +1,221 @@
+/**
+ * GameManager Module
+ * Gestiona la lógica del juego de bingo: reproducción aleatoria, historial, LÍNEA y BINGO
+ */
+export class GameManager {
+    constructor() {
+        this.gameStarted = false;
+        this.continuousMode = false;
+        this.lineaCompleted = false;
+        this.bingoCompleted = false;
+        this.playedSongs = [];
+        this.currentSongIndex = null;
+    }
+
+    /**
+     * Inicia el juego
+     */
+    startGame() {
+        this.gameStarted = true;
+    }
+
+    /**
+     * Verifica si el juego ha comenzado
+     */
+    isGameStarted() {
+        return this.gameStarted;
+    }
+
+    /**
+     * Alterna el modo continuo
+     */
+    toggleContinuousMode() {
+        this.continuousMode = !this.continuousMode;
+        return this.continuousMode;
+    }
+
+    /**
+     * Obtiene una canción aleatoria no reproducida
+     */
+    getRandomUnplayedSong(songs) {
+        const unplayedSongs = songs.filter(song => !song.played && song.file);
+        
+        if (unplayedSongs.length === 0) {
+            return null;
+        }
+
+        return unplayedSongs[Math.floor(Math.random() * unplayedSongs.length)];
+    }
+
+    /**
+     * Obtiene una canción aleatoria (cualquiera con archivo)
+     */
+    getRandomSong(songs) {
+        const availableSongs = songs.filter(song => song.file);
+        
+        if (availableSongs.length === 0) {
+            return null;
+        }
+
+        return availableSongs[Math.floor(Math.random() * availableSongs.length)];
+    }
+
+    /**
+     * Marca una canción como reproducida y la agrega al historial
+     */
+    markSongAsPlayed(song) {
+        if (!song.played && this.gameStarted) {
+            song.played = true;
+            this.playedSongs.push(song);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Valida si se puede cantar LÍNEA
+     */
+    canCallLinea(minSongs) {
+        if (this.lineaCompleted) {
+            return {
+                valid: false,
+                error: 'La línea ya fue cantada. Solo puedes cantar línea una vez por juego.',
+                title: 'Línea Ya Cantada'
+            };
+        }
+
+        if (this.playedSongs.length < 4) {
+            return {
+                valid: false,
+                error: 'Debes reproducir al menos 4 canciones antes de cantar LÍNEA.',
+                title: 'Canciones Insuficientes'
+            };
+        }
+
+        return { valid: true };
+    }
+
+    /**
+     * Marca LÍNEA como completada
+     */
+    completeLinea() {
+        this.lineaCompleted = true;
+    }
+
+    /**
+     * Valida si se puede cantar BINGO
+     */
+    canCallBingo(minSongs) {
+        if (this.bingoCompleted) {
+            return {
+                valid: false,
+                error: 'El bingo ya fue completado. Reinicia el juego para comenzar de nuevo.',
+                title: 'Bingo Ya Completado'
+            };
+        }
+
+        if (this.playedSongs.length < 12) {
+            return {
+                valid: false,
+                error: 'Debes reproducir al menos 12 canciones antes de cantar BINGO.',
+                title: 'Canciones Insuficientes'
+            };
+        }
+
+        return { valid: true };
+    }
+
+    /**
+     * Marca BINGO como completado
+     */
+    completeBingo() {
+        this.bingoCompleted = true;
+    }
+
+    /**
+     * Verifica si todas las canciones han sido reproducidas
+     */
+    allSongsPlayed(songs) {
+        const unplayedSongs = songs.filter(song => !song.played && song.file);
+        return unplayedSongs.length === 0;
+    }
+
+    /**
+     * Verifica si solo queda una canción sin reproducir
+     */
+    onlyOneSongLeft(songs) {
+        const unplayedSongs = songs.filter(song => !song.played && song.file);
+        return unplayedSongs.length === 1;
+    }
+
+    /**
+     * Reinicia el estado del juego
+     */
+    resetGame() {
+        this.gameStarted = false;
+        this.continuousMode = false;
+        this.lineaCompleted = false;
+        this.bingoCompleted = false;
+        this.playedSongs = [];
+        this.currentSongIndex = null;
+    }
+
+    /**
+     * Obtiene estadísticas del juego
+     */
+    getGameStats(totalSongsWithFiles) {
+        return {
+            gameStarted: this.gameStarted,
+            songsPlayed: this.playedSongs.length,
+            totalSongs: totalSongsWithFiles,
+            percentage: totalSongsWithFiles > 0 
+                ? Math.round((this.playedSongs.length / totalSongsWithFiles) * 100) 
+                : 0,
+            lineaCompleted: this.lineaCompleted,
+            bingoCompleted: this.bingoCompleted,
+            continuousMode: this.continuousMode
+        };
+    }
+
+    /**
+     * Establece la canción actual
+     */
+    setCurrentSong(songId) {
+        this.currentSongIndex = songId;
+    }
+
+    /**
+     * Obtiene la canción actual
+     */
+    getCurrentSong() {
+        return this.currentSongIndex;
+    }
+
+    /**
+     * Limpia el historial de canciones reproducidas
+     */
+    clearHistory() {
+        this.playedSongs = [];
+    }
+
+    /**
+     * Obtiene el historial de canciones reproducidas
+     */
+    getHistory() {
+        return this.playedSongs;
+    }
+
+    /**
+     * Verifica si hay suficientes canciones para jugar
+     */
+    validateMinSongs(totalSongsWithFiles, minRequired) {
+        if (totalSongsWithFiles < minRequired) {
+            return {
+                valid: false,
+                error: `Necesitas al menos ${minRequired} canciones cargadas para poder jugar.`,
+                title: 'Canciones Insuficientes'
+            };
+        }
+        return { valid: true };
+    }
+}
