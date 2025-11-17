@@ -9,6 +9,7 @@ import {GameManager} from "./modules/GameManager.js";
 import {UIManager} from "./modules/UIManager.js";
 import {ModalManager} from "./modules/ModalManager.js";
 import {SettingsManager} from "./modules/SettingsManager.js";
+import {CartonManager} from "./modules/CartonManager.js";
 
 export const MIN_SONGS_REQUIRED = 24;
 
@@ -31,6 +32,7 @@ class BingoMusical {
         this.ui = new UIManager(this.dom, MIN_SONGS_REQUIRED);
         this.modal = new ModalManager(this.dom, this.audio);
         this.settings = new SettingsManager(this.dom, this.audio, this.storage);
+        this.carton = new CartonManager(this.dom, this.audio, this.cartonGenerator);
         
         this.init();
     }
@@ -869,7 +871,7 @@ class BingoMusical {
         this.modal.openCartonModal(
             this.getTotalSongsWithFiles(),
             MIN_SONGS_REQUIRED,
-            () => this.updateCartonPreview()
+            () => this.carton.updateCartonPreview(this.songs)
         );
     }
 
@@ -878,102 +880,21 @@ class BingoMusical {
     }
 
     async generateCartones(format = 'html') {
-        const count = Number.parseInt(this.dom.cartonCountInput.value);
-
-        if (Number.isNaN(count) || count < 1 || count > BingoMusical.MAX_CARTONS_GENERATED) {
-            this.showAlert(`Por favor ingresa un número válido entre 1 y ${BingoMusical.MAX_CARTONS_GENERATED}.`, 'Número Inválido');
-            return;
-        }
-
-        const totalSongs = this.getTotalSongsWithFiles();
-        if (totalSongs < MIN_SONGS_REQUIRED) {
-            this.showAlert(`Necesitas al menos ${MIN_SONGS_REQUIRED} canciones cargadas para poder generar cartones.`, 'Canciones Insuficientes');
-            return;
-        }
-
-        this.audio.playEffect('start');
-
-        try {
-            // Obtener configuración de personalización
-            const config = {
-                primaryColor: this.dom.cartonPrimaryColorInput.value,
-                secondaryColor: this.dom.cartonSecondaryColorInput.value
-            };
-            
-            const cartones = this.cartonGenerator.generateCartones(this.songs, count);
-            
-            if (format === 'pdf') {
-                await this.cartonGenerator.downloadAsPDF(cartones, config);
-                this.showAlert(`${count} cartón(es) generado(s) en PDF exitosamente.`, 'Cartones Generados');
-            } else {
-                this.cartonGenerator.downloadAsHTML(cartones, config);
-                this.showAlert(`${count} cartón(es) generado(s) exitosamente.\n\nEl archivo HTML está listo para imprimir.`, 'Cartones Generados');
-            }
-            
-            this.audio.playEffect('win');
+        const success = await this.carton.generateCartones(
+            this.songs,
+            format,
+            BingoMusical.MAX_CARTONS_GENERATED,
+            MIN_SONGS_REQUIRED,
+            (message, title) => this.showAlert(message, title)
+        );
+        
+        if (success) {
             this.closeCartonModal();
-        } catch (error) {
-            this.showAlert(`Error al generar cartones: ${error.message}`, 'Error');
         }
     }
     
     updateCartonPreview() {
-        try {
-            // Obtener configuración
-            const config = {
-                primaryColor: this.dom.cartonPrimaryColorInput.value,
-                secondaryColor: this.dom.cartonSecondaryColorInput.value
-            };
-            
-            // Generar un cartón de ejemplo
-            const previewCarton = this.cartonGenerator.generateSingleCarton(this.songs, 1);
-            
-            // Renderizar vista previa
-            this.dom.cartonPreviewContainer.innerHTML = this.generatePreviewHTML(previewCarton, config);
-        } catch (error) {
-            this.dom.cartonPreviewContainer.innerHTML = `
-                <div class="carton-preview-placeholder">
-                    <p>❌ Error al generar vista previa</p>
-                    <p>${error.message}</p>
-                </div>
-            `;
-        }
-    }
-    
-    generatePreviewHTML(carton, config) {
-        const { primaryColor, secondaryColor } = config;
-        
-        const cellsHTML = carton.rows.flatMap(row => 
-            row.cells.map(cell => {
-                const cellClass = cell.type === 'song' ? 'song' : 'decorative';
-                let icon;
-                if (cell.song.iconType === 'image') {
-                    icon = cell.type === 'song'
-                        ? `<img src="${cell.song.icon}" alt="${cell.song.title}" style="max-width: 90%; max-height: 90%;">`
-                        : `<span class="decorative-icon">${cell.icon}</span>`;
-                } else {
-                    icon = cell.type === 'song'
-                        ? cell.song.icon
-                        : `<span class="decorative-icon">${cell.icon}</span>`;
-                }
-                    
-                return `<div class="preview-cell ${cellClass}">
-                    ${icon}
-                </div>`;
-            })
-        ).join('');
-        
-        return `
-            <div class="preview-carton" style="color: ${primaryColor}; border-color: ${primaryColor};">
-                <div class="preview-carton-header" style="border-color: ${primaryColor};">
-                    <div class="preview-carton-title" style="color: ${primaryColor};">🎵 Bingo Musical</div>
-                    <div class="preview-carton-number" style="background-color: ${secondaryColor};">#1</div>
-                </div>
-                <div class="preview-carton-grid">
-                    ${cellsHTML}
-                </div>
-            </div>
-        `;
+        this.carton.updateCartonPreview(this.songs);
     }
 }
 
