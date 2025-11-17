@@ -2,6 +2,7 @@
 import {BingoCartonGenerator} from "./bingoCartonGenerator.js";
 import {DOMElements} from "./modules/DOMElements.js";
 import {AudioManager} from "./modules/AudioManager.js";
+import {StorageManager} from "./modules/StorageManager.js";
 
 export const MIN_SONGS_REQUIRED = 24;
 
@@ -26,6 +27,7 @@ class BingoMusical {
         this.songsFolder = 'canciones/';
         this.dom = new DOMElements();
         this.audio = new AudioManager(this.dom);
+        this.storage = new StorageManager();
         this.initializeIcons();
         
         this.init();
@@ -326,7 +328,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
     // Sistema de temas (claro/oscuro)
     loadThemePreference() {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const savedTheme = this.storage.loadTheme('dark');
         this.applyTheme(savedTheme);
     }
 
@@ -334,7 +336,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         const currentTheme = document.documentElement.dataset.theme || 'dark';
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         this.applyTheme(newTheme);
-        localStorage.setItem('theme', newTheme);
+        this.storage.saveTheme(newTheme);
         this.audio.playEffect('click');
     }
 
@@ -503,43 +505,14 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     exportPlaylist() {
-        if (this.songs.length === 0) {
-            this.showAlert('No hay canciones para exportar.', 'Lista Vacía');
-            return;
+        const result = this.storage.exportPlaylist(this.songs, this.songsFolder);
+        
+        if (result.success) {
+            this.audio.playEffect('click');
+            this.showAlert(result.message, 'Exportación Exitosa');
+        } else {
+            this.showAlert(result.error, 'Error al Exportar');
         }
-
-        const playlist = {
-            version: '1.0',
-            date: new Date().toISOString(),
-            songs: this.songs.map(song => ({
-                id: song.id,
-                title: song.title,
-                icon: song.icon,
-                iconType: song.iconType || 'emoji',
-            }))
-        };
-
-        const dataStr = JSON.stringify(playlist, null, 2);
-        const dataBlob = new Blob([dataStr], {type: 'application/json'});
-        const url = URL.createObjectURL(dataBlob);
-
-        const link = document.createElement('a');
-        const date = new Date().toISOString().split('T')[0];
-        link.href = url;
-        link.download = `bingo-musical-${date}.json`;
-        link.setAttribute('aria-label', 'Descargar lista de canciones en formato JSON');
-        
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-
-        URL.revokeObjectURL(url);
-        this.audio.playEffect('click');
-        
-        const message = `Lista de canciones exportada correctamente.\n\n` +
-                       `Coloca el archivo JSON en la carpeta raíz del proyecto.\n` +
-                       `Coloca los archivos de audio en: ${this.songsFolder}`;
-        this.showAlert(message, 'Exportación Exitosa');
     }
 
     async importPlaylist(event) {
@@ -553,101 +526,97 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             return;
         }
 
-        try {
-            const text = await file.text();
-            const playlist = JSON.parse(text);
-
-            if (!playlist.songs || !Array.isArray(playlist.songs)) {
-                throw new Error('Formato de archivo inválido');
-            }
-
-            // Reset lists for replacement behavior
-            this.songs = [];
-            this.playedSongs = [];
-            this.songId = 1; // Reset song ID counter for the new list
-
-            const duplicates = [];
-            const newSongs = [];
-            const titlesAdded = new Set();
-            const usedIcons = new Set();
-
-            for (const songData of playlist.songs) {
-                const title = songData.title;
-
-                if (titlesAdded.has(title)) {
-                    duplicates.push(title);
-                    continue; // Skip duplicate within the same file
-                }
-
-                let {icon, iconType = 'emoji'} = songData;
-
-                if (!icon || usedIcons.has(icon)) {
-                    const availableIcon = this.availableIcons.find(i => !usedIcons.has(i));
-                    const randomIndex = Math.floor(Math.random() * this.availableIcons.length);
-                    icon = availableIcon || this.availableIcons[randomIndex] || '🎵';
-                }
-
-                usedIcons.add(icon);
-                titlesAdded.add(title);
-
-                const audioPath = this.songsFolder + title + '.mp3';
-                const exists = await fetch(audioPath, {method: 'HEAD'})
-                    .then(response => response.ok)
-                    .catch(() => false);
-
-                if (exists) {
-                    const resp = await fetch(audioPath);
-                    const blob = await resp.blob();
-
-                    newSongs.push({
-                        id: this.songId++, // Use class-level counter
-                        title: title,
-                        icon,
-                        iconType,
-                        audioPath,
-                        file: blob,
-                        played: false
-                    });
-                } else {
-                    console.warn(`Archivo no encontrado: ${audioPath}`);
-                }
-            }
-
-            this.songs = newSongs; // Assign the filtered list
-
-            this.renderSongsList();
-            this.updateCounters();
-            this.updateUIState();
-
-            // Show duplicate warning first, if any
-            if (duplicates.length > 0) {
-                this.audio.playEffect('error');
-                const message = `Se omitieron las siguientes canciones duplicadas:\n\n- ${duplicates.join('\n- ')}`;
-                this.showAlert(message, 'Canciones Duplicadas Omitidas');
-            }
-
-            // Then, show the main success/error message
-            // Use a timeout to ensure the duplicate alert is seen first if both are shown
-            setTimeout(() => {
-                let message;
-                let messageTitle;
-                if (this.songs.length === 0) {
-                    this.audio.playEffect('error');
-                    message = `Se han importado 0 canciones.\n\nRevisa que los archivos de audio estén en: ${this.songsFolder}\ny que los nombres coincidan con los títulos.`;
-                    messageTitle = 'Error al Importar';
-                } else {
-                    this.audio.playEffect('win');
-                    message = `Lista importada con ${this.songs.length} canciones.\n\nLos archivos de audio deben estar en: ${this.songsFolder}`;
-                    messageTitle = 'Importación Exitosa';
-                }
-                this.showAlert(message, messageTitle);
-            }, duplicates.length > 0 ? 2000 : 0);
-
-        } catch (error) {
-            console.error(error);
-            const message = `Error al importar la lista: ${error.message}`;
-            this.showAlert(message, 'Error de Importación');
+        // Usar StorageManager para leer el archivo
+        const result = await this.storage.importPlaylist(file);
+        
+        if (!result.success) {
+            this.showAlert(`Error al importar la lista: ${result.error}`, 'Error de Importación');
+            event.target.value = '';
+            return;
         }
+
+        const playlist = result.playlist;
+
+        // Reset lists for replacement behavior
+        this.songs = [];
+        this.playedSongs = [];
+        this.songId = 1;
+
+        const duplicates = [];
+        const newSongs = [];
+        const titlesAdded = new Set();
+        const usedIcons = new Set();
+
+        for (const songData of playlist.songs) {
+            const title = songData.title;
+
+            if (titlesAdded.has(title)) {
+                duplicates.push(title);
+                continue;
+            }
+
+            let {icon, iconType = 'emoji'} = songData;
+
+            if (!icon || usedIcons.has(icon)) {
+                const availableIcon = this.availableIcons.find(i => !usedIcons.has(i));
+                const randomIndex = Math.floor(Math.random() * this.availableIcons.length);
+                icon = availableIcon || this.availableIcons[randomIndex] || '🎵';
+            }
+
+            usedIcons.add(icon);
+            titlesAdded.add(title);
+
+            const audioPath = this.songsFolder + title + '.mp3';
+            const exists = await fetch(audioPath, {method: 'HEAD'})
+                .then(response => response.ok)
+                .catch(() => false);
+
+            if (exists) {
+                const resp = await fetch(audioPath);
+                const blob = await resp.blob();
+
+                newSongs.push({
+                    id: this.songId++,
+                    title: title,
+                    icon,
+                    iconType,
+                    audioPath,
+                    file: blob,
+                    played: false
+                });
+            } else {
+                console.warn(`Archivo no encontrado: ${audioPath}`);
+            }
+        }
+
+        this.songs = newSongs;
+
+        this.renderSongsList();
+        this.updateCounters();
+        this.updateUIState();
+
+        // Show duplicate warning first, if any
+        if (duplicates.length > 0) {
+            this.audio.playEffect('error');
+            const message = `Se omitieron las siguientes canciones duplicadas:\n\n- ${duplicates.join('\n- ')}`;
+            this.showAlert(message, 'Canciones Duplicadas Omitidas');
+        }
+
+        // Then, show the main success/error message
+        setTimeout(() => {
+            let message;
+            let messageTitle;
+            if (this.songs.length === 0) {
+                this.audio.playEffect('error');
+                message = `Se han importado 0 canciones.\n\nRevisa que los archivos de audio estén en: ${this.songsFolder}\ny que los nombres coincidan con los títulos.`;
+                messageTitle = 'Error al Importar';
+            } else {
+                this.audio.playEffect('win');
+                message = `Lista importada con ${this.songs.length} canciones.\n\nLos archivos de audio deben estar en: ${this.songsFolder}`;
+                messageTitle = 'Importación Exitosa';
+            }
+            this.showAlert(message, messageTitle);
+        }, duplicates.length > 0 ? 2000 : 0);
         
         event.target.value = '';
     }
