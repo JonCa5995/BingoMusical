@@ -165,66 +165,13 @@ body {
     color: white;
     white-space: nowrap;
 }
-
-/* Botón de pantalla completa */
-.btn-fullscreen {
-    background: var(--gradient-primary);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    padding: 0.5rem 1rem;
-}
-
-/* SPECIAL BUTTONS */
-.btn-special {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1rem;
-    padding: 0.75rem 1.5rem;
-    font-weight: 700;
-}
-
-/* Botón de LÍNEA */
-.btn-linea {
-    background: var(--gradient-success);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-}
-
-.btn-linea:hover:not(:disabled) {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
-}
-
-/* Botón de BINGO */
-.btn-bingo {
-    background: var(--gradient-warning);
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
-    animation: bingoPulse 2s ease-in-out infinite;
-}
-
-.btn-bingo:hover:not(:disabled) {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
-}
-
-@keyframes bingoPulse {
-    0%, 100% {
-        box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
-    }
-    50% {
-        box-shadow: 0 4px 20px rgba(255, 215, 0, 0.7);
-    }
-}
-
 .fullscreen-icon {
     font-size: 1.25rem;
 }
 
 
 
-/* Estados y variantes de botones (agrupados junto al bloque base para evitar sobreescrituras) */
+/* Estados de botones (inmediatamente después del bloque base para evitar sobreescrituras de variantes generales) */
 .btn:focus-visible {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
@@ -245,6 +192,58 @@ body {
 }
 
 /* Variantes de botones */
+.btn-fullscreen {
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+}
+
+/* Botón especial (composición de estilos) */
+.btn-special {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 700;
+}
+
+/* Botón de LÍNEA */
+.btn-linea {
+    background: var(--gradient-success);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* Estado hover específico (debe ir DESPUÉS del hover genérico de .btn) */
+.btn-linea:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+}
+
+/* Botón de BINGO */
+.btn-bingo {
+    background: var(--gradient-warning);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+    animation: bingoPulse 2s ease-in-out infinite;
+}
+
+/* Estado hover específico (debe ir DESPUÉS del hover genérico de .btn) */
+.btn-bingo:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+}
+
+@keyframes bingoPulse {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(255, 215, 0, 0.7);
+    }
+}
 .btn-pause {
     background: var(--secondary-color);
 }
