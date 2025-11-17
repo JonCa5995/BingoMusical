@@ -3,6 +3,7 @@ import {BingoCartonGenerator} from "./bingoCartonGenerator.js";
 import {DOMElements} from "./modules/DOMElements.js";
 import {AudioManager} from "./modules/AudioManager.js";
 import {StorageManager} from "./modules/StorageManager.js";
+import {IconManager} from "./modules/IconManager.js";
 
 export const MIN_SONGS_REQUIRED = 24;
 
@@ -17,7 +18,6 @@ class BingoMusical {
         this.continuousMode = false;
         this.bingoCompleted = false;
         this.lineaCompleted = false;
-        this.currentEditingSongId = null;
         this.gameStarted = false;
         this.confirmCallback = null;
         this.shouldRender = false;
@@ -28,60 +28,9 @@ class BingoMusical {
         this.dom = new DOMElements();
         this.audio = new AudioManager(this.dom);
         this.storage = new StorageManager();
-        this.initializeIcons();
+        this.icons = new IconManager(this.dom, this.audio, () => this.songs);
         
         this.init();
-    }
-
-    initializeIcons() {
-        this.availableIcons = [
-            // 🎵 Música y sonido (28)
-            '🎵', '🎶', '🎼', '🎹', '🎤', '🎧', '🎸', '🎺', '🎻', '🥁', '🎷', '🪕',
-            '🪗', '📯', '🎙️', '📻', '💿', '🎚️', '🎛️', '🔊', '🔇', '🔔', '🔕', '📢',
-            '📣', '🪘', '🪇', '🪈',
-
-            // 🎉 Entretenimiento y celebración (32)
-            '🎉', '🎊', '🎈', '🎁', '🎂', '🍰', '🍾', '🥂', '🍷', '🍸', '🍹', '🍺',
-            '🎇', '✨', '💫', '🎭', '🎪', '🎬', '🎮', '🕹️', '🎯', '🎲',
-            '🃏', '🎰', '🏆', '🥇', '🥈', '🥉', '🎖️', '🏅', '🎟️', '🎫',
-
-            // 😀 Emociones y expresiones (32)
-            '😀', '😁', '😂', '😅', '😊', '😍', '🥰', '😘', '😎', '🤩', '🤗',
-            '😇', '🥳', '🤪', '😜', '🤓', '😏', '😌', '😴', '😢', '😭', '😡', '🤬',
-            '😱', '😳', '🤯', '🤔', '🤨', '🙄', '😆', '😋', '😺',
-
-            // 🌿 Naturaleza y colores (22)
-            '🌞', '🌝', '🌙', '⭐', '🌟', '🌠', '🌌', '🌈', '🔥', '💧', '❄️', '🍀',
-            '🌹', '🌻', '🌸', '🌷', '🌼', '🌳', '🌴', '🌵', '🍂', '🍁',
-
-            // 👥 Personas y gente (56)
-            '👶', '🧒', '👦', '👧', '🧑', '👩', '👨', '👵', '🧓', '👴', '👩‍🎤', '👩‍🏫',
-            '👩‍🍳', '👩‍🚀', '👩‍⚕️', '👩‍💻', '👩‍🎨', '👩‍🔧', '👩‍🚒', '👩‍✈️', '👩‍⚖️', '👩‍🌾', '👩‍🔬',
-            '👫', '🤝', '👏', '👍', '🙌', '🙏', '🤟', '✌️', '👸', '🤴', '👰', '🤵',
-            '👼', '🎅', '🤶', '🧙', '🧚', '🧛', '🧜', '🧝', '🧞', '🧟', '🧌', '🦸',
-            '🦹', '👯', '👨‍👩‍👧', '👨‍👩‍👦', '👨‍👩‍👧‍👦', '👪', '👨‍👦', '👩‍👧',
-
-            // ✝️ Iglesias y religión / espiritualidad (23)
-            '⛪', '🕌', '🛕', '🕍', '⛩️', '🏛️', '✝️', '✡️', '🕎', '☦️', '🛐', '📿',
-            '🕊️', '🔔', '🕯️', '📖', '📜', '💒', '☁️', '🌅',
-            '🌄', '🙏', '🧎',
-
-            // 🍔 Comida y bebida (24)
-            '🍎', '🍊', '🍌', '🍉', '🍇', '🍓', '🍒', '🍍', '🥭', '🥝', '🍑', '🍋',
-            '🥑', '🥦', '🥕', '🌽', '🥔', '🍞', '🥐', '🥨', '🍔', '🍕', '🍟', '🌭',
-
-            // 🚗 Transporte y viajes (21)
-            '🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🚚',
-            '🚜', '🚲', '🛵', '🏍️', '🚂', '✈️', '🚀', '🛸', '⛵', '🚢',
-
-            // 💻 Tecnología (17)
-            '💻', '🖨️', '⌨️', '🖱️', '📱', '☎️', '📞', '📟', '📠', '📺',
-            '📷', '🎥', '🎞️', '📹', '💾', '🖲️', '🔋',
-
-            // ⚽ Deportes y actividades (24)
-            '⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🥏', '🎱', '🏓', '🏸', '🥊',
-            '🥋', '🥅', '⛳', '⛸️', '🎿', '🛷', '🥌', '🏒', '🏑', '🏏', '🤿', '🏹'
-        ];
     }
 
     init() {
@@ -174,14 +123,6 @@ class BingoMusical {
 
 
     _setupModalEventListeners() {
-        this.dom.closeIconModalBtn.addEventListener('click', () => this.closeIconModal());
-        this.dom.iconModal.addEventListener('click', (e) => {
-            if (e.target.id === 'icon-modal') this.closeIconModal();
-        });
-
-        this.dom.uploadCustomIconBtn.addEventListener('click', () => this.dom.customIconUploadInput.click());
-        this.dom.customIconUploadInput.addEventListener('change', (e) => this.uploadCustomIcon(e));
-        
         this.dom.confirmCancelBtn.addEventListener('click', () => this.closeConfirmModal(false));
         this.dom.confirmAcceptBtn.addEventListener('click', () => this.closeConfirmModal(true));
         this.dom.alertOkBtn.addEventListener('click', () => this.closeAlertModal());
@@ -213,7 +154,7 @@ class BingoMusical {
 
     closeModalsOnEscape() {
         if (!this.dom.iconModal.classList.contains('hidden')) {
-            this.closeIconModal();
+            this.icons.closeIconModal();
         } else if (!this.dom.cartonModal.classList.contains('hidden')) {
             this.closeCartonModal();
         } else if (!this.dom.confirmModal.classList.contains('hidden')) {
@@ -558,9 +499,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             let {icon, iconType = 'emoji'} = songData;
 
             if (!icon || usedIcons.has(icon)) {
-                const availableIcon = this.availableIcons.find(i => !usedIcons.has(i));
-                const randomIndex = Math.floor(Math.random() * this.availableIcons.length);
-                icon = availableIcon || this.availableIcons[randomIndex] || '🎵';
+                icon = this.icons.getRandomAvailableIcon(this.songs);
             }
 
             usedIcons.add(icon);
@@ -622,159 +561,27 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     getAvailableIcons() {
-        const usedIcons = new Set(
-            this.songs
-                .filter(song => song.iconType === 'emoji' && song.icon != null)
-                .map(song => song.icon)
-        );
-        return this.availableIcons.filter(icon => !usedIcons.has(icon));
+        return this.icons.getAvailableIcons(this.songs);
     }
 
     isIconUsed(icon) {
-        return this.songs.some(s => 
-            s.icon === icon && 
-            s.iconType === 'emoji' && 
-            s.id !== this.currentEditingSongId
-        );
+        return this.icons.isIconUsed(icon, this.songs);
     }
 
     openIconPicker(songId) {
-        const song = this.songs.find(s => s.id === songId);
-        if (!song) return;
-
-        if (song.played) {
-            const message = 'No puedes cambiar el icono de una canción ' +
-                          'que ya fue reproducida.';
-            this.showAlert(message, 'Canción Ya Reproducida');
-            return;
-        }
-
         if (this.gameStarted) {
-            const message = 'No puedes cambiar iconos una vez que ' +
-                          'el juego ha iniciado.';
+            const message = 'No puedes cambiar iconos una vez que el juego ha iniciado.';
             this.showAlert(message, 'Juego Iniciado');
             return;
         }
 
-        this.currentEditingSongId = songId;
-        this.dom.modalSongTitle.textContent = song.title;
-
-        // Usar DocumentFragment para renderizado en batch
-        const fragment = document.createDocumentFragment();
-
-        for (const icon of this.availableIcons) {
-            const iconOption = document.createElement('button');
-            iconOption.type = 'button';
-            iconOption.className = 'icon-option';
-            iconOption.setAttribute('aria-label', `Seleccionar icono ${icon}`);
-
-            const isUsed = this.isIconUsed(icon);
-            const isCurrentSongIcon = icon === song.icon;
-
-            if (isCurrentSongIcon) {
-                iconOption.classList.add('selected');
-                iconOption.setAttribute('aria-pressed', 'true');
-            } else {
-                iconOption.setAttribute('aria-pressed', 'false');
-            }
-
-            if (isUsed && !isCurrentSongIcon) {
-                iconOption.style.opacity = '0.3';
-                iconOption.style.cursor = 'not-allowed';
-                iconOption.title = 'Este icono ya está en uso';
-                iconOption.disabled = true;
-            } else {
-                iconOption.onclick = () => {
-                    if (!isUsed || isCurrentSongIcon) {
-                        this.selectIcon(icon);
-                    }
-                };
-            }
-
-            iconOption.textContent = icon;
-            fragment.appendChild(iconOption);
-        }
-
-        // Una sola operación DOM
-        this.dom.iconPickerContainer.innerHTML = '';
-        this.dom.iconPickerContainer.appendChild(fragment);
-
-        this.dom.iconModal.classList.remove('hidden');
-        
-        if (this.dom.iconModal.showModal) {
-            this.dom.iconModal.showModal();
-        }
-        
-        this.audio.playEffect('click');
-    }
-
-    async uploadCustomIcon(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const song = this.songs.find(s => s.id === this.currentEditingSongId);
-        if (!song) return;
-
-        const reader = new FileReader();
-
-        const handleUpdate = () => {
-            song.iconType = 'image';
+        const result = this.icons.openIconPicker(songId, this.songs, () => {
             this.renderSongsList();
-            this.audio.playEffect('click');
-            this.closeIconModal();
-            this.showAlert('Icono personalizado cargado correctamente.', 'Icono Actualizado');
-        };
+        });
 
-        reader.onload = (event) => {
-            if (file.type === 'image/png') {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 200;
-                    canvas.height = 200;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, 200, 200);
-                    song.icon = canvas.toDataURL('image/png');
-                    handleUpdate(); // Call update logic after canvas is ready
-                };
-                img.src = event.target.result;
-            } else {
-                song.icon = event.target.result;
-                handleUpdate(); // Call update logic directly for SVG
-            }
-        };
-
-        reader.readAsDataURL(file);
-    }
-
-    selectIcon(icon, iconType = 'emoji') {
-        if (this.currentEditingSongId === null) return;
-
-        const song = this.songs.find(s => s.id === this.currentEditingSongId);
-        if (song && !song.played) {
-            song.icon = icon;
-            song.iconType = iconType;
-
-            this.renderSongsList();
-            this.audio.playEffect('click');
-
-            for (const opt of document.querySelectorAll('.icon-option')) {
-                const isSelected = opt.textContent === icon;
-                opt.classList.toggle('selected', isSelected);
-                opt.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
-            }
-
-            setTimeout(() => this.closeIconModal(), 300);
+        if (!result.success) {
+            this.showAlert(result.error, result.title || 'Error');
         }
-    }
-
-    closeIconModal() {
-        if (this.dom.iconModal.close) {
-            this.dom.iconModal.close();
-        }
-        
-        this.dom.iconModal.classList.add('hidden');
-        this.currentEditingSongId = null;
     }
 
     addSongs(event) {
@@ -799,10 +606,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
                 continue;
             }
 
-            const availableIconsList = this.getAvailableIcons();
-            const randomIcon = availableIconsList.length > 0
-                ? availableIconsList[Math.floor(Math.random() * availableIconsList.length)]
-                : this.availableIcons[Math.floor(Math.random() * this.availableIcons.length)];
+            const randomIcon = this.icons.getRandomAvailableIcon(this.songs);
 
             newSongs.push({
                 id: this.songId++,
