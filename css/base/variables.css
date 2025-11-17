@@ -1,0 +1,36 @@
+:root {
+    --primary-color: #6366f1;
+    --secondary-color: #8b5cf6;
+    --background-color: #0f172a;
+    --surface-color: #1e293b;
+    --text-color: #f1f5f9;
+    --text-muted: #94a3b8;
+    --success-color: #10b981;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+    --primary-hover: #4f46e5;
+    --card-bg: #273449;
+    --border-color: #334155;
+    --border-radius: 12px;
+    --spacing: 1.5rem;
+    --gradient-primary: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    --gradient-success: linear-gradient(135deg, #10b981, #059669);
+    --gradient-warning: linear-gradient(135deg, #ffd700, #ff8c00);
+    --body-bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+[data-theme="light"] {
+    --primary-color: #4f46e5;
+    --secondary-color: #7c3aed;
+    --background-color: #f8fafc;
+    --surface-color: #ffffff;
+    --text-color: #1e293b;
+    --text-muted: #64748b;
+    --success-color: #059669;
+    --danger-color: #dc2626;
+    --warning-color: #d97706;
+    --primary-hover: #4338ca;
+    --card-bg: #f1f5f9;
+    --border-color: #e2e8f0;
+    --body-bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+}

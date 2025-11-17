@@ -1,0 +1,53 @@
+.celebration-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.5s ease-in;
+}
+
+.celebration-overlay.hidden {
+    display: none;
+}
+
+aside.celebration-overlay {
+    width: 100%;
+    height: 100%;
+}
+
+.celebration-content {
+    text-align: center;
+    animation: bounceIn 0.8s ease-out;
+}
+
+article.celebration-content {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.celebration-title {
+    font-size: 4rem;
+    background: var(--gradient-warning);
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 1rem;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.celebration-title-linea {
+    background: var(--gradient-success);
+    background-clip: text;
+    color: transparent;
+}
+
+.celebration-text {
+    font-size: 1.5rem;
+    color: var(--text-color);
+    margin-bottom: 2rem;
+}

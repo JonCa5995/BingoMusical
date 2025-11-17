@@ -1,0 +1,227 @@
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.volume-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.volume-slider {
+    width: 100px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--background-color);
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    transition: outline-color 0.2s;
+    appearance: none;
+    cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.volume-slider:focus-visible {
+    outline-color: var(--primary-color);
+}
+
+.volume-slider:hover::-webkit-slider-thumb {
+    transform: scale(1.2);
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: none;
+}
+
+.volume-value {
+    font-size: 0.875rem;
+    color: var(--text-color);
+    min-width: 40px;
+}
+
+.search-box {
+    flex: 1;
+    min-width: 120px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    background: var(--background-color);
+    color: var(--text-color);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.search-input::placeholder {
+    color: var(--text-muted);
+}
+
+.filter-select {
+    flex: 1;
+    min-width: 120px;
+    padding: 0.6rem 0.7rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    background: var(--background-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.filter-select:hover {
+    border-color: var(--primary-hover);
+}
+
+.file-input-wrapper {
+    position: relative;
+    flex: 3;
+    min-width: 200px;
+}
+
+.file-input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    overflow: hidden;
+    z-index: -1;
+}
+
+.file-label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.8rem;
+    background: var(--gradient-primary);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+    height: auto;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.file-label:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.5);
+}
+
+.file-label:active {
+    transform: translateY(0);
+}
+
+.file-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.file-text {
+    font-weight: 600;
+}
+
+.file-label.dragover {
+    background: linear-gradient(135deg, var(--success-color), #34d399);
+    transform: scale(1.02);
+}
+
+.file-input:focus + .file-label {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.file-import {
+    display: none;
+}
+
+.config-input,
+.config-select {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: var(--background-color);
+    color: var(--text-color);
+    transition: border-color 0.2s;
+}
+
+.config-input:focus,
+.config-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.config-color-input {
+    width: 80px;
+    height: 40px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.config-color-input:hover {
+    border-color: var(--primary-color);
+}
+
+.config-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--text-color);
+}
+
+.config-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.modal-carton-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+}

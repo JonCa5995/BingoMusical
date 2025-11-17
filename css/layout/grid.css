@@ -1,0 +1,30 @@
+.history-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .5rem;
+    padding: .5rem;
+    flex: 1;
+}
+
+body.fullscreen .history-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.icon-picker {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.75rem;
+}
+
+.carton-settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.preview-carton-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 3px;
+}

@@ -1,0 +1,117 @@
+.player-section {
+    background: var(--surface-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.player-container {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    margin: 0;
+}
+
+.player-info {
+    flex: 1;
+}
+
+.song-icon-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.song-icon {
+    width: 200px;
+    height: 200px;
+    background: var(--background-color);
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+    position: relative;
+}
+
+.song-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    position: relative;
+    z-index: 2;
+}
+
+.pulse-animation {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    border-radius: var(--border-radius);
+    opacity: 0;
+    z-index: 1;
+}
+
+.song-icon.playing .pulse-animation {
+    animation: pulse 2s ease-out infinite;
+    opacity: 1;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, transparent 70%);
+}
+
+.controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.progress-container {
+    width: 100%;
+}
+
+progress.progress-bar,
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--background-color);
+    border-radius: 4px;
+    overflow: visible;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    appearance: none;
+    border: none;
+    display: block;
+}
+
+progress.progress-bar::-webkit-progress-bar {
+    background: var(--background-color);
+    border-radius: 4px;
+    height: 8px;
+}
+
+progress.progress-bar::-webkit-progress-value {
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 4px;
+    transition: width 0.1s;
+    height: 8px;
+}
+
+progress.progress-bar::-moz-progress-bar {
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 4px;
+    transition: width 0.1s;
+    height: 8px;
+}
+
+progress.progress-bar[value] {
+    background: var(--background-color);
+}
+
+.time-display {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}

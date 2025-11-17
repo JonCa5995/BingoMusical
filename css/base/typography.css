@@ -1,0 +1,29 @@
+.app-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: var(--gradient-primary);
+    background-clip: text;
+    color: transparent;
+    margin: 0;
+}
+
+h2 {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+h3 {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+}
+
+#song-title {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+time {
+    font-variant-numeric: tabular-nums;
+}
