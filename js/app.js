@@ -7,6 +7,7 @@ import {IconManager} from "./modules/IconManager.js";
 import {SongManager} from "./modules/SongManager.js";
 import {GameManager} from "./modules/GameManager.js";
 import {UIManager} from "./modules/UIManager.js";
+import {ModalManager} from "./modules/ModalManager.js";
 
 export const MIN_SONGS_REQUIRED = 24;
 
@@ -17,8 +18,6 @@ class BingoMusical {
     constructor() {
         this.songs = [];
         this.continuousMode = false;
-        this.confirmCallback = null;
-        this.shouldRender = false;
         
         this.cartonGenerator = new BingoCartonGenerator();
         this.songsFolder = 'canciones/';
@@ -29,6 +28,7 @@ class BingoMusical {
         this.songManager = new SongManager();
         this.game = new GameManager();
         this.ui = new UIManager(this.dom, MIN_SONGS_REQUIRED);
+        this.modal = new ModalManager(this.dom, this.audio);
         
         this.init();
     }
@@ -144,22 +144,11 @@ class BingoMusical {
     }
 
     checkOpenModals() {
-        return !this.dom.iconModal.classList.contains('hidden') ||
-            !this.dom.cartonModal.classList.contains('hidden') ||
-            !this.dom.confirmModal.classList.contains('hidden') ||
-            !this.dom.alertModal.classList.contains('hidden');
+        return this.modal.checkOpenModals();
     }
 
     closeModalsOnEscape() {
-        if (!this.dom.iconModal.classList.contains('hidden')) {
-            this.icons.closeIconModal();
-        } else if (!this.dom.cartonModal.classList.contains('hidden')) {
-            this.closeCartonModal();
-        } else if (!this.dom.confirmModal.classList.contains('hidden')) {
-            this.closeConfirmModal(false);
-        } else if (!this.dom.alertModal.classList.contains('hidden')) {
-            this.closeAlertModal();
-        }
+        this.modal.closeModalsOnEscape(() => this.icons.closeIconModal());
     }
 
     playPauseOnSpace() {
@@ -289,57 +278,19 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
     // Sistema de modales personalizados
     showAlert(message, title = 'Información') {
-        this.dom.alertTitle.textContent = title;
-        this.dom.alertMessage.innerHTML = message;
-        this.dom.alertModal.classList.remove('hidden');
-        
-        if (this.dom.alertModal.showModal) {
-            this.dom.alertModal.showModal();
-        }
-        
-        const isError = /error|inválido|insuficientes/i.test(title);
-        this.audio.playEffect(isError ? 'error' : 'click');
+        this.modal.showAlert(message, title);
     }
 
     closeAlertModal() {
-        if (this.shouldRender) {
-            this.renderSongsList();
-            this.shouldRender = false;
-        }
-        
-        if (this.dom.alertModal.close) {
-            this.dom.alertModal.close();
-        }
-        
-        this.dom.alertModal.classList.add('hidden');
+        this.modal.closeAlertModal(() => this.renderSongsList());
     }
 
     showConfirm(message, title = 'Confirmar') {
-        return new Promise((resolve) => {
-            this.dom.confirmTitle.textContent = title;
-            this.dom.confirmMessage.textContent = message;
-            this.dom.confirmModal.classList.remove('hidden');
-            
-            if (this.dom.confirmModal.showModal) {
-                this.dom.confirmModal.showModal();
-            }
-            
-            this.confirmCallback = resolve;
-            this.audio.playEffect('click');
-        });
+        return this.modal.showConfirm(message, title);
     }
 
     closeConfirmModal(result) {
-        if (this.dom.confirmModal.close) {
-            this.dom.confirmModal.close();
-        }
-        
-        this.dom.confirmModal.classList.add('hidden');
-        
-        if (this.confirmCallback) {
-            this.confirmCallback(result);
-            this.confirmCallback = null;
-        }
+        this.modal.closeConfirmModal(result);
     }
 
     setupDragAndDrop() {
@@ -986,31 +937,15 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     openCartonModal() {
-        const totalSongs = this.getTotalSongsWithFiles();
-
-        if (totalSongs < MIN_SONGS_REQUIRED) {
-            this.showAlert(`Necesitas al menos ${MIN_SONGS_REQUIRED} canciones cargadas para poder generar cartones.`, 'Canciones Insuficientes');
-            return;
-        }
-
-        this.dom.cartonModal.classList.remove('hidden');
-        
-        if (this.dom.cartonModal.showModal) {
-            this.dom.cartonModal.showModal();
-        }
-        
-        // Generar vista previa inicial
-        this.updateCartonPreview();
-        
-        this.audio.playEffect('click');
+        this.modal.openCartonModal(
+            this.getTotalSongsWithFiles(),
+            MIN_SONGS_REQUIRED,
+            () => this.updateCartonPreview()
+        );
     }
 
     closeCartonModal() {
-        if (this.dom.cartonModal.close) {
-            this.dom.cartonModal.close();
-        }
-        
-        this.dom.cartonModal.classList.add('hidden');
+        this.modal.closeCartonModal();
     }
 
     async generateCartones(format = 'html') {

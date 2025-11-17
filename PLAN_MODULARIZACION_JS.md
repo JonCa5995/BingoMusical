@@ -248,7 +248,7 @@ js/
 5. ✅ **SongManager.js** - Lógica central ✔️ COMPLETADO
 6. ✅ **GameManager.js** - Lógica de juego ✔️ COMPLETADO
 7. ✅ **UIManager.js** - Renderizado ✔️ COMPLETADO
-8. 🎪 **ModalManager.js** - Interfaz secundaria
+8. ✅ **ModalManager.js** - Interfaz secundaria ✔️ COMPLETADO
 9. ⚙️ **SettingsManager.js** - Configuración
 10. 🎴 **CartonManager.js** - Funcionalidad extra
 11. 🔧 **Refactorización final app.js** - Integración
