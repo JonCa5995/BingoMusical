@@ -1,6 +1,7 @@
 // Bingo Musical Application
 import {BingoCartonGenerator} from "./bingoCartonGenerator.js";
 import {DOMElements} from "./modules/DOMElements.js";
+import {AudioManager} from "./modules/AudioManager.js";
 
 export const MIN_SONGS_REQUIRED = 24;
 
@@ -12,10 +13,7 @@ class BingoMusical {
         this.songs = [];
         this.playedSongs = [];
         this.currentSongIndex = null;
-        this.isPlaying = false;
         this.continuousMode = false;
-        this.effectsVolume = 0.7;
-        this.musicVolume = 1;
         this.bingoCompleted = false;
         this.lineaCompleted = false;
         this.currentEditingSongId = null;
@@ -27,8 +25,8 @@ class BingoMusical {
         this.cartonGenerator = new BingoCartonGenerator();
         this.songsFolder = 'canciones/';
         this.dom = new DOMElements();
+        this.audio = new AudioManager(this.dom);
         this.initializeIcons();
-        this.soundEffects = { start: null, win: null, click: null, complete: null, error: null };
         
         this.init();
     }
@@ -87,7 +85,6 @@ class BingoMusical {
     init() {
         this.setupEventListeners();
         this.setupDragAndDrop();
-        this.generateSoundEffects();
         this.loadThemePreference();
         this.setupDebouncing();
         this.renderSongsList();
@@ -108,13 +105,11 @@ class BingoMusical {
         this.dom.pauseBtn.addEventListener('click', () => this.pauseSong());
         this.dom.stopBtn.addEventListener('click', () => this.stopSong());
 
-        // Eventos del reproductor de audio
-        this.dom.audioPlayer.addEventListener('timeupdate', () => this.updateProgress());
+        // Evento cuando termina una canción
         this.dom.audioPlayer.addEventListener('ended', () => this.onSongEnded());
-        this.dom.audioPlayer.addEventListener('loadedmetadata', () => this.updateDuration());
 
         // Clic en barra de progreso
-        this.dom.progressBar.addEventListener('click', (e) => this.seekTo(e));
+        this.dom.progressBar.addEventListener('click', (e) => this.audio.seekTo(e));
     }
 
     _setupSongManagementEventListeners() {
@@ -159,7 +154,6 @@ class BingoMusical {
         this._setupPlayerEventListeners();
         this._setupSongManagementEventListeners();
         this._setupCartonEventListeners();
-        this._setupVolumeControls();
         this._setupModalEventListeners();
         this._setupCelebrationEventListeners();
         this._setupFullscreenEventListeners();
@@ -175,20 +169,7 @@ class BingoMusical {
         this.dom.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
     }
 
-    _setupVolumeControls() {
-        this.dom.musicVolumeSlider.addEventListener('input', (e) => {
-            this.musicVolume = e.target.value / 100;
-            this.dom.audioPlayer.volume = this.musicVolume;
-            this.dom.musicVolumeValueSpan.textContent = `${e.target.value}%`;
-            e.target.setAttribute('aria-valuenow', e.target.value);
-        });
 
-        this.dom.effectsVolumeSlider.addEventListener('input', (e) => {
-            this.effectsVolume = e.target.value / 100;
-            this.dom.effectsVolumeValueSpan.textContent = `${e.target.value}%`;
-            e.target.setAttribute('aria-valuenow', e.target.value);
-        });
-    }
 
     _setupModalEventListeners() {
         this.dom.closeIconModalBtn.addEventListener('click', () => this.closeIconModal());
@@ -241,7 +222,7 @@ class BingoMusical {
     }
 
     playPauseOnSpace() {
-        if (this.isPlaying) {
+        if (this.audio.isPlaying) {
             this.pauseSong();
         } else if (this.currentSongIndex !== null) {
             this.pauseSong(); // Esto actúa como resume
@@ -354,7 +335,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         this.applyTheme(newTheme);
         localStorage.setItem('theme', newTheme);
-        this.playEffect('click');
+        this.audio.playEffect('click');
     }
 
     applyTheme(theme) {
@@ -376,7 +357,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         }
         
         const isError = /error|inválido|insuficientes/i.test(title);
-        this.playEffect(isError ? 'error' : 'click');
+        this.audio.playEffect(isError ? 'error' : 'click');
     }
 
     closeAlertModal() {
@@ -403,7 +384,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             }
             
             this.confirmCallback = resolve;
-            this.playEffect('click');
+            this.audio.playEffect('click');
         });
     }
 
@@ -461,75 +442,6 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         }
     }
 
-    generateSoundEffects() {
-        if (!globalThis.AudioContext) {
-            console.warn('Web Audio API no soportada');
-            return;
-        }
-
-        this.soundEffects.start = () => this._createSoundEffect(400, 800, 0.3);
-        this.soundEffects.win = () => this._createMelody([523.25, 587.33, 659.25, 783.99], 0.15, 0.3);
-        this.soundEffects.click = () => this._createSoundEffect(800, 800, 0.05, 0.2);
-        this.soundEffects.complete = () => this._createMelody([523.25, 659.25, 783.99, 1046.5], 0.1, 0.4, 'triangle');
-        this.soundEffects.error = () => this._createSoundEffect(600, 100, 0.6, 0.6, 'square');
-    }
-
-    _createSoundEffect(startFreq, endFreq, duration, volumeMultiplier = 1, waveType = 'sine') {
-        const audioCtx = new AudioContext();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-
-        oscillator.type = waveType;
-
-        oscillator.frequency.setValueAtTime(startFreq, audioCtx.currentTime);
-        if (startFreq !== endFreq) {
-            oscillator.frequency.exponentialRampToValueAtTime(endFreq, audioCtx.currentTime + duration);
-        }
-
-        gainNode.gain.setValueAtTime(this.effectsVolume * volumeMultiplier, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-
-        oscillator.start(audioCtx.currentTime);
-        oscillator.stop(audioCtx.currentTime + duration);
-    }
-
-    _createMelody(notes, interval, volumeMultiplier, waveType = 'sine') {
-        const audioCtx = new AudioContext();
-        
-        for (const [index, freq] of notes.entries()) {
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            oscillator.type = waveType;
-            oscillator.frequency.value = freq;
-
-            const startTime = audioCtx.currentTime + (index * interval);
-            const duration = waveType === 'triangle' ? 0.5 : 0.15;
-            
-            gainNode.gain.setValueAtTime(this.effectsVolume * volumeMultiplier, startTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-
-            oscillator.start(startTime);
-            oscillator.stop(startTime + duration);
-        }
-    }
-
-    playEffect(effectName) {
-        if (this.soundEffects[effectName] && this.effectsVolume > 0) {
-            try {
-                this.soundEffects[effectName]();
-            } catch (error) {
-                console.warn('Error al reproducir efecto:', error);
-            }
-        }
-    }
-
     getTotalSongsWithFiles() {
         return this.songs.filter(s => s.file).length;
     }
@@ -558,7 +470,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         }
 
         this.lineaCompleted = true;
-        this.playEffect('win');
+        this.audio.playEffect('win');
         setTimeout(() => this.dom.lineaOverlay.classList.remove('hidden'), 500);
     }
 
@@ -586,7 +498,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         }
 
         this.bingoCompleted = true;
-        this.playEffect('complete');
+        this.audio.playEffect('complete');
         setTimeout(() => this.dom.celebrationOverlay.classList.remove('hidden'), 500);
     }
 
@@ -622,7 +534,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         link.remove();
 
         URL.revokeObjectURL(url);
-        this.playEffect('click');
+        this.audio.playEffect('click');
         
         const message = `Lista de canciones exportada correctamente.\n\n` +
                        `Coloca el archivo JSON en la carpeta raíz del proyecto.\n` +
@@ -709,7 +621,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
             // Show duplicate warning first, if any
             if (duplicates.length > 0) {
-                this.playEffect('error');
+                this.audio.playEffect('error');
                 const message = `Se omitieron las siguientes canciones duplicadas:\n\n- ${duplicates.join('\n- ')}`;
                 this.showAlert(message, 'Canciones Duplicadas Omitidas');
             }
@@ -720,11 +632,11 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
                 let message;
                 let messageTitle;
                 if (this.songs.length === 0) {
-                    this.playEffect('error');
+                    this.audio.playEffect('error');
                     message = `Se han importado 0 canciones.\n\nRevisa que los archivos de audio estén en: ${this.songsFolder}\ny que los nombres coincidan con los títulos.`;
                     messageTitle = 'Error al Importar';
                 } else {
-                    this.playEffect('win');
+                    this.audio.playEffect('win');
                     message = `Lista importada con ${this.songs.length} canciones.\n\nLos archivos de audio deben estar en: ${this.songsFolder}`;
                     messageTitle = 'Importación Exitosa';
                 }
@@ -824,7 +736,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             this.dom.iconModal.showModal();
         }
         
-        this.playEffect('click');
+        this.audio.playEffect('click');
     }
 
     async uploadCustomIcon(e) {
@@ -839,7 +751,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         const handleUpdate = () => {
             song.iconType = 'image';
             this.renderSongsList();
-            this.playEffect('click');
+            this.audio.playEffect('click');
             this.closeIconModal();
             this.showAlert('Icono personalizado cargado correctamente.', 'Icono Actualizado');
         };
@@ -875,7 +787,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             song.iconType = iconType;
 
             this.renderSongsList();
-            this.playEffect('click');
+            this.audio.playEffect('click');
 
             for (const opt of document.querySelectorAll('.icon-option')) {
                 const isSelected = opt.textContent === icon;
@@ -937,7 +849,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
         if (newSongs.length > 0) {
             this.songs.push(...newSongs);
-            this.playEffect('click');
+            this.audio.playEffect('click');
             this.renderSongsList();
             this.updateCounters();
             this.updateUIState();
@@ -958,7 +870,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             this.songs = this.songs.filter(s => s.id !== songId);
             this.renderSongsList();
             this.updateCounters();
-            this.playEffect('click');
+            this.audio.playEffect('click');
             this.updateUIState();
         }
     }
@@ -1068,7 +980,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
 
         li.onclick = () => {
             if (song.file && !this.gameStarted) {
-                this.playEffect('click');
+                this.audio.playEffect('click');
                 this.playSong(song.id);
             }
         };
@@ -1236,7 +1148,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         
         if (confirmed) {
             this.songs = [];
-            this.playEffect('click');
+            this.audio.playEffect('click');
             this.filterAndSortSongs();
             this.updateCounters();
             this.updateUIState();
@@ -1252,7 +1164,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             btn.innerHTML = '<span aria-hidden="true">⏸</span> Detener Modo Continuo';
             btn.style.background = 'var(--danger-color)';
             btn.setAttribute('aria-pressed', 'true');
-            this.playEffect('start');
+            this.audio.playEffect('start');
         } else {
             btn.innerHTML = '<span aria-hidden="true">🔄</span> Modo Continuo';
             btn.style.background = 'var(--text-muted)';
@@ -1295,54 +1207,34 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             return;
         }
 
-        this.playEffect('start');
-        this.dom.audioPlayer.pause();
-        this.dom.audioPlayer.src = URL.createObjectURL(song.file);
-        this.dom.audioPlayer.volume = this.musicVolume;
-        this.dom.audioPlayer.play();
+        // Usar AudioManager para reproducir
+        this.audio.play(song.file, () => {
+            this.currentSongIndex = songId;
+            this.updatePlayerUI(song);
+            this.updateControls(true);
 
-        this.currentSongIndex = songId;
-        this.isPlaying = true;
+            // Only do game logic if the game has started
+            if (this.gameStarted && !song.played) {
+                song.played = true;
+                this.playedSongs.push(song);
+                this.addToHistory(song);
+                this.updateCounters();
+                this.audio.playEffect('win');
+            }
 
-        this.updatePlayerUI(song);
-        this.updateControls(true);
-
-        // Only do game logic if the game has started
-        if (this.gameStarted && !song.played) {
-            song.played = true;
-            this.playedSongs.push(song);
-            this.addToHistory(song);
-            this.updateCounters();
-            this.playEffect('win');
-        }
-
-        // Always re-render the list to show the current playing song
-        this.renderSongsList();
+            // Always re-render the list to show the current playing song
+            this.renderSongsList();
+        });
     }
 
     pauseSong() {
-        this.playEffect('click');
-
-        if (this.isPlaying) {
-            this.dom.audioPlayer.pause();
-            this.isPlaying = false;
-            this.updateControls(false);
-        } else {
-            this.dom.audioPlayer.play();
-            this.isPlaying = true;
-            this.updateControls(true);
-        }
+        const isNowPlaying = this.audio.pause();
+        this.updateControls(isNowPlaying);
     }
 
     stopSong() {
-        this.playEffect('click');
-        this.dom.audioPlayer.pause();
-        this.dom.audioPlayer.currentTime = 0;
-        this.isPlaying = false;
+        this.audio.stop();
         this.updateControls(false);
-
-        this.dom.progressFill.value = 0;
-        this.dom.progressFill.setAttribute('aria-valuenow', '0');
         this.dom.songIconContainer.classList.remove('playing');
         this.renderSongsList();
     }
@@ -1393,43 +1285,8 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         }
     }
 
-    updateProgress() {
-        const progress = (this.dom.audioPlayer.currentTime / this.dom.audioPlayer.duration) * 100;
-        if (Number.isFinite(progress)) {
-            this.dom.progressFill.value = progress;
-            this.dom.progressFill.setAttribute('aria-valuenow', Math.round(progress).toString());
-
-            this.dom.currentTimeSpan.textContent = this.formatTime(this.dom.audioPlayer.currentTime);
-            this.dom.currentTimeSpan.setAttribute('datetime', `PT${Math.floor(this.dom.audioPlayer.currentTime)}S`);
-        }
-    }
-
-    updateDuration() {
-        this.dom.durationSpan.textContent = this.formatTime(this.dom.audioPlayer.duration);
-        this.dom.durationSpan.setAttribute('datetime', `PT${Math.floor(this.dom.audioPlayer.duration)}S`);
-    }
-
-    formatTime(seconds) {
-        if (Number.isNaN(seconds)) return '0:00';
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    seekTo(event) {
-        if (!this.dom.audioPlayer.src) return;
-
-        const progressBar = event.currentTarget;
-        const clickX = event.offsetX;
-        const width = progressBar.offsetWidth;
-        const percentage = clickX / width;
-
-        this.dom.audioPlayer.currentTime = percentage * this.dom.audioPlayer.duration;
-        this.playEffect('click');
-    }
-
     onSongEnded() {
-        this.isPlaying = false;
+        this.audio.isPlaying = false;
         this.dom.songIconContainer.classList.remove('playing');
 
         // Handle continuous PREVIEW mode
@@ -1445,7 +1302,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
                 // All songs have been played, trigger BINGO automatically
                 this.bingoCompleted = true;
                 setTimeout(() => {
-                    this.playEffect('complete');
+                    this.audio.playEffect('complete');
                     this.dom.celebrationOverlay.classList.remove('hidden');
                 }, 500);
             }
@@ -1476,7 +1333,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         historyItem.setAttribute('aria-label', `Canción reproducida: ${song.title}`);
 
         historyItem.addEventListener('click', () => {
-            this.playEffect('click');
+            this.audio.playEffect('click');
             this.playSong(song.id);
         });
 
@@ -1503,7 +1360,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     async reiniciarJuego() {
-        this.playEffect('click');
+        this.audio.playEffect('click');
 
         const confirmed = await this.showConfirm(
             '¿Estás seguro de que quieres reiniciar el juego? Esto limpiará el historial y el progreso actual.',
@@ -1535,7 +1392,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
     }
 
     toggleFullscreen() {
-        this.playEffect('click');
+        this.audio.playEffect('click');
 
         if (document.fullscreenElement) {
             document.exitFullscreen().then();
@@ -1577,7 +1434,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
         // Generar vista previa inicial
         this.updateCartonPreview();
         
-        this.playEffect('click');
+        this.audio.playEffect('click');
     }
 
     closeCartonModal() {
@@ -1602,7 +1459,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
             return;
         }
 
-        this.playEffect('start');
+        this.audio.playEffect('start');
 
         try {
             // Obtener configuración de personalización
@@ -1621,7 +1478,7 @@ ATAJOS DE TECLADO DISPONIBLES:<br><br>
                 this.showAlert(`${count} cartón(es) generado(s) exitosamente.\n\nEl archivo HTML está listo para imprimir.`, 'Cartones Generados');
             }
             
-            this.playEffect('win');
+            this.audio.playEffect('win');
             this.closeCartonModal();
         } catch (error) {
             this.showAlert(`Error al generar cartones: ${error.message}`, 'Error');
