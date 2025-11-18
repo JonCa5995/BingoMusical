@@ -40,7 +40,7 @@ class BingoMusical {
     init() {
         this.setupEventListeners();
         this.setupDragAndDrop();
-        this.loadThemePreference();
+        this.settings.loadThemePreference();
         this.setupDebouncing();
         this.renderSongsList();
         this.updateCounters();
@@ -105,6 +105,10 @@ class BingoMusical {
         });
     }
 
+    // ============================================================
+    // CONFIGURACIÓN DE EVENT LISTENERS
+    // ============================================================
+
     setupEventListeners() {
         this._setupPlayerEventListeners();
         this._setupSongManagementEventListeners();
@@ -119,9 +123,9 @@ class BingoMusical {
         this.dom.importFileInput.addEventListener('change', (e) => this.importPlaylist(e));
         this.dom.lineaBtn.addEventListener('click', () => this.triggerLinea());
         this.dom.bingoBtn.addEventListener('click', () => this.triggerBingo());
-        this.dom.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+        this.dom.fullscreenBtn.addEventListener('click', () => this.settings.toggleFullscreen());
         this.dom.shortcutsHelpBtn.addEventListener('click', () => this.showKeyboardShortcutsHelp());
-        this.dom.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
+        this.dom.themeToggleBtn.addEventListener('click', () => this.settings.toggleTheme());
     }
 
 
@@ -144,7 +148,7 @@ class BingoMusical {
     }
 
     _setupFullscreenEventListeners() {
-        document.addEventListener('fullscreenchange', () => this.onFullscreenChange());
+        document.addEventListener('fullscreenchange', () => this.settings.onFullscreenChange());
     }
 
     checkOpenModals() {
@@ -241,25 +245,19 @@ class BingoMusical {
         });
     }
 
+    // ============================================================
+    // SISTEMA DE TEMAS
+    // ============================================================
+
     showKeyboardShortcutsHelp() {
         const helpMessage = this.settings.getKeyboardShortcutsHelp();
         this.showAlert(helpMessage, '⌨️ Atajos de Teclado');
     }
 
-    // Sistema de temas (claro/oscuro)
-    loadThemePreference() {
-        this.settings.loadThemePreference();
-    }
+    // ============================================================
+    // SISTEMA DE MODALES
+    // ============================================================
 
-    toggleTheme() {
-        this.settings.toggleTheme();
-    }
-
-    applyTheme(theme) {
-        this.settings.applyTheme(theme);
-    }
-
-    // Sistema de modales personalizados
     showAlert(message, title = 'Información') {
         this.modal.showAlert(message, title);
     }
@@ -276,6 +274,10 @@ class BingoMusical {
         this.modal.closeConfirmModal(result);
     }
 
+    // ============================================================
+    // CONFIGURACIÓN Y DRAG & DROP
+    // ============================================================
+
     setupDragAndDrop() {
         this.settings.setupDragAndDrop(
             () => this.game.isGameStarted(),
@@ -283,9 +285,17 @@ class BingoMusical {
         );
     }
 
+    // ============================================================
+    // VALIDACIONES Y UTILIDADES
+    // ============================================================
+
     getTotalSongsWithFiles() {
         return this.songManager.getTotalSongsWithFiles(this.songs);
     }
+
+    // ============================================================
+    // GESTIÓN DE JUEGO (LÍNEA Y BINGO)
+    // ============================================================
 
     async triggerLinea() {
         // Validar con GameManager
@@ -324,6 +334,10 @@ class BingoMusical {
         this.audio.playEffect('complete');
         setTimeout(() => this.dom.celebrationOverlay.classList.remove('hidden'), 500);
     }
+
+    // ============================================================
+    // GESTIÓN DE PLAYLIST (EXPORTAR/IMPORTAR)
+    // ============================================================
 
     exportPlaylist() {
         const result = this.storage.exportPlaylist(this.songs, this.songsFolder);
@@ -440,6 +454,10 @@ class BingoMusical {
         event.target.value = '';
     }
 
+    // ============================================================
+    // GESTIÓN DE ICONOS
+    // ============================================================
+
     getAvailableIcons() {
         return this.icons.getAvailableIcons(this.songs);
     }
@@ -463,6 +481,10 @@ class BingoMusical {
             this.showAlert(result.error, result.title || 'Error');
         }
     }
+
+    // ============================================================
+    // GESTIÓN DE CANCIONES
+    // ============================================================
 
     addSongs(event) {
         const files = Array.from(event.target.files);
@@ -508,6 +530,10 @@ class BingoMusical {
             this.updateUIState();
         }
     }
+
+    // ============================================================
+    // RENDERIZADO Y UI
+    // ============================================================
 
     updateUIState() {
         this.ui.updateUIState(
@@ -631,6 +657,10 @@ class BingoMusical {
     }
 
     // Gestión de playlist
+    // ============================================================
+    // GESTIÓN DE PLAYLIST (ELIMINACIÓN)
+    // ============================================================
+
     async deleteAllSongs() {
         if (this.game.isGameStarted()) {
             this.showAlert('No puedes eliminar canciones una vez iniciado el juego.', 'Juego Iniciado');
@@ -672,6 +702,10 @@ class BingoMusical {
             btn.setAttribute('aria-pressed', 'false');
         }
     }
+
+    // ============================================================
+    // REPRODUCCIÓN Y CONTROL DE AUDIO
+    // ============================================================
 
     playRandomSong() {
         // Validar con GameManager
@@ -859,13 +893,9 @@ class BingoMusical {
         }
     }
 
-    toggleFullscreen() {
-        this.settings.toggleFullscreen();
-    }
-
-    onFullscreenChange() {
-        this.settings.onFullscreenChange();
-    }
+    // ============================================================
+    // GENERACIÓN DE CARTONES
+    // ============================================================
 
     openCartonModal() {
         this.modal.openCartonModal(
