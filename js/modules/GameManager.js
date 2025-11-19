@@ -202,18 +202,4 @@ export class GameManager {
     getHistory() {
         return this.playedSongs;
     }
-
-    /**
-     * Verifica si hay suficientes canciones para jugar
-     */
-    validateMinSongs(totalSongsWithFiles, minRequired) {
-        if (totalSongsWithFiles < minRequired) {
-            return {
-                valid: false,
-                error: `Necesitas al menos ${minRequired} canciones cargadas para poder jugar.`,
-                title: 'Canciones Insuficientes'
-            };
-        }
-        return { valid: true };
-    }
 }

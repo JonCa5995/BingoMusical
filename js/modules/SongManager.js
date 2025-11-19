@@ -163,6 +163,21 @@ export class SongManager {
     }
 
     /**
+     * Valida si hay suficientes canciones y devuelve un mensaje de error si no
+     */
+    validateMinSongs(songs, minRequired) {
+        const totalSongsWithFiles = this.getTotalSongsWithFiles(songs);
+        if (totalSongsWithFiles < minRequired) {
+            return {
+                valid: false,
+                error: `Necesitas al menos ${minRequired} canciones cargadas para poder jugar.`,
+                title: 'Canciones Insuficientes'
+            };
+        }
+        return { valid: true };
+    }
+
+    /**
      * Obtiene estadísticas de canciones
      */
     getStats(songs) {

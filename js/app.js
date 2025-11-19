@@ -298,8 +298,8 @@ class BingoMusical {
     // ============================================================
 
     async triggerLinea() {
-        // Validar con GameManager
-        const validation = this.game.validateMinSongs(this.getTotalSongsWithFiles(), MIN_SONGS_REQUIRED);
+        // Validar con SongManager
+        const validation = this.songManager.validateMinSongs(this.songs, MIN_SONGS_REQUIRED);
         if (!validation.valid) {
             this.showAlert(validation.error, validation.title);
             return;
@@ -317,8 +317,8 @@ class BingoMusical {
     }
 
     async triggerBingo() {
-        // Validar con GameManager
-        const validation = this.game.validateMinSongs(this.getTotalSongsWithFiles(), MIN_SONGS_REQUIRED);
+        // Validar con SongManager
+        const validation = this.songManager.validateMinSongs(this.songs, MIN_SONGS_REQUIRED);
         if (!validation.valid) {
             this.showAlert(validation.error, validation.title);
             return;
@@ -700,8 +700,8 @@ class BingoMusical {
     // ============================================================
 
     playRandomSong() {
-        // Validar con GameManager
-        const validation = this.game.validateMinSongs(this.getTotalSongsWithFiles(), MIN_SONGS_REQUIRED);
+        // Validar con SongManager
+        const validation = this.songManager.validateMinSongs(this.songs, MIN_SONGS_REQUIRED);
         if (!validation.valid) {
             this.showAlert(validation.error, validation.title);
             return;
@@ -729,7 +729,7 @@ class BingoMusical {
     }
 
     playSong(songId) {
-        const song = this.songs.find(s => s.id === songId);
+        const song = this.songManager.findSongById(this.songs, songId);
         if (!song?.file) {
             this.showAlert('Esta canción no tiene archivo de audio.', 'Sin Archivo');
             return;
