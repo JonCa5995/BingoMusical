@@ -73,7 +73,7 @@ export class GameManager {
     /**
      * Valida si se puede cantar LÍNEA
      */
-    canCallLinea(minSongs) {
+    canCallLinea() {
         if (this.lineaCompleted) {
             return {
                 valid: false,
@@ -103,7 +103,7 @@ export class GameManager {
     /**
      * Valida si se puede cantar BINGO
      */
-    canCallBingo(minSongs) {
+    canCallBingo() {
         if (this.bingoCompleted) {
             return {
                 valid: false,

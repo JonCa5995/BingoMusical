@@ -216,7 +216,7 @@ class BingoMusical {
 
                 case 'f': // F → Pantalla completa
                     e.preventDefault();
-                    this.toggleFullscreen();
+                    this.settings.toggleFullscreen();
                     break;
 
                 case 'l': // L → Cantar línea
@@ -458,14 +458,6 @@ class BingoMusical {
     // GESTIÓN DE ICONOS
     // ============================================================
 
-    getAvailableIcons() {
-        return this.icons.getAvailableIcons(this.songs);
-    }
-
-    isIconUsed(icon) {
-        return this.icons.isIconUsed(icon, this.songs);
-    }
-
     openIconPicker(songId) {
         if (this.game.isGameStarted()) {
             const message = 'No puedes cambiar iconos una vez que el juego ha iniciado.';
@@ -566,7 +558,7 @@ class BingoMusical {
         let songStateLabel = this.ui.getSongStateLabel(song);
 
         // Usar template fragment para mejor rendimiento
-        const fragment = document.createDocumentFragment();
+        document.createDocumentFragment();
         
         const iconBtn = document.createElement('button');
         iconBtn.type = 'button';
