@@ -3,14 +3,12 @@
  * Gestiona la lógica del juego de bingo: reproducción aleatoria, historial, LÍNEA y BINGO
  */
 export class GameManager {
-    constructor() {
-        this.gameStarted = false;
-        this.continuousMode = false;
-        this.lineaCompleted = false;
-        this.bingoCompleted = false;
-        this.playedSongs = [];
-        this.currentSongIndex = null;
-    }
+    gameStarted = false;
+    lineaCompleted = false;
+    bingoCompleted = false;
+    playedSongs = [];
+    currentSongIndex = null;
+    continuousMode = false;
 
     /**
      * Inicia el juego

@@ -81,7 +81,7 @@ export class CartonManager {
     /**
      * Genera y descarga cartones
      */
-    async generateCartones(songs, format = 'html', maxCartones, minRequired, showAlertCallback) {
+    async generateCartones(songs, maxCartones, minRequired, showAlertCallback, format = 'html') {
         const count = Number.parseInt(this.dom.cartonCountInput.value);
 
         if (Number.isNaN(count) || count < 1 || count > maxCartones) {

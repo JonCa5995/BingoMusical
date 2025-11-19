@@ -912,10 +912,10 @@ class BingoMusical {
     async generateCartones(format = 'html') {
         const success = await this.carton.generateCartones(
             this.songs,
-            format,
             BingoMusical.MAX_CARTONS_GENERATED,
             MIN_SONGS_REQUIRED,
-            (message, title) => this.showAlert(message, title)
+            (message, title) => this.showAlert(message, title),
+            format
         );
         
         if (success) {
@@ -929,8 +929,11 @@ class BingoMusical {
 }
 
 // Inicializar la aplicación cuando el DOM esté listo
+let app;
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => new BingoMusical());
+    document.addEventListener('DOMContentLoaded', () => {
+        app = new BingoMusical();
+    });
 } else {
-    new BingoMusical();
+    app = new BingoMusical();
 }

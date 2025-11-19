@@ -3,8 +3,8 @@
  * Gestiona la persistencia de datos (export/import JSON y localStorage)
  */
 export class StorageManager {
+    STORAGE_PREFIX = 'bingoMusical_';
     constructor() {
-        this.STORAGE_PREFIX = 'bingoMusical_';
         this.STORAGE_KEYS = {
             THEME: this.STORAGE_PREFIX + 'theme',
             SONGS: this.STORAGE_PREFIX + 'songs',
@@ -62,9 +62,9 @@ export class StorageManager {
      */
     clearAll() {
         try {
-            Object.values(this.STORAGE_KEYS).forEach(key => {
+            for (const key of Object.values(this.STORAGE_KEYS)) {
                 localStorage.removeItem(key);
-            });
+            }
             return true;
         } catch (error) {
             console.error('Error al limpiar localStorage:', error);

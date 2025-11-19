@@ -142,9 +142,9 @@ export class SongManager {
      * Reinicia el estado de reproducción de todas las canciones
      */
     resetPlayedStatus(songs) {
-        songs.forEach(song => {
+        for (const song of songs) {
             song.played = false;
-        });
+        }
         return songs;
     }
 
