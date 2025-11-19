@@ -766,49 +766,11 @@ class BingoMusical {
     }
 
     updatePlayerUI(song) {
-        this.dom.songTitleElement.textContent = song.title;
-        this.dom.currentIconImg.alt = song.title;
-
-        if (song.iconType === 'image' && song.icon) {
-            this.dom.currentIconImg.src = song.icon;
-        } else {
-            const canvas = document.createElement('canvas');
-            canvas.width = 200;
-            canvas.height = 200;
-            const ctx = canvas.getContext('2d');
-            ctx.font = '140px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(song.icon, 100, 100);
-            this.dom.currentIconImg.src = canvas.toDataURL();
-        }
-
-        this.dom.songIconContainer.classList.add('playing');
+        this.ui.updatePlayerUI(song);
     }
 
     updateControls(playing) {
-        const noSongSelected = this.game.currentSongIndex === null;
-
-        this.dom.playBtn.disabled = playing && this.game.isGameStarted();
-        this.dom.pauseBtn.disabled = noSongSelected;
-        this.dom.stopBtn.disabled = noSongSelected;
-
-        if (noSongSelected) {
-            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reproducir';
-            this.dom.pauseBtn.setAttribute('aria-label', 'Reproducir');
-            return;
-        }
-
-        if (playing) {
-            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span> Pausar';
-            this.dom.pauseBtn.setAttribute('aria-label', 'Pausar reproducción');
-        } else if (this.dom.audioPlayer.currentTime > 0) {
-            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reanudar';
-            this.dom.pauseBtn.setAttribute('aria-label', 'Reanudar reproducción');
-        } else {
-            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">▶</span> Reproducir';
-            this.dom.pauseBtn.setAttribute('aria-label', 'Reproducir canción seleccionada');
-        }
+        this.ui.updateControls(playing, this.game.currentSongIndex, this.game.isGameStarted());
     }
 
     onSongEnded() {
