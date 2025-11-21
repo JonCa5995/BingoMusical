@@ -111,10 +111,21 @@ export class UIManager {
     /**
      * Actualiza la UI del reproductor con información de la canción
      */
-    updatePlayerUI(song) {
-        this.dom.songTitleElement.textContent = song.title;
+    updatePlayerUI(song, titleRevealTime = 0, iconRevealTime = 0) {
+        // Ocultar título y icono inicialmente
+        this.dom.songTitleElement.style.opacity = '0';
+        this.dom.currentIconImg.style.opacity = '0';
+        
+        // Revelar título después del tiempo configurado
+        setTimeout(() => {
+            this.dom.songTitleElement.textContent = song.title;
+            this.dom.songTitleElement.style.transition = 'opacity 1s ease-in';
+            this.dom.songTitleElement.style.opacity = '1';
+        }, titleRevealTime * 1000);
+
         this.dom.currentIconImg.alt = song.title;
 
+        // Preparar icono pero no mostrarlo aún
         if (song.iconType === 'image' && song.icon) {
             this.dom.currentIconImg.src = song.icon;
         } else {
@@ -128,6 +139,12 @@ export class UIManager {
             ctx.fillText(song.icon, 100, 100);
             this.dom.currentIconImg.src = canvas.toDataURL();
         }
+
+        // Revelar icono después del tiempo configurado
+        setTimeout(() => {
+            this.dom.currentIconImg.style.transition = 'opacity 1s ease-in';
+            this.dom.currentIconImg.style.opacity = '1';
+        }, iconRevealTime * 1000);
     }
 
     /**
@@ -135,13 +152,13 @@ export class UIManager {
      */
     updateControls(playing, gameStarted) {
         if (playing) {
-            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span> Pausar';
+            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span>';
             this.dom.pauseBtn.setAttribute('aria-label', 'Pausar canción actual');
             this.dom.stopBtn.disabled = false;
             this.dom.pauseBtn.disabled = false;
             this.dom.songIconContainer.classList.add('playing');
         } else {
-            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">▶️</span> Reproducir';
+            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">▶️</span>';
             this.dom.pauseBtn.setAttribute('aria-label', 'Reproducir canción seleccionada');
             this.dom.stopBtn.disabled = true;
             this.dom.pauseBtn.disabled = true;
@@ -184,6 +201,11 @@ export class UIManager {
             toggleContinuousModeCallback();
         }
 
+        // Deshabilitar botón de configuración cuando el juego está iniciado
+        this.dom.configBtn.disabled = isDisabled;
+        this.dom.configBtn.style.opacity = isDisabled ? '0.5' : '1';
+        this.dom.configBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+
         if (gameStarted) {
             this.dom.playBtn.innerHTML = '<span aria-hidden="true">🔀</span> Canción Aleatoria';
             this.dom.playBtn.setAttribute('aria-label', 'Canción Aleatoria');
@@ -196,7 +218,7 @@ export class UIManager {
     /**
      * Agrega una canción al historial visual
      */
-    addToHistory(song) {
+    addToHistory(song, iconRevealTime = 0) {
         const historyItem = document.createElement('div');
         historyItem.className = 'history-item';
         historyItem.title = song.title;
@@ -204,6 +226,9 @@ export class UIManager {
         historyItem.setAttribute('aria-label', `Canción reproducida: ${song.title}`);
 
         const img = document.createElement('img');
+        
+        // Inicialmente oculto
+        img.style.opacity = '0';
 
         if (song.iconType === 'image' && song.icon) {
             img.src = song.icon;
@@ -223,6 +248,12 @@ export class UIManager {
         historyItem.appendChild(img);
         this.dom.historyGrid.appendChild(historyItem);
         this.dom.historyGrid.scrollTop = this.dom.historyGrid.scrollHeight;
+
+        // Revelar icono después del tiempo configurado
+        setTimeout(() => {
+            img.style.transition = 'opacity 1s ease-in';
+            img.style.opacity = '1';
+        }, iconRevealTime * 1000);
 
         return historyItem;
     }

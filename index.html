@@ -148,17 +148,18 @@
           <figcaption class="player-info">
             <h2 id="song-title">Selecciona una canción o presiona reproducir</h2>
             <nav class="controls" aria-label="Controles de reproducción">
+              <button id="config-btn" class="btn btn-icon" type="button" aria-label="Configuración del juego" title="Configuración">
+                <span aria-hidden="true">⚙️</span>
+              </button>
               <button id="play-btn" class="btn btn-play" type="button" aria-label="Iniciar Bingo">
                 <span aria-hidden="true">▶️</span>
                 Iniciar Bingo
               </button>
               <button type="button" id="pause-btn" class="btn btn-pause btn-icon" aria-label="Reproducir">
                 <span aria-hidden="true">▶</span>
-                Reproducir
               </button>
               <button id="stop-btn" class="btn btn-stop" type="button" aria-label="Reiniciar Canción" disabled>
                 <span aria-hidden="true">⏮</span>
-                Reiniciar Canción
               </button>
             </nav>
             <div class="progress-container">
@@ -193,15 +194,15 @@
                     aria-pressed="false"
             >
               <span aria-hidden="true">🔄</span>
-              Modo Continuo
+              Automático
             </button>
             <button id="delete-all-btn"
                     class="btn btn-secondary btn-icon"
                     type="button"
-                    aria-label="Eliminar todas las canciones"
+                    aria-label="Borrar Lista"
             >
               <span aria-hidden="true">🗑️</span>
-              Eliminar Todas
+              Borrar Lista
             </button>
             <button id="generate-cartones"
                     class="btn btn-secondary btn-icon"
@@ -209,15 +210,15 @@
                     aria-label="Generar Cartones"
             >
               <span aria-hidden="true">🎴</span>
-              Generar Cartones
+              Cartones
             </button>
             <button id="export-list" class="btn btn-secondary btn-icon" type="button" aria-label="Exportar Lista">
-              <span aria-hidden="true">💾</span>
-              Exportar Lista
+              <span aria-hidden="true">💾📝</span>
+              Exportar
             </button>
             <button id="import-list" class="btn btn-secondary btn-icon" type="button" aria-label="Importar Lista">
-              <span aria-hidden="true">📂</span>
-              Importar Lista
+              <span aria-hidden="true">📝</span>
+              Importar
             </button>
             <input id="import-file"
                    class="file-import"
@@ -286,6 +287,64 @@
       </section>
     </main>
   </div>
+
+  <!-- Modal de configuración del juego -->
+  <dialog id="config-modal" class="modal hidden" aria-labelledby="config-modal-title">
+    <article class="modal-content">
+      <header class="modal-header">
+        <h2 id="config-modal-title">⚙️ Configuración del Juego</h2>
+        <button id="close-config-modal" class="close-btn" type="button" aria-label="Cerrar configuración">
+          ✕
+        </button>
+      </header>
+      <section class="modal-body">
+        <div class="config-group">
+          <label class="config-label" for="title-reveal-time">
+            📝 Tiempo para revelar título:
+            <span class="config-value" id="title-reveal-value">5 segundos</span>
+          </label>
+          <input id="title-reveal-time"
+                 class="config-slider"
+                 type="range"
+                 min="0"
+                 max="30"
+                 value="5"
+                 step="1"
+                 aria-describedby="title-hint"
+          >
+          <small id="title-hint" class="config-hint">
+            Tiempo desde que se inicia la canción hasta que aparece el título
+          </small>
+        </div>
+
+        <div class="config-group">
+          <label class="config-label" for="icon-reveal-time">
+            🖼️ Tiempo para revelar icono:
+            <span class="config-value" id="icon-reveal-value">10 segundos</span>
+          </label>
+          <input id="icon-reveal-time"
+                 class="config-slider"
+                 type="range"
+                 min="0"
+                 max="30"
+                 value="10"
+                 step="1"
+                 aria-describedby="icon-hint"
+          >
+          <small id="icon-hint" class="config-hint">
+            Tiempo desde que se inicia la canción hasta que aparece el icono en el reproductor y en el historial
+          </small>
+        </div>
+
+        <footer class="modal-actions">
+          <button id="save-config-btn" class="btn btn-play btn-icon" type="button">
+            <span aria-hidden="true">✔️</span>
+            Guardar y Cerrar
+          </button>
+        </footer>
+      </section>
+    </article>
+  </dialog>
 
   <!-- Modal para generar cartones con personalización -->
   <dialog id="carton-modal" class="modal hidden" aria-labelledby="carton-modal-title">

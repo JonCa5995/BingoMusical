@@ -119,6 +119,7 @@ export class ModalManager {
     checkOpenModals() {
         return !this.dom.iconModal.classList.contains('hidden') ||
             !this.dom.cartonModal.classList.contains('hidden') ||
+            !this.dom.configModal.classList.contains('hidden') ||
             !this.dom.confirmModal.classList.contains('hidden') ||
             !this.dom.alertModal.classList.contains('hidden');
     }
@@ -131,6 +132,11 @@ export class ModalManager {
             if (iconCloseCallback) iconCloseCallback();
         } else if (!this.dom.cartonModal.classList.contains('hidden')) {
             this.closeCartonModal();
+        } else if (!this.dom.configModal.classList.contains('hidden')) {
+            if (this.dom.configModal.close) {
+                this.dom.configModal.close();
+            }
+            this.dom.configModal.classList.add('hidden');
         } else if (!this.dom.confirmModal.classList.contains('hidden')) {
             this.closeConfirmModal(false);
         } else if (!this.dom.alertModal.classList.contains('hidden')) {

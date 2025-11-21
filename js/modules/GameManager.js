@@ -9,6 +9,8 @@ export class GameManager {
     playedSongs = [];
     currentSongIndex = null;
     continuousMode = false;
+    titleRevealTime = 5; // segundos
+    iconRevealTime = 10; // segundos
 
     /**
      * Inicia el juego
@@ -201,5 +203,33 @@ export class GameManager {
      */
     getHistory() {
         return this.playedSongs;
+    }
+
+    /**
+     * Establece el tiempo de revelación del título
+     */
+    setTitleRevealTime(seconds) {
+        this.titleRevealTime = seconds;
+    }
+
+    /**
+     * Establece el tiempo de revelación del icono
+     */
+    setIconRevealTime(seconds) {
+        this.iconRevealTime = seconds;
+    }
+
+    /**
+     * Obtiene el tiempo de revelación del título
+     */
+    getTitleRevealTime() {
+        return this.titleRevealTime;
+    }
+
+    /**
+     * Obtiene el tiempo de revelación del icono
+     */
+    getIconRevealTime() {
+        return this.iconRevealTime;
     }
 }

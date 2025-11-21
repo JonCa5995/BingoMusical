@@ -72,6 +72,16 @@ export class DOMElements {
         this.cartonSecondaryColorInput = document.getElementById('carton-secondary-color');
         this.cartonPreviewContainer = document.getElementById('carton-preview');
         
+        // Modal de configuración
+        this.configBtn = document.getElementById('config-btn');
+        this.configModal = document.getElementById('config-modal');
+        this.closeConfigModalBtn = document.getElementById('close-config-modal');
+        this.titleRevealTimeSlider = document.getElementById('title-reveal-time');
+        this.titleRevealValueSpan = document.getElementById('title-reveal-value');
+        this.iconRevealTimeSlider = document.getElementById('icon-reveal-time');
+        this.iconRevealValueSpan = document.getElementById('icon-reveal-value');
+        this.saveConfigBtn = document.getElementById('save-config-btn');
+        
         // Modal de confirmación
         this.confirmModal = document.getElementById('confirm-modal');
         this.confirmTitle = document.getElementById('confirm-title');

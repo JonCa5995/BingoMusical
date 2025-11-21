@@ -113,6 +113,7 @@ class BingoMusical {
         this._setupPlayerEventListeners();
         this._setupSongManagementEventListeners();
         this._setupCartonEventListeners();
+        this._setupConfigEventListeners();
         this._setupModalEventListeners();
         this._setupCelebrationEventListeners();
         this._setupFullscreenEventListeners();
@@ -126,6 +127,28 @@ class BingoMusical {
         this.dom.fullscreenBtn.addEventListener('click', () => this.settings.toggleFullscreen());
         this.dom.shortcutsHelpBtn.addEventListener('click', () => this.showKeyboardShortcutsHelp());
         this.dom.themeToggleBtn.addEventListener('click', () => this.settings.toggleTheme());
+    }
+
+    _setupConfigEventListeners() {
+        this.dom.configBtn.addEventListener('click', () => this.openConfigModal());
+        this.dom.closeConfigModalBtn.addEventListener('click', () => this.closeConfigModal());
+        this.dom.saveConfigBtn.addEventListener('click', () => this.saveConfig());
+        
+        // Actualizar valores en tiempo real
+        this.dom.titleRevealTimeSlider.addEventListener('input', (e) => {
+            this.dom.titleRevealValueSpan.textContent = `${e.target.value} segundos`;
+        });
+        
+        this.dom.iconRevealTimeSlider.addEventListener('input', (e) => {
+            this.dom.iconRevealValueSpan.textContent = `${e.target.value} segundos`;
+        });
+
+        // Cerrar modal al hacer clic fuera
+        this.dom.configModal.addEventListener('click', (e) => {
+            if (e.target.id === 'config-modal') {
+                this.closeConfigModal();
+            }
+        });
     }
 
 
@@ -333,6 +356,44 @@ class BingoMusical {
         this.game.completeBingo();
         this.audio.playEffect('complete');
         setTimeout(() => this.dom.celebrationOverlay.classList.remove('hidden'), 500);
+    }
+
+    // ============================================================
+    // GESTIÓN DE CONFIGURACIÓN
+    // ============================================================
+
+    openConfigModal() {
+        if (this.game.isGameStarted()) {
+            this.showAlert('No puedes cambiar la configuración una vez que el juego ha iniciado.', 'Juego Iniciado');
+            return;
+        }
+        
+        this.audio.playEffect('click');
+        this.dom.configModal.classList.remove('hidden');
+        this.dom.configModal.showModal();
+    }
+
+    closeConfigModal() {
+        this.audio.playEffect('click');
+        this.dom.configModal.classList.add('hidden');
+        this.dom.configModal.close();
+    }
+
+    saveConfig() {
+        const titleRevealTime = parseInt(this.dom.titleRevealTimeSlider.value);
+        const iconRevealTime = parseInt(this.dom.iconRevealTimeSlider.value);
+        
+        this.game.setTitleRevealTime(titleRevealTime);
+        this.game.setIconRevealTime(iconRevealTime);
+        
+        this.audio.playEffect('win');
+        this.showAlert(
+            `Configuración guardada:\n\n` +
+            `• Tiempo para revelar título: ${titleRevealTime} segundos\n` +
+            `• Tiempo para revelar icono: ${iconRevealTime} segundos`,
+            'Configuración Guardada'
+        );
+        this.closeConfigModal();
     }
 
     // ============================================================
@@ -684,12 +745,12 @@ class BingoMusical {
         const btn = this.dom.shuffleAllBtn;
 
         if (this.continuousMode) {
-            btn.innerHTML = '<span aria-hidden="true">⏸</span> Detener Modo Continuo';
+            btn.innerHTML = '<span aria-hidden="true">⏸</span> Manual';
             btn.style.background = 'var(--danger-color)';
             btn.setAttribute('aria-pressed', 'true');
             this.audio.playEffect('start');
         } else {
-            btn.innerHTML = '<span aria-hidden="true">🔄</span> Modo Continuo';
+            btn.innerHTML = '<span aria-hidden="true">🔄</span> Automático';
             btn.style.background = 'var(--text-muted)';
             btn.setAttribute('aria-pressed', 'false');
         }
@@ -766,7 +827,9 @@ class BingoMusical {
     }
 
     updatePlayerUI(song) {
-        this.ui.updatePlayerUI(song);
+        const titleRevealTime = this.game.getTitleRevealTime();
+        const iconRevealTime = this.game.getIconRevealTime();
+        this.ui.updatePlayerUI(song, titleRevealTime, iconRevealTime);
     }
 
     updateControls(playing) {
@@ -812,7 +875,8 @@ class BingoMusical {
     }
 
     addToHistory(song) {
-        const historyItem = this.ui.addToHistory(song);
+        const iconRevealTime = this.game.getIconRevealTime();
+        const historyItem = this.ui.addToHistory(song, iconRevealTime);
         
         // Agregar evento click para reproducir
         historyItem.addEventListener('click', () => {
