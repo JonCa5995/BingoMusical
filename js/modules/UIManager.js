@@ -207,8 +207,8 @@ export class UIManager {
         this.dom.configBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
 
         if (gameStarted) {
-            this.dom.playBtn.innerHTML = '<span aria-hidden="true">🔀</span> Canción Aleatoria';
-            this.dom.playBtn.setAttribute('aria-label', 'Canción Aleatoria');
+            this.dom.playBtn.innerHTML = '<span aria-hidden="true">🔀</span> Siguiente';
+            this.dom.playBtn.setAttribute('aria-label', 'Siguiente canción');
         } else {
             this.dom.playBtn.innerHTML = '<span aria-hidden="true">▶️</span> Iniciar Juego';
             this.dom.playBtn.setAttribute('aria-label', 'Iniciar Juego');
