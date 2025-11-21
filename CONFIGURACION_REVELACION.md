@@ -17,7 +17,9 @@ Se ha implementado una funcionalidad que permite configurar cuánto tiempo debe 
 - El título inicia oculto (opacity: 0)
 - Aparece gradualmente después del tiempo configurado
 - Transición suave de 1 segundo (fade-in)
-- Se aplica en el reproductor principal
+- Se aplica en:
+  - Reproductor principal
+  - **Lista de canciones (canción en reproducción)**
 
 ### 3. Revelación Progresiva del Icono
 - El icono inicia oculto (opacity: 0)
@@ -27,6 +29,10 @@ Se ha implementado una funcionalidad que permite configurar cuánto tiempo debe 
   - Reproductor principal
   - Historial de canciones reproducidas
   - **Lista de canciones (canción en reproducción)**
+
+### 4. Condición Importante
+- ⚠️ **La revelación progresiva SOLO se aplica cuando el juego ha iniciado**
+- Antes de iniciar el juego, todo se muestra inmediatamente (modo preview)
 
 ## Archivos Modificados
 
@@ -64,11 +70,15 @@ Se ha implementado una funcionalidad que permite configurar cuánto tiempo debe 
 4. Guarda la configuración
 5. Inicia el juego
 6. Al reproducirse cada canción:
-   - El título aparece después del tiempo configurado
-   - El icono aparece después del tiempo configurado en:
-     * Reproductor principal
-     * Historial de canciones reproducidas
-     * Lista de canciones (en la canción que está sonando)
+   - **Si el juego NO ha iniciado**: Todo se muestra inmediatamente
+   - **Si el juego ha iniciado**:
+     - El título aparece después del tiempo configurado en:
+       * Reproductor principal
+       * Lista de canciones (canción en reproducción)
+     - El icono aparece después del tiempo configurado en:
+       * Reproductor principal
+       * Historial de canciones reproducidas
+       * Lista de canciones (canción en reproducción)
 
 ## Restricciones
 - La configuración **solo puede modificarse antes de iniciar el juego**

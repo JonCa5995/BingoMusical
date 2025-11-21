@@ -111,21 +111,35 @@ export class UIManager {
     /**
      * Actualiza la UI del reproductor con información de la canción
      */
-    updatePlayerUI(song, titleRevealTime = 0, iconRevealTime = 0) {
-        // Ocultar título y icono inicialmente
-        this.dom.songTitleElement.style.opacity = '0';
-        this.dom.currentIconImg.style.opacity = '0';
-        
-        // Revelar título después del tiempo configurado
-        setTimeout(() => {
+    updatePlayerUI(song, titleRevealTime = 0, iconRevealTime = 0, gameStarted = false) {
+        // Si el juego no ha iniciado, mostrar todo inmediatamente
+        if (!gameStarted) {
             this.dom.songTitleElement.textContent = song.title;
-            this.dom.songTitleElement.style.transition = 'opacity 1s ease-in';
             this.dom.songTitleElement.style.opacity = '1';
-        }, titleRevealTime * 1000);
+            this.dom.songTitleElement.style.transition = '';
+            this.dom.currentIconImg.style.opacity = '1';
+            this.dom.currentIconImg.style.transition = '';
+        } else {
+            // Si el juego ha iniciado, ocultar y revelar progresivamente
+            // Establecer el título inmediatamente pero oculto
+            this.dom.songTitleElement.textContent = song.title;
+            this.dom.songTitleElement.style.transition = '';
+            this.dom.songTitleElement.style.opacity = '0';
+            
+            // Revelar título después del tiempo configurado
+            setTimeout(() => {
+                this.dom.songTitleElement.style.transition = 'opacity 1s ease-in';
+                this.dom.songTitleElement.style.opacity = '1';
+            }, titleRevealTime * 1000);
+            
+            // Icono se maneja más abajo
+            this.dom.currentIconImg.style.transition = '';
+            this.dom.currentIconImg.style.opacity = '0';
+        }
 
         this.dom.currentIconImg.alt = song.title;
 
-        // Preparar icono pero no mostrarlo aún
+        // Preparar icono
         if (song.iconType === 'image' && song.icon) {
             this.dom.currentIconImg.src = song.icon;
         } else {
@@ -140,11 +154,13 @@ export class UIManager {
             this.dom.currentIconImg.src = canvas.toDataURL();
         }
 
-        // Revelar icono después del tiempo configurado
-        setTimeout(() => {
-            this.dom.currentIconImg.style.transition = 'opacity 1s ease-in';
-            this.dom.currentIconImg.style.opacity = '1';
-        }, iconRevealTime * 1000);
+        // Revelar icono después del tiempo configurado (solo si el juego ha iniciado)
+        if (gameStarted) {
+            setTimeout(() => {
+                this.dom.currentIconImg.style.transition = 'opacity 1s ease-in';
+                this.dom.currentIconImg.style.opacity = '1';
+            }, iconRevealTime * 1000);
+        }
     }
 
     /**
@@ -218,7 +234,7 @@ export class UIManager {
     /**
      * Agrega una canción al historial visual
      */
-    addToHistory(song, iconRevealTime = 0) {
+    addToHistory(song, iconRevealTime = 0, gameStarted = false) {
         const historyItem = document.createElement('div');
         historyItem.className = 'history-item';
         historyItem.title = song.title;
@@ -227,8 +243,10 @@ export class UIManager {
 
         const img = document.createElement('img');
         
-        // Inicialmente oculto
-        img.style.opacity = '0';
+        // Solo ocultar si el juego ha iniciado
+        if (gameStarted) {
+            img.style.opacity = '0';
+        }
 
         if (song.iconType === 'image' && song.icon) {
             img.src = song.icon;
@@ -249,11 +267,13 @@ export class UIManager {
         this.dom.historyGrid.appendChild(historyItem);
         this.dom.historyGrid.scrollTop = this.dom.historyGrid.scrollHeight;
 
-        // Revelar icono después del tiempo configurado
-        setTimeout(() => {
-            img.style.transition = 'opacity 1s ease-in';
-            img.style.opacity = '1';
-        }, iconRevealTime * 1000);
+        // Revelar icono después del tiempo configurado (solo si el juego ha iniciado)
+        if (gameStarted) {
+            setTimeout(() => {
+                img.style.transition = 'opacity 1s ease-in';
+                img.style.opacity = '1';
+            }, iconRevealTime * 1000);
+        }
 
         return historyItem;
     }

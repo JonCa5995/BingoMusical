@@ -638,10 +638,25 @@ class BingoMusical {
         
         const infoDiv = document.createElement('div');
         infoDiv.className = 'song-item-info';
-        infoDiv.innerHTML = `
-            <strong class="song-item-title">${song.title}</strong>
-            <div class="song-item-status" role="status" aria-live="polite">${songStateLabel}</div>
-        `;
+        
+        const titleStrong = document.createElement('strong');
+        titleStrong.className = 'song-item-title';
+        titleStrong.dataset.songId = song.id;
+        titleStrong.textContent = song.title;
+        
+        // Si es la canción actualmente reproduciéndose y el juego ha iniciado, ocultar el título inicialmente
+        if (this.game.getCurrentSong() === song.id && this.game.isGameStarted() && song.justStarted) {
+            titleStrong.style.opacity = '0';
+        }
+        
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'song-item-status';
+        statusDiv.setAttribute('role', 'status');
+        statusDiv.setAttribute('aria-live', 'polite');
+        statusDiv.textContent = songStateLabel;
+        
+        infoDiv.appendChild(titleStrong);
+        infoDiv.appendChild(statusDiv);
         
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
@@ -820,16 +835,34 @@ class BingoMusical {
             // Always re-render the list to show the current playing song
             this.renderSongsList();
 
-            // Programar la revelación del icono en la lista después del tiempo configurado
-            const iconRevealTime = this.game.getIconRevealTime();
-            setTimeout(() => {
+            // Programar la revelación del título e icono en la lista después del tiempo configurado
+            // Solo si el juego ha iniciado
+            if (this.game.isGameStarted()) {
+                const titleRevealTime = this.game.getTitleRevealTime();
+                const iconRevealTime = this.game.getIconRevealTime();
+                
+                // Revelar título
+                setTimeout(() => {
+                    const titleElement = document.querySelector(`.song-item-title[data-song-id="${songId}"]`);
+                    if (titleElement) {
+                        titleElement.style.transition = 'opacity 1s ease-in';
+                        titleElement.style.opacity = '1';
+                    }
+                }, titleRevealTime * 1000);
+                
+                // Revelar icono
+                setTimeout(() => {
+                    song.justStarted = false;
+                    const iconBtn = document.querySelector(`.song-item-icon[data-song-id="${songId}"]`);
+                    if (iconBtn) {
+                        iconBtn.style.transition = 'opacity 1s ease-in';
+                        iconBtn.style.opacity = '1';
+                    }
+                }, iconRevealTime * 1000);
+            } else {
+                // Si el juego no ha iniciado, limpiar la bandera inmediatamente
                 song.justStarted = false;
-                const iconBtn = document.querySelector(`.song-item-icon[data-song-id="${songId}"]`);
-                if (iconBtn) {
-                    iconBtn.style.transition = 'opacity 1s ease-in';
-                    iconBtn.style.opacity = '1';
-                }
-            }, iconRevealTime * 1000);
+            }
         });
     }
 
@@ -856,7 +889,8 @@ class BingoMusical {
     updatePlayerUI(song) {
         const titleRevealTime = this.game.getTitleRevealTime();
         const iconRevealTime = this.game.getIconRevealTime();
-        this.ui.updatePlayerUI(song, titleRevealTime, iconRevealTime);
+        const gameStarted = this.game.isGameStarted();
+        this.ui.updatePlayerUI(song, titleRevealTime, iconRevealTime, gameStarted);
     }
 
     updateControls(playing) {
@@ -912,7 +946,8 @@ class BingoMusical {
 
     addToHistory(song) {
         const iconRevealTime = this.game.getIconRevealTime();
-        const historyItem = this.ui.addToHistory(song, iconRevealTime);
+        const gameStarted = this.game.isGameStarted();
+        const historyItem = this.ui.addToHistory(song, iconRevealTime, gameStarted);
         
         // Agregar evento click para reproducir
         historyItem.addEventListener('click', () => {
