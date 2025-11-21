@@ -697,11 +697,22 @@ class BingoMusical {
     }
 
     renderSongsList() {
-        this.ui.renderSongsList(
-            this.songs,
-            this.getTotalSongsWithFiles(),
-            (song) => this.createSongItemElement(song)
-        );
+        // Verificar si hay filtros activos
+        const hasSearchTerm = this.dom.searchInput.value.trim() !== '';
+        const hasFilterStatus = this.dom.filterStatus.value !== 'all';
+        const hasSortOrder = this.dom.sortOrder.value !== 'default';
+        
+        // Si hay filtros activos, usar filterAndSortSongs en lugar de renderizar todo
+        if (hasSearchTerm || hasFilterStatus || hasSortOrder) {
+            this.filterAndSortSongs();
+        } else {
+            // Si no hay filtros, renderizar toda la lista
+            this.ui.renderSongsList(
+                this.songs,
+                this.getTotalSongsWithFiles(),
+                (song) => this.createSongItemElement(song)
+            );
+        }
     }
 
     filterAndSortSongs() {
