@@ -66,6 +66,7 @@ export class GameManager {
     markSongAsPlayed(song) {
         if (!song.played && this.gameStarted) {
             song.played = true;
+            song.playedOrder = this.playedSongs.length + 1; // Añadir orden de reproducción
             this.playedSongs.push(song);
             return true;
         }

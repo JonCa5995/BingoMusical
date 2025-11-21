@@ -89,6 +89,11 @@ export class SongManager {
                 break;
             case 'played-first':
                 filteredSongs.sort((a, b) => {
+                    // Si ambas reproducidas, ordenar por orden de reproducción
+                    if (a.played && b.played) {
+                        return (a.playedOrder || 0) - (b.playedOrder || 0);
+                    }
+                    // Si una está reproducida y la otra no
                     if (a.played === b.played) return 0;
                     return a.played ? -1 : 1;
                 });
@@ -144,6 +149,7 @@ export class SongManager {
     resetPlayedStatus(songs) {
         for (const song of songs) {
             song.played = false;
+            song.playedOrder = undefined; // Limpiar el orden de reproducción
         }
         return songs;
     }
