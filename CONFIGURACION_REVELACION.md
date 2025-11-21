@@ -26,6 +26,7 @@ Se ha implementado una funcionalidad que permite configurar cuánto tiempo debe 
 - Se aplica simultáneamente en:
   - Reproductor principal
   - Historial de canciones reproducidas
+  - **Lista de canciones (canción en reproducción)**
 
 ## Archivos Modificados
 
@@ -47,6 +48,8 @@ Se ha implementado una funcionalidad que permite configurar cuánto tiempo debe 
   - Event listeners para el modal de configuración
   - Funciones `openConfigModal()`, `closeConfigModal()`, `saveConfig()`
   - Integración con `updatePlayerUI()` y `addToHistory()`
+  - Revelación progresiva en la lista de canciones (`createSongItemElement()`, `playSong()`)
+  - Limpieza de estados en `stopSong()`, `onSongEnded()` y `reiniciarJuego()`
 
 ### CSS
 - `css/components/modals.css`: Estilos para el modal de configuración y sliders personalizados
@@ -62,7 +65,10 @@ Se ha implementado una funcionalidad que permite configurar cuánto tiempo debe 
 5. Inicia el juego
 6. Al reproducirse cada canción:
    - El título aparece después del tiempo configurado
-   - El icono aparece después del tiempo configurado (tanto en reproductor como en historial)
+   - El icono aparece después del tiempo configurado en:
+     * Reproductor principal
+     * Historial de canciones reproducidas
+     * Lista de canciones (en la canción que está sonando)
 
 ## Restricciones
 - La configuración **solo puede modificarse antes de iniciar el juego**
