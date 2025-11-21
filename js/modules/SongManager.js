@@ -89,9 +89,20 @@ export class SongManager {
                 break;
             case 'played-first':
                 filteredSongs.sort((a, b) => {
-                    // Si ambas reproducidas, ordenar por orden de reproducción
+                    // Si ambas reproducidas, ordenar por orden de reproducción (antiguas primero)
                     if (a.played && b.played) {
                         return (a.playedOrder || 0) - (b.playedOrder || 0);
+                    }
+                    // Si una está reproducida y la otra no
+                    if (a.played === b.played) return 0;
+                    return a.played ? -1 : 1;
+                });
+                break;
+            case 'played-last':
+                filteredSongs.sort((a, b) => {
+                    // Si ambas reproducidas, ordenar por orden de reproducción inverso (recientes primero)
+                    if (a.played && b.played) {
+                        return (b.playedOrder || 0) - (a.playedOrder || 0);
                     }
                     // Si una está reproducida y la otra no
                     if (a.played === b.played) return 0;
