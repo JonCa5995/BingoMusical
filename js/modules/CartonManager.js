@@ -12,7 +12,7 @@ export class CartonManager {
     /**
      * Actualiza la vista previa del cartón
      */
-    updateCartonPreview(songs) {
+    updateCartonPreview(songs, gameName = '') {
         try {
             // Obtener configuración
             const config = {
@@ -24,7 +24,7 @@ export class CartonManager {
             const previewCarton = this.cartonGenerator.generateSingleCarton(songs, 1);
             
             // Renderizar vista previa
-            this.dom.cartonPreviewContainer.innerHTML = this.generatePreviewHTML(previewCarton, config);
+            this.dom.cartonPreviewContainer.innerHTML = this.generatePreviewHTML(previewCarton, config, gameName);
         } catch (error) {
             this.dom.cartonPreviewContainer.innerHTML = `
                 <div class="carton-preview-placeholder">
@@ -39,9 +39,10 @@ export class CartonManager {
     /**
      * Genera HTML para la vista previa del cartón
      */
-    generatePreviewHTML(carton, config) {
+    generatePreviewHTML(carton, config, gameName = '') {
         const { primaryColor, secondaryColor } = config;
-        
+        const displayName = gameName || 'Bingo Musical';
+
         const cellsHTML = carton.rows.flatMap(row => 
             row.cells.map(cell => {
                 const cellClass = cell.type === 'song' ? 'song' : 'decorative';
@@ -68,7 +69,7 @@ export class CartonManager {
         return `
             <div class="preview-carton" style="color: ${primaryColor}; border-color: ${primaryColor};">
                 <div class="preview-carton-header" style="border-color: ${primaryColor};">
-                    <div class="preview-carton-title" style="color: ${primaryColor};">🎵 Bingo Musical</div>
+                    <div class="preview-carton-title" style="color: ${primaryColor};">🎵 ${displayName}</div>
                     <div class="preview-carton-number" style="background-color: ${secondaryColor};">#1</div>
                 </div>
                 <div class="preview-carton-grid">
@@ -81,7 +82,7 @@ export class CartonManager {
     /**
      * Genera y descarga cartones
      */
-    async generateCartones(songs, maxCartones, minRequired, showAlertCallback, format = 'html') {
+    async generateCartones(songs, maxCartones, minRequired, showAlertCallback, gameName = '', format = 'html') {
         const count = Number.parseInt(this.dom.cartonCountInput.value);
 
         if (Number.isNaN(count) || count < 1 || count > maxCartones) {
@@ -107,7 +108,8 @@ export class CartonManager {
             // Obtener configuración de personalización
             const config = {
                 primaryColor: this.dom.cartonPrimaryColorInput.value,
-                secondaryColor: this.dom.cartonSecondaryColorInput.value
+                secondaryColor: this.dom.cartonSecondaryColorInput.value,
+                gameName: gameName || 'Bingo Musical'
             };
             
             const cartones = this.cartonGenerator.generateCartones(songs, count);

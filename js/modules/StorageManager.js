@@ -108,7 +108,7 @@ export class StorageManager {
     /**
      * Exporta la lista de canciones a un archivo JSON
      */
-    exportPlaylist(songs, songsFolder) {
+    exportPlaylist(songs, songsFolder, gameName = '') {
         if (!songs || songs.length === 0) {
             return { success: false, error: 'No hay canciones para exportar' };
         }
@@ -116,6 +116,7 @@ export class StorageManager {
         try {
             const playlist = {
                 version: '1.0',
+                name: gameName || 'Lista de Bingo Musical',
                 date: new Date().toISOString(),
                 songs: songs.map(song => ({
                     id: song.id,
@@ -131,8 +132,11 @@ export class StorageManager {
 
             const link = document.createElement('a');
             const date = new Date().toISOString().split('T')[0];
+            const fileName = gameName
+                ? `${gameName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${date}.json`
+                : `bingo-musical-${date}.json`;
             link.href = url;
-            link.download = `bingo-musical-${date}.json`;
+            link.download = fileName;
             link.setAttribute('aria-label', 'Descargar lista de canciones en formato JSON');
             
             document.body.appendChild(link);
@@ -143,7 +147,7 @@ export class StorageManager {
 
             return {
                 success: true,
-                message: `Lista de canciones exportada correctamente.\n\n` +
+                message: `Lista "${gameName || 'Bingo Musical'}" exportada correctamente.\n\n` +
                         `Coloca el archivo JSON en la carpeta raíz del proyecto.\n` +
                         `Coloca los archivos de audio en: ${songsFolder}`
             };

@@ -11,6 +11,36 @@ export class GameManager {
     continuousMode = false;
     titleRevealTime = 5; // segundos
     iconRevealTime = 10; // segundos
+    gameName = ''; // Nombre del juego/lista
+    cartonesGenerated = false; // Flag para controlar si se generaron cartones
+
+    /**
+     * Establece el nombre del juego
+     */
+    setGameName(name) {
+        this.gameName = name || '';
+    }
+
+    /**
+     * Obtiene el nombre del juego
+     */
+    getGameName() {
+        return this.gameName;
+    }
+
+    /**
+     * Marca que se generaron cartones
+     */
+    setCartonesGenerated(generated) {
+        this.cartonesGenerated = generated;
+    }
+
+    /**
+     * Verifica si se generaron cartones
+     */
+    hasCartonesGenerated() {
+        return this.cartonesGenerated;
+    }
 
     /**
      * Inicia el juego
@@ -159,6 +189,8 @@ export class GameManager {
         this.bingoCompleted = false;
         this.playedSongs = [];
         this.currentSongIndex = null;
+        // NO resetear gameName ni cartonesGenerated
+        // El nombre y cartones persisten entre juegos
     }
 
     /**

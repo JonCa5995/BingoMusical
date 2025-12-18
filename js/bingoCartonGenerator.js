@@ -128,13 +128,14 @@ export class BingoCartonGenerator {
     }
 
     _generateHTMLHeader(count, config = {}) {
+        const gameName = config.gameName || 'Bingo Musical';
         return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Cartones de Bingo Musical generados - ${count} cartones únicos">
-  <title>Cartones de Bingo Musical</title>
+  <meta name="description" content="Cartones de ${gameName} generados - ${count} cartones únicos">
+  <title>Cartones de ${gameName}</title>
   <style>${this._generateCSS(config)}</style>
 </head>
 <body>
@@ -182,13 +183,14 @@ export class BingoCartonGenerator {
     }
 
     _generateCartonHTML(carton, config = {}) {
+        const gameName = config.gameName || 'Bingo Musical';
         const rowsHTML = carton.rows.map(row =>
             row.cells.map(cell => this._generateCellHTML(cell)).join('')
         ).join('\n        \n');
 
         return `    <article class="carton-container" role="region" aria-labelledby="carton-title-${carton.id}">
       <header class="carton-header">
-        <h2 id="carton-title-${carton.id}" class="carton-title">🎵 Bingo Musical</h2>
+        <h2 id="carton-title-${carton.id}" class="carton-title">🎵 ${gameName}</h2>
         <span class="carton-number" aria-label="Cartón número ${carton.id}">#${carton.id}</span>
       </header>
       <div class="carton-grid" role="grid" aria-label="Cuadrícula de bingo con 3 filas y 8 columnas">
@@ -208,7 +210,11 @@ ${rowsHTML}
         return `          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true">${cell.icon}</div></div>\n`;
     }
 
-    downloadAsHTML(cartones, config = {}, filename = 'cartones-bingo-musical.html') {
+    downloadAsHTML(cartones, config = {}) {
+        const gameName = config.gameName || 'Bingo Musical';
+        const sanitizedName = gameName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const filename = `cartones-${sanitizedName}.html`;
+
         const html = this.generatePrintableHTML(cartones, config);
         const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
         const url = URL.createObjectURL(blob);

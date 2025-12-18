@@ -8,6 +8,9 @@ export class DOMElements {
     }
 
     initializeElements() {
+        // Nombre del juego
+        this.gameNameInput = document.getElementById('game-name-input');
+
         // Audio y reproductor
         this.audioPlayer = document.getElementById('audio-player');
         this.playBtn = document.getElementById('play-btn');

@@ -118,6 +118,7 @@ class BingoMusical {
         this._setupCelebrationEventListeners();
         this._setupFullscreenEventListeners();
         this._setupKeyboardShortcuts();
+        this._setupGameNameEventListeners();
 
         this.dom.exportListBtn.addEventListener('click', () => this.exportPlaylist());
         this.dom.importListBtn.addEventListener('click', () => this.dom.importFileInput.click());
@@ -127,6 +128,23 @@ class BingoMusical {
         this.dom.fullscreenBtn.addEventListener('click', () => this.settings.toggleFullscreen());
         this.dom.shortcutsHelpBtn.addEventListener('click', () => this.showKeyboardShortcutsHelp());
         this.dom.themeToggleBtn.addEventListener('click', () => this.settings.toggleTheme());
+    }
+
+    _setupGameNameEventListeners() {
+        // Actualizar el nombre del juego cuando cambia el input
+        this.dom.gameNameInput.addEventListener('input', (e) => {
+            this.game.setGameName(e.target.value.trim());
+        });
+
+        // Validar al hacer blur
+        this.dom.gameNameInput.addEventListener('blur', (e) => {
+            const name = e.target.value.trim();
+            if (name.length > 50) {
+                this.showAlert('El nombre del juego no puede tener más de 50 caracteres.', 'Nombre muy largo');
+                e.target.value = name.substring(0, 50);
+                this.game.setGameName(e.target.value);
+            }
+        });
     }
 
     _setupConfigEventListeners() {
@@ -401,8 +419,9 @@ class BingoMusical {
     // ============================================================
 
     exportPlaylist() {
-        const result = this.storage.exportPlaylist(this.songs, this.songsFolder);
-        
+        const gameName = this.game.getGameName() || 'Bingo Musical';
+        const result = this.storage.exportPlaylist(this.songs, this.songsFolder, gameName);
+
         if (result.success) {
             this.audio.playEffect('click');
             this.showAlert(result.message, 'Exportación Exitosa');
@@ -484,6 +503,11 @@ class BingoMusical {
         }
 
         this.songs = newSongs;
+
+        // Cargar el nombre del juego desde el playlist
+        const gameName = playlist.name || '';
+        this.game.setGameName(gameName);
+        this.dom.gameNameInput.value = gameName;
 
         this.renderSongsList();
         this.updateCounters();
@@ -594,6 +618,16 @@ class BingoMusical {
             this.continuousMode,
             () => this.toggleContinuousMode()
         );
+
+        // Deshabilitar el input del nombre si el juego ha iniciado o se generaron cartones
+        const shouldDisableGameName = this.game.isGameStarted() || this.game.hasCartonesGenerated();
+        this.dom.gameNameInput.disabled = shouldDisableGameName;
+
+        if (shouldDisableGameName && !this.dom.gameNameInput.title.includes('bloqueado')) {
+            this.dom.gameNameInput.title = 'Nombre del juego bloqueado (juego iniciado o cartones generados)';
+        } else if (!shouldDisableGameName) {
+            this.dom.gameNameInput.title = 'Edita el nombre del juego (máx. 50 caracteres)';
+        }
     }
 
 
@@ -764,6 +798,12 @@ class BingoMusical {
         if (confirmed) {
             this.songs = this.songManager.deleteAllSongs();
             this.audio.playEffect('click');
+
+            // Resetear el flag de cartones generados y el nombre del juego
+            this.game.setCartonesGenerated(false);
+            this.game.setGameName('');
+            this.dom.gameNameInput.value = '';
+
             this.filterAndSortSongs();
             this.updateCounters();
             this.updateUIState();
@@ -1008,10 +1048,11 @@ class BingoMusical {
     // ============================================================
 
     openCartonModal() {
+        const gameName = this.game.getGameName() || 'Bingo Musical';
         this.modal.openCartonModal(
             this.getTotalSongsWithFiles(),
             MIN_SONGS_REQUIRED,
-            () => this.carton.updateCartonPreview(this.songs)
+            () => this.carton.updateCartonPreview(this.songs, gameName)
         );
     }
 
@@ -1020,21 +1061,27 @@ class BingoMusical {
     }
 
     async generateCartones(format = 'html') {
+        const gameName = this.game.getGameName() || 'Bingo Musical';
         const success = await this.carton.generateCartones(
             this.songs,
             BingoMusical.MAX_CARTONS_GENERATED,
             MIN_SONGS_REQUIRED,
             (message, title) => this.showAlert(message, title),
+            gameName,
             format
         );
         
         if (success) {
+            // Marcar que se generaron cartones
+            this.game.setCartonesGenerated(true);
+            this.updateUIState();
             this.closeCartonModal();
         }
     }
     
     updateCartonPreview() {
-        this.carton.updateCartonPreview(this.songs);
+        const gameName = this.game.getGameName() || 'Bingo Musical';
+        this.carton.updateCartonPreview(this.songs, gameName);
     }
 }
 
