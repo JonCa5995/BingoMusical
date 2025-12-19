@@ -63,18 +63,24 @@ export class DOMElements {
         this.uploadCustomIconBtn = document.getElementById('upload-custom-icon-btn');
         this.customIconUploadInput = document.getElementById('custom-icon-upload');
         
-        // Modal de cartones
+        // Modal de cartones (generación simplificada)
         this.cartonModal = document.getElementById('carton-modal');
         this.closeCartonModalBtn = document.getElementById('close-carton-modal');
         this.generateCartonesBtn = document.getElementById('generate-cartones');
-        this.generateHtmlCartonesBtn = document.getElementById('generate-html-cartones');
-        this.generatePdfCartonesBtn = document.getElementById('generate-pdf-cartones');
-        this.previewCartonBtn = document.getElementById('preview-carton-btn');
         this.cartonCountInput = document.getElementById('carton-count');
-        this.cartonPrimaryColorInput = document.getElementById('carton-primary-color');
-        this.cartonSecondaryColorInput = document.getElementById('carton-secondary-color');
-        this.cartonPreviewContainer = document.getElementById('carton-preview');
-        
+        this.generateSaveCartonesBtn = document.getElementById('generate-save-cartones-btn');
+
+        // Modal de impresión (con personalización)
+        this.printModal = document.getElementById('print-modal');
+        this.closePrintModalBtn = document.getElementById('close-print-modal');
+        this.printCartonesInfo = document.getElementById('print-cartones-info');
+        this.printPrimaryColorInput = document.getElementById('print-primary-color');
+        this.printSecondaryColorInput = document.getElementById('print-secondary-color');
+        this.printCartonPreview = document.getElementById('print-carton-preview');
+        this.previewPrintBtn = document.getElementById('preview-print-btn');
+        this.printPdfBtn = document.getElementById('print-pdf-btn');
+        this.printHtmlBtn = document.getElementById('print-html-btn');
+
         // Modal de opciones de cartones
         this.cartonOptionsModal = document.getElementById('carton-options-modal');
         this.closeCartonOptionsModalBtn = document.getElementById('close-carton-options-modal');

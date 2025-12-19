@@ -394,9 +394,9 @@
     </article>
   </dialog>
 
-  <!-- Modal para generar cartones con personalización -->
+  <!-- Modal para generar cartones (simplificado) -->
   <dialog id="carton-modal" class="modal hidden" aria-labelledby="carton-modal-title">
-    <article class="modal-content modal-wide">
+    <article class="modal-content">
       <header class="modal-header">
         <h2 id="carton-modal-title">🎴 Generar Cartones de Bingo</h2>
         <button id="close-carton-modal" class="close-btn" type="button" aria-label="Cerrar modal">
@@ -404,56 +404,80 @@
         </button>
       </header>
       <section class="modal-body">
+        <!-- Solo configuración de cantidad -->
+        <div class="config-group">
+          <label class="config-label" for="carton-count">
+            📊 ¿Cuántos cartones deseas generar?
+          </label>
+          <input id="carton-count"
+                 class="config-input"
+                 type="number"
+                 min="1"
+                 max="1500"
+                 value="10"
+                 aria-describedby="carton-hint"
+          >
+          <small id="carton-hint" class="config-hint">
+            Cada cartón contiene 12 canciones únicas. Los cartones se guardarán para imprimirlos después.
+          </small>
+        </div>
+
+        <footer class="modal-actions">
+          <button id="generate-save-cartones-btn" class="btn btn-play btn-icon" type="button">
+            <span aria-hidden="true">💾</span>
+            Generar y Guardar
+          </button>
+        </footer>
+      </section>
+    </article>
+  </dialog>
+
+  <!-- Modal para imprimir cartones existentes (con personalización) -->
+  <dialog id="print-modal" class="modal hidden" aria-labelledby="print-modal-title">
+    <article class="modal-content modal-wide">
+      <header class="modal-header">
+        <h2 id="print-modal-title">🖨️ Imprimir Cartones</h2>
+        <button id="close-print-modal" class="close-btn" type="button" aria-label="Cerrar modal">
+          ✕
+        </button>
+      </header>
+      <section class="modal-body">
         <div class="carton-settings-grid">
           <!-- Columna izquierda: Configuración -->
           <div class="carton-config-section">
-            <h3>⚙️ Configuración</h3>
-            
-            <!-- Número de cartones -->
-            <div class="config-group">
-              <label class="config-label" for="carton-count">
-                📊 Número de cartones:
-              </label>
-              <input id="carton-count"
-                     class="config-input"
-                     type="number"
-                     min="1"
-                     max="1500"
-                     value="10"
-                     aria-describedby="carton-hint"
-              >
-              <small id="carton-hint" class="config-hint">
-                Cada cartón contiene 12 canciones únicas
-              </small>
-            </div>
+            <h3>⚙️ Personalización</h3>
+
+            <p class="info-message" id="print-cartones-info">
+              <!-- Se llenará dinámicamente -->
+            </p>
 
             <!-- Color principal -->
             <div class="config-group">
-              <label class="config-label" for="carton-primary-color">
+              <label class="config-label" for="print-primary-color">
                 🎨 Color principal:
               </label>
               <div class="color-picker-wrapper">
-                <input id="carton-primary-color"
+                <input id="print-primary-color"
                        class="config-color-input"
                        type="color"
                        value="#6366f1"
                 >
-                <span class="color-preview" style="background-color: #6366f1"></span>
+                <span class="color-preview-print" style="background-color: #6366f1"></span>
               </div>
             </div>
 
             <!-- Color secundario -->
             <div class="config-group">
-              <label class="config-label" for="carton-secondary-color">
+              <label class="config-label" for="print-secondary-color">
                 🎨 Color secundario:
               </label>
               <div class="color-picker-wrapper">
-                <input id="carton-secondary-color"
+                <input id="print-secondary-color"
                        class="config-color-input"
                        type="color"
                        value="#f8faff"
                 >
-                <span class="color-preview" style="background-color: #f8faff"></span>
+                <span class="color-preview-print-secondary" style="background-color: #f8faff"></span>
               </div>
             </div>
           </div>
@@ -461,29 +485,30 @@
           <!-- Columna derecha: Vista previa -->
           <div class="carton-preview-section">
             <h3>👁️ Vista Previa</h3>
-            <div id="carton-preview" class="carton-preview-container">
+            <div id="print-carton-preview" class="carton-preview-container">
               <!-- La vista previa se generará dinámicamente -->
             </div>
           </div>
         </div>
 
         <footer class="modal-actions">
-          <button id="preview-carton-btn" class="btn btn-secondary btn-icon" type="button">
+          <button id="preview-print-btn" class="btn btn-secondary btn-icon" type="button">
             <span aria-hidden="true">👁️</span>
             Actualizar Vista Previa
           </button>
-          <button id="generate-pdf-cartones" class="btn btn-secondary btn-icon" type="button">
+          <button id="print-pdf-btn" class="btn btn-secondary btn-icon" type="button">
             <span aria-hidden="true">📄</span>
-            Generar PDF
+            Descargar PDF
           </button>
-          <button id="generate-html-cartones" class="btn btn-play btn-icon" type="button">
-            <span aria-hidden="true">🎴</span>
-            Generar HTML
+          <button id="print-html-btn" class="btn btn-play btn-icon" type="button">
+            <span aria-hidden="true">🌐</span>
+            Descargar HTML
           </button>
         </footer>
       </section>
     </article>
   </dialog>
+
 
   <!-- Modal para personalizar icono -->
   <dialog id="icon-modal" class="modal hidden" aria-labelledby="icon-modal-title">

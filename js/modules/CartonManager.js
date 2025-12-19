@@ -37,6 +37,32 @@ export class CartonManager {
     }
 
     /**
+     * Actualiza vista previa de impresión (modal de imprimir)
+     */
+    updatePrintPreview(songs, gameName = '') {
+        try {
+            const config = {
+                primaryColor: this.dom.printPrimaryColorInput.value,
+                secondaryColor: this.dom.printSecondaryColorInput.value
+            };
+
+            // Generar un cartón de ejemplo
+            const previewCarton = this.cartonGenerator.generateSingleCarton(songs, 1);
+
+            // Renderizar vista previa
+            this.dom.printCartonPreview.innerHTML = this.generatePreviewHTML(previewCarton, config, gameName);
+        } catch (error) {
+            this.dom.printCartonPreview.innerHTML = `
+                <div class="carton-preview-placeholder">
+                    <p>❌ Error al generar vista previa</p>
+                    <p>${error.message}</p>
+                </div>
+            `;
+            console.error(error);
+        }
+    }
+
+    /**
      * Genera HTML para la vista previa del cartón
      */
     generatePreviewHTML(carton, config, gameName = '') {
@@ -80,65 +106,6 @@ export class CartonManager {
     }
 
     /**
-     * Genera y descarga cartones
-     */
-    async generateCartones(songs, maxCartones, minRequired, showAlertCallback, gameName = '', format = 'html', mode = 'new', existingCartones = []) {
-        const count = Number.parseInt(this.dom.cartonCountInput.value);
-
-        if (Number.isNaN(count) || count < 1 || count > maxCartones) {
-            showAlertCallback(
-                `Por favor ingresa un número válido entre 1 y ${maxCartones}.`,
-                'Número Inválido'
-            );
-            return { success: false };
-        }
-
-        const totalSongs = songs.filter(s => s.file).length;
-        if (totalSongs < minRequired) {
-            showAlertCallback(
-                `Necesitas al menos ${minRequired} canciones cargadas para poder generar cartones.`,
-                'Canciones Insuficientes'
-            );
-            return { success: false };
-        }
-
-        this.audio.playEffect('start');
-
-        try {
-            // Obtener configuración de personalización
-            const config = {
-                primaryColor: this.dom.cartonPrimaryColorInput.value,
-                secondaryColor: this.dom.cartonSecondaryColorInput.value,
-                gameName: gameName || 'Bingo Musical'
-            };
-            
-            // Generar cartones pasando los existentes si estamos en modo añadir
-            const cartonesToPass = mode === 'add' ? existingCartones : [];
-            const cartones = this.cartonGenerator.generateCartones(songs, count, cartonesToPass);
-
-            if (format === 'pdf') {
-                await this.cartonGenerator.downloadAsPDF(cartones, config);
-                showAlertCallback(
-                    `${count} cartón(es) generado(s) en PDF exitosamente.`,
-                    'Cartones Generados'
-                );
-            } else {
-                this.cartonGenerator.downloadAsHTML(cartones, config);
-                showAlertCallback(
-                    `${count} cartón(es) generado(s) exitosamente.\n\nEl archivo HTML está listo para imprimir.`,
-                    'Cartones Generados'
-                );
-            }
-            
-            this.audio.playEffect('win');
-            return { success: true, cartones, config };
-        } catch (error) {
-            showAlertCallback(`Error al generar cartones: ${error.message}`, 'Error');
-            return { success: false };
-        }
-    }
-
-    /**
      * Imprime cartones existentes
      */
     async printExistingCartones(cartones, songs, gameName = '', format = 'html') {
@@ -172,6 +139,80 @@ export class CartonManager {
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Imprime cartones con configuración personalizada del modal
+     */
+    async printCartonesWithConfig(cartones, songs, gameName, format = 'html') {
+        if (!cartones || cartones.length === 0) {
+            return { success: false, error: 'No hay cartones para imprimir' };
+        }
+
+        try {
+            // Verificar si necesitan reconstrucción
+            const firstCell = cartones[0]?.rows?.[0]?.cells?.[0];
+            const needsReconstruction = firstCell && firstCell.songId !== undefined && !firstCell.song;
+
+            const cartonesParaImprimir = needsReconstruction
+                ? this.reconstructCartones(cartones, songs)
+                : cartones;
+
+            // Obtener configuración del modal de impresión
+            const config = {
+                primaryColor: this.dom.printPrimaryColorInput.value,
+                secondaryColor: this.dom.printSecondaryColorInput.value,
+                gameName: gameName || 'Bingo Musical'
+            };
+
+            if (format === 'pdf') {
+                await this.cartonGenerator.downloadAsPDF(cartonesParaImprimir, config);
+            } else {
+                this.cartonGenerator.downloadAsHTML(cartonesParaImprimir, config);
+            }
+
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Genera cartones sin descargarlos
+     */
+    async generateCartones(songs, maxCartones, minRequired, showAlertCallback, mode = 'new', existingCartones = []) {
+        const count = Number.parseInt(this.dom.cartonCountInput.value);
+
+        if (Number.isNaN(count) || count < 1 || count > maxCartones) {
+            showAlertCallback(
+                `Por favor ingresa un número válido entre 1 y ${maxCartones}.`,
+                'Número Inválido'
+            );
+            return { success: false };
+        }
+
+        const totalSongs = songs.filter(s => s.file).length;
+        if (totalSongs < minRequired) {
+            showAlertCallback(
+                `Necesitas al menos ${minRequired} canciones cargadas para poder generar cartones.`,
+                'Canciones Insuficientes'
+            );
+            return { success: false };
+        }
+
+        this.audio.playEffect('start');
+
+        try {
+            // Generar cartones pasando los existentes si estamos en modo añadir
+            const cartonesToPass = mode === 'add' ? existingCartones : [];
+            const cartones = this.cartonGenerator.generateCartones(songs, count, cartonesToPass);
+
+            this.audio.playEffect('win');
+            return { success: true, cartones };
+        } catch (error) {
+            showAlertCallback(`Error al generar cartones: ${error.message}`, 'Error');
+            return { success: false };
         }
     }
 
