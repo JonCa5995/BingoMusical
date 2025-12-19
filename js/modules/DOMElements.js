@@ -75,6 +75,14 @@ export class DOMElements {
         this.cartonSecondaryColorInput = document.getElementById('carton-secondary-color');
         this.cartonPreviewContainer = document.getElementById('carton-preview');
         
+        // Modal de opciones de cartones
+        this.cartonOptionsModal = document.getElementById('carton-options-modal');
+        this.closeCartonOptionsModalBtn = document.getElementById('close-carton-options-modal');
+        this.existingCartonesInfo = document.getElementById('existing-cartones-info');
+        this.createNewCartonesBtn = document.getElementById('create-new-cartones-btn');
+        this.addCartonesBtn = document.getElementById('add-cartones-btn');
+        this.printExistingCartonesBtn = document.getElementById('print-existing-cartones-btn');
+
         // Modal de configuración
         this.configBtn = document.getElementById('config-btn');
         this.configModal = document.getElementById('config-modal');

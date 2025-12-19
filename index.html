@@ -357,6 +357,43 @@
     </article>
   </dialog>
 
+  <!-- Modal de opciones de cartones (Crear/Añadir/Imprimir) -->
+  <dialog id="carton-options-modal" class="modal hidden" aria-labelledby="carton-options-title">
+    <article class="modal-content">
+      <header class="modal-header">
+        <h2 id="carton-options-title">🎴 Opciones de Cartones</h2>
+        <button id="close-carton-options-modal" class="close-btn" type="button" aria-label="Cerrar opciones">
+          ✕
+        </button>
+      </header>
+      <section class="modal-body">
+        <p id="existing-cartones-info" class="info-message">
+          <!-- Se llenará dinámicamente con el número de cartones existentes -->
+        </p>
+
+        <div class="carton-options-grid">
+          <button id="create-new-cartones-btn" class="option-card" type="button">
+            <span class="option-icon" aria-hidden="true">🆕</span>
+            <h3 class="option-title">Crear Nuevos</h3>
+            <p class="option-description">Reemplaza los cartones existentes con nuevos cartones</p>
+          </button>
+
+          <button id="add-cartones-btn" class="option-card" type="button">
+            <span class="option-icon" aria-hidden="true">➕</span>
+            <h3 class="option-title">Añadir Cartones</h3>
+            <p class="option-description">Agrega más cartones a la lista actual manteniendo unicidad</p>
+          </button>
+
+          <button id="print-existing-cartones-btn" class="option-card" type="button">
+            <span class="option-icon" aria-hidden="true">🖨️</span>
+            <h3 class="option-title">Imprimir Existentes</h3>
+            <p class="option-description">Genera archivo con los cartones ya creados</p>
+          </button>
+        </div>
+      </section>
+    </article>
+  </dialog>
+
   <!-- Modal para generar cartones con personalización -->
   <dialog id="carton-modal" class="modal hidden" aria-labelledby="carton-modal-title">
     <article class="modal-content modal-wide">

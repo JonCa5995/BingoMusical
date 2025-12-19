@@ -13,6 +13,46 @@ export class GameManager {
     iconRevealTime = 10; // segundos
     gameName = ''; // Nombre del juego/lista
     cartonesGenerated = false; // Flag para controlar si se generaron cartones
+    cartones = []; // Array de cartones generados
+
+    /**
+     * Establece los cartones generados
+     */
+    setCartones(cartones) {
+        this.cartones = cartones || [];
+        this.cartonesGenerated = this.cartones.length > 0;
+    }
+
+    /**
+     * Obtiene los cartones almacenados
+     */
+    getCartones() {
+        return this.cartones;
+    }
+
+    /**
+     * Añade cartones a los existentes
+     */
+    addCartones(newCartones) {
+        if (!Array.isArray(newCartones)) return;
+        this.cartones = [...this.cartones, ...newCartones];
+        this.cartonesGenerated = this.cartones.length > 0;
+    }
+
+    /**
+     * Elimina todos los cartones
+     */
+    clearCartones() {
+        this.cartones = [];
+        this.cartonesGenerated = false;
+    }
+
+    /**
+     * Obtiene el número de cartones almacenados
+     */
+    getCartonesCount() {
+        return this.cartones.length;
+    }
 
     /**
      * Establece el nombre del juego

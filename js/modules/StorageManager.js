@@ -108,14 +108,14 @@ export class StorageManager {
     /**
      * Exporta la lista de canciones a un archivo JSON
      */
-    exportPlaylist(songs, songsFolder, gameName = '') {
+    exportPlaylist(songs, songsFolder, gameName = '', cartones = []) {
         if (!songs || songs.length === 0) {
             return { success: false, error: 'No hay canciones para exportar' };
         }
 
         try {
             const playlist = {
-                version: '1.0',
+                version: '1.1',
                 name: gameName || 'Lista de Bingo Musical',
                 date: new Date().toISOString(),
                 songs: songs.map(song => ({
@@ -123,6 +123,17 @@ export class StorageManager {
                     title: song.title,
                     icon: song.icon,
                     iconType: song.iconType || 'emoji',
+                })),
+                cartones: cartones.map(carton => ({
+                    id: carton.id,
+                    songs: carton.songs.map(s => s.id),
+                    rows: carton.rows.map(row => ({
+                        cells: row.cells.map(cell => ({
+                            position: cell.position,
+                            songId: cell.type === 'song' ? cell.song.id : null
+                        }))
+                    })),
+                    generatedAt: carton.generatedAt
                 }))
             };
 
@@ -145,9 +156,13 @@ export class StorageManager {
 
             URL.revokeObjectURL(url);
 
+            const cartonesInfo = cartones.length > 0
+                ? `\n${cartones.length} cartón(es) incluido(s) en el archivo.`
+                : '';
+
             return {
                 success: true,
-                message: `Lista "${gameName || 'Bingo Musical'}" exportada correctamente.\n\n` +
+                message: `Lista "${gameName || 'Bingo Musical'}" exportada correctamente.${cartonesInfo}\n\n` +
                         `Coloca el archivo JSON en la carpeta raíz del proyecto.\n` +
                         `Coloca los archivos de audio en: ${songsFolder}`
             };

@@ -10,7 +10,7 @@ export class BingoCartonGenerator {
 
     emptyIcon = '<img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración">';
 
-    generateCartones(songs, count = 1) {
+    generateCartones(songs, count = 1, existingCartones = []) {
         if (songs.length < MIN_SONGS_REQUIRED) {
             throw new Error('Se necesitan al menos 24 canciones para generar cartones');
         }
@@ -18,12 +18,30 @@ export class BingoCartonGenerator {
         const cartones = [];
         const usedCombinations = new Set();
 
+        // Agregar combinaciones de cartones existentes al set
+        for (const existingCarton of existingCartones) {
+            for (const row of existingCarton.rows) {
+                const songIds = row.cells
+                    .filter(c => c.type === 'song')
+                    .map(c => c.song ? c.song.id : c.songId)
+                    .filter(id => id)
+                    .sort((a, b) => a - b)
+                    .join('-');
+                if (songIds) {
+                    usedCombinations.add(songIds);
+                }
+            }
+        }
+
+        // Calcular el número de inicio para los nuevos cartones
+        const startNumber = existingCartones.length + 1;
+
         for (let i = 0; i < count; i++) {
             let carton;
             let attempts = 0;
 
             do {
-                carton = this.generateSingleCarton(songs, i + 1);
+                carton = this.generateSingleCarton(songs, startNumber + i);
                 attempts++;
 
                 if (attempts > BingoCartonGenerator.MAX_CARTON_GENERATION_ATTEMPTS) {

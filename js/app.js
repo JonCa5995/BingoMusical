@@ -82,7 +82,21 @@ class BingoMusical {
     }
 
     _setupCartonEventListeners() {
-        this.dom.generateCartonesBtn.addEventListener('click', () => this.openCartonModal());
+        this.dom.generateCartonesBtn.addEventListener('click', () => this.openCartonOptionsModal());
+
+        // Modal de opciones
+        this.dom.closeCartonOptionsModalBtn.addEventListener('click', () => this.closeCartonOptionsModal());
+        this.dom.createNewCartonesBtn.addEventListener('click', () => this.handleCreateNewCartones());
+        this.dom.addCartonesBtn.addEventListener('click', () => this.handleAddCartones());
+        this.dom.printExistingCartonesBtn.addEventListener('click', () => this.handlePrintExistingCartones());
+
+        this.dom.cartonOptionsModal.addEventListener('click', (e) => {
+            if (e.target.id === 'carton-options-modal') {
+                this.closeCartonOptionsModal();
+            }
+        });
+
+        // Modal de generación
         this.dom.closeCartonModalBtn.addEventListener('click', () => this.closeCartonModal());
         this.dom.generateHtmlCartonesBtn.addEventListener('click', () => this.generateCartones('html'));
         this.dom.generatePdfCartonesBtn.addEventListener('click', () => this.generateCartones('pdf'));
@@ -420,7 +434,8 @@ class BingoMusical {
 
     exportPlaylist() {
         const gameName = this.game.getGameName() || 'Bingo Musical';
-        const result = this.storage.exportPlaylist(this.songs, this.songsFolder, gameName);
+        const cartones = this.game.getCartones();
+        const result = this.storage.exportPlaylist(this.songs, this.songsFolder, gameName, cartones);
 
         if (result.success) {
             this.audio.playEffect('click');
@@ -508,6 +523,13 @@ class BingoMusical {
         const gameName = playlist.name || '';
         this.game.setGameName(gameName);
         this.dom.gameNameInput.value = gameName;
+
+        // Cargar cartones si existen en el playlist
+        if (playlist.cartones && Array.isArray(playlist.cartones) && playlist.cartones.length > 0) {
+            // Reconstruir cartones con referencias a las canciones actuales
+            const reconstructedCartones = this.carton.reconstructCartones(playlist.cartones, this.songs);
+            this.game.setCartones(reconstructedCartones);
+        }
 
         this.renderSongsList();
         this.updateCounters();
@@ -799,8 +821,8 @@ class BingoMusical {
             this.songs = this.songManager.deleteAllSongs();
             this.audio.playEffect('click');
 
-            // Resetear el flag de cartones generados y el nombre del juego
-            this.game.setCartonesGenerated(false);
+            // Resetear el flag de cartones generados, el nombre del juego y los cartones
+            this.game.clearCartones();
             this.game.setGameName('');
             this.dom.gameNameInput.value = '';
 
@@ -1047,7 +1069,90 @@ class BingoMusical {
     // GENERACIÓN DE CARTONES
     // ============================================================
 
-    openCartonModal() {
+    openCartonOptionsModal() {
+        const existingCount = this.game.getCartonesCount();
+
+        // Mostrar información de cartones existentes
+        if (existingCount > 0) {
+            this.dom.existingCartonesInfo.textContent =
+                `Tienes ${existingCount} cartón(es) guardado(s). ¿Qué deseas hacer?`;
+            this.dom.printExistingCartonesBtn.disabled = false;
+        } else {
+            this.dom.existingCartonesInfo.textContent =
+                `No tienes cartones guardados. Selecciona "Crear Nuevos" para generar.`;
+            this.dom.printExistingCartonesBtn.disabled = true;
+        }
+
+        // Abrir modal de opciones
+        this.audio.playEffect('click');
+        this.dom.cartonOptionsModal.classList.remove('hidden');
+        this.dom.cartonOptionsModal.showModal();
+    }
+
+    closeCartonOptionsModal() {
+        this.audio.playEffect('click');
+        this.dom.cartonOptionsModal.classList.add('hidden');
+        this.dom.cartonOptionsModal.close();
+    }
+
+    handleCreateNewCartones() {
+        this.cartonMode = 'new';
+        this.closeCartonOptionsModal();
+        this.openCartonGenerationModal();
+    }
+
+    handleAddCartones() {
+        this.cartonMode = 'add';
+        this.closeCartonOptionsModal();
+        this.openCartonGenerationModal();
+    }
+
+    async handlePrintExistingCartones() {
+        const existingCartones = this.game.getCartones();
+
+        if (existingCartones.length === 0) {
+            this.showAlert('No hay cartones guardados para imprimir.', 'Sin Cartones');
+            return;
+        }
+
+        this.closeCartonOptionsModal();
+
+        // Mostrar opciones de formato
+        const confirmed = await this.showConfirm(
+            `¿En qué formato deseas imprimir los ${existingCartones.length} cartón(es)?`,
+            'Seleccionar Formato'
+        );
+
+        if (confirmed) {
+            this.printExistingCartones('html');
+        }
+    }
+
+    async printExistingCartones(format = 'html') {
+        const gameName = this.game.getGameName() || 'Bingo Musical';
+        const existingCartones = this.game.getCartones();
+
+        this.audio.playEffect('start');
+
+        const result = await this.carton.printExistingCartones(
+            existingCartones,
+            this.songs,
+            gameName,
+            format
+        );
+
+        if (result.success) {
+            this.audio.playEffect('win');
+            this.showAlert(
+                `${existingCartones.length} cartón(es) descargado(s) exitosamente.`,
+                'Cartones Impresos'
+            );
+        } else {
+            this.showAlert(`Error al imprimir cartones: ${result.error}`, 'Error');
+        }
+    }
+
+    openCartonGenerationModal() {
         const gameName = this.game.getGameName() || 'Bingo Musical';
         this.modal.openCartonModal(
             this.getTotalSongsWithFiles(),
@@ -1062,20 +1167,35 @@ class BingoMusical {
 
     async generateCartones(format = 'html') {
         const gameName = this.game.getGameName() || 'Bingo Musical';
-        const success = await this.carton.generateCartones(
+        const mode = this.cartonMode || 'new';
+
+        // Obtener cartones existentes si estamos en modo añadir
+        const existingCartones = mode === 'add' ? this.game.getCartones() : [];
+
+        const result = await this.carton.generateCartones(
             this.songs,
             BingoMusical.MAX_CARTONS_GENERATED,
             MIN_SONGS_REQUIRED,
             (message, title) => this.showAlert(message, title),
             gameName,
-            format
+            format,
+            mode,
+            existingCartones
         );
         
-        if (success) {
-            // Marcar que se generaron cartones
-            this.game.setCartonesGenerated(true);
+        if (result.success) {
+            // Guardar o añadir cartones según el modo
+            if (mode === 'new') {
+                this.game.setCartones(result.cartones);
+            } else if (mode === 'add') {
+                this.game.addCartones(result.cartones);
+            }
+
             this.updateUIState();
             this.closeCartonModal();
+
+            // Resetear modo
+            this.cartonMode = null;
         }
     }
     
