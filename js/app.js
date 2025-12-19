@@ -112,6 +112,14 @@ class BingoMusical {
         this.dom.printPdfBtn.addEventListener('click', () => this.printCartones('pdf'));
         this.dom.previewPrintBtn.addEventListener('click', () => this.updatePrintPreview());
 
+        // Event listeners para selector de rango
+        this.dom.printRangeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const showRange = e.target.value === 'range';
+                this.dom.rangeInputsContainer.style.display = showRange ? 'block' : 'none';
+            });
+        });
+
         // Actualizar preview al cambiar colores
         this.dom.printPrimaryColorInput.addEventListener('input', (e) => {
             document.querySelector('.color-preview-print').style.backgroundColor = e.target.value;
@@ -1182,11 +1190,19 @@ class BingoMusical {
     }
 
     openPrintModal() {
-        const gameName = this.game.getGameName() || 'Bingo Musical';
         const count = this.game.getCartonesCount();
 
         // Actualizar información
         this.dom.printCartonesInfo.textContent = `Tienes ${count} cartón(es) guardado(s) listo(s) para imprimir.`;
+
+        // Configurar valores de rango
+        this.dom.rangeFromInput.max = count;
+        this.dom.rangeToInput.max = count;
+        this.dom.rangeToInput.value = count;
+
+        // Resetear a "todos"
+        this.dom.printRangeRadios[0].checked = true;
+        this.dom.rangeInputsContainer.style.display = 'none';
 
         // Generar vista previa inicial
         this.updatePrintPreview();
@@ -1218,7 +1234,7 @@ class BingoMusical {
         if (result.success) {
             this.audio.playEffect('win');
             this.showAlert(
-                `${existingCartones.length} cartón(es) descargado(s) en ${format.toUpperCase()} exitosamente.`,
+                `${result.count} cartón(es) descargado(s) en ${format.toUpperCase()} exitosamente.`,
                 'Cartones Impresos'
             );
             this.closePrintModal();

@@ -80,6 +80,10 @@ export class DOMElements {
         this.previewPrintBtn = document.getElementById('preview-print-btn');
         this.printPdfBtn = document.getElementById('print-pdf-btn');
         this.printHtmlBtn = document.getElementById('print-html-btn');
+        this.printRangeRadios = document.getElementsByName('print-range');
+        this.rangeInputsContainer = document.getElementById('range-inputs');
+        this.rangeFromInput = document.getElementById('range-from');
+        this.rangeToInput = document.getElementById('range-to');
 
         // Modal de opciones de cartones
         this.cartonOptionsModal = document.getElementById('carton-options-modal');

@@ -451,6 +451,50 @@
               <!-- Se llenará dinámicamente -->
             </p>
 
+            <!-- Selector de rango de cartones -->
+            <div class="config-group">
+              <label class="config-label">
+                📋 Cartones a imprimir:
+              </label>
+              <div class="radio-group">
+                <label class="radio-option">
+                  <input type="radio" name="print-range" value="all" checked>
+                  <span>Todos los cartones</span>
+                </label>
+                <label class="radio-option">
+                  <input type="radio" name="print-range" value="range">
+                  <span>Rango específico</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Inputs para rango (ocultos inicialmente) -->
+            <div class="config-group" id="range-inputs" style="display: none;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                <div>
+                  <label class="config-label" for="range-from">Desde:</label>
+                  <input id="range-from"
+                         class="config-input"
+                         type="number"
+                         min="1"
+                         value="1"
+                  >
+                </div>
+                <div>
+                  <label class="config-label" for="range-to">Hasta:</label>
+                  <input id="range-to"
+                         class="config-input"
+                         type="number"
+                         min="1"
+                         value="1"
+                  >
+                </div>
+              </div>
+              <small class="config-hint" id="range-hint">
+                Selecciona el rango de cartones (ej: del 1 al 10)
+              </small>
+            </div>
+
             <!-- Color principal -->
             <div class="config-group">
               <label class="config-label" for="print-primary-color">

@@ -95,7 +95,7 @@ export class CartonManager {
         return `
             <div class="preview-carton" style="color: ${primaryColor}; border-color: ${primaryColor};">
                 <div class="preview-carton-header" style="border-color: ${primaryColor};">
-                    <div class="preview-carton-title" style="color: ${primaryColor};">🎵 ${displayName}</div>
+                    <div class="preview-carton-title" style="color: ${secondaryColor};">🎵 ${displayName}</div>
                     <div class="preview-carton-number" style="background-color: ${secondaryColor};">#1</div>
                 </div>
                 <div class="preview-carton-grid">
@@ -151,13 +151,34 @@ export class CartonManager {
         }
 
         try {
+            // Obtener selección de rango
+            const printAll = this.dom.printRangeRadios[0].checked;
+            let cartonesToPrint = cartones;
+
+            if (!printAll) {
+                // Filtrar por rango
+                const from = Number.parseInt(this.dom.rangeFromInput.value) || 1;
+                const to = Number.parseInt(this.dom.rangeToInput.value) || cartones.length;
+
+                // Validar rango
+                if (from < 1 || from > cartones.length || to < 1 || to > cartones.length || from > to) {
+                    return {
+                        success: false,
+                        error: `Rango inválido. Debe ser entre 1 y ${cartones.length}, y "Desde" debe ser menor o igual que "Hasta".`
+                    };
+                }
+
+                // Filtrar cartones por índice (0-based)
+                cartonesToPrint = cartones.slice(from - 1, to);
+            }
+
             // Verificar si necesitan reconstrucción
-            const firstCell = cartones[0]?.rows?.[0]?.cells?.[0];
+            const firstCell = cartonesToPrint[0]?.rows?.[0]?.cells?.[0];
             const needsReconstruction = firstCell && firstCell.songId !== undefined && !firstCell.song;
 
             const cartonesParaImprimir = needsReconstruction
-                ? this.reconstructCartones(cartones, songs)
-                : cartones;
+                ? this.reconstructCartones(cartonesToPrint, songs)
+                : cartonesToPrint;
 
             // Obtener configuración del modal de impresión
             const config = {
@@ -172,7 +193,7 @@ export class CartonManager {
                 this.cartonGenerator.downloadAsHTML(cartonesParaImprimir, config);
             }
 
-            return { success: true };
+            return { success: true, count: cartonesParaImprimir.length };
         } catch (error) {
             return { success: false, error: error.message };
         }

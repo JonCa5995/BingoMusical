@@ -178,14 +178,14 @@ export class BingoCartonGenerator {
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Arial', sans-serif; background: white; margin: 0; padding: 0; }
     .cartones-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 1rem; width: 210mm; margin: 0 auto; }
-    .carton-container { background: white; border: 2px solid #000; padding: 12px; display: flex; flex-direction: column; }
+    .carton-container { background: white; border: 2px solid ${primaryColor}; padding: 12px; display: flex; flex-direction: column; }
     .carton-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid ${primaryColor}; }
-    .carton-title { font-size: 20px; font-weight: bold; color: ${primaryColor}; text-transform: uppercase; }
-    .carton-number { font-size: 25px; font-weight: bold; color: #64748b; background: #f1f5f9; padding: 3px 10px; border-radius: 4px; }
+    .carton-title { font-size: 20px; font-weight: bold; color: ${secondaryColor}; text-transform: uppercase; }
+    .carton-number { font-size: 25px; font-weight: bold; color: ${primaryColor}; background: ${secondaryColor}; padding: 3px 10px; border-radius: 4px; }
     .carton-grid { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(3, 1fr); gap: 4px; width: 100%; height: 100%; border-collapse: separate; border-spacing: 4px; }
     .carton-cell { aspect-ratio: 1 / 1; border: 2px solid #e2e8f0; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: white; }
-    .carton-cell.song { border-color: ${primaryColor}; background: ${secondaryColor}; }
-    .carton-cell.decorative { background: #fafafa; border-color: #e2e8f0; border-style: dashed; }
+    .carton-cell.song { border-color: ${primaryColor}; background: white; }
+    .carton-cell.decorative { background: white; border-color: #e2e8f0; border-style: dashed; }
     .cell-icon { font-size: 72px; line-height: 1; display: flex; align-items: center; justify-content: center; height: 100%; }
     .cell-icon img { max-width: 90%; max-height: 90%; object-fit: contain; }
     .image-icon { height: 56px; aspect-ratio: 1; }
