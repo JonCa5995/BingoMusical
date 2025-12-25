@@ -60,6 +60,7 @@ export class DOMElements {
         this.closeIconModalBtn = document.getElementById('close-modal');
         this.modalSongTitle = document.getElementById('modal-song-title');
         this.iconPickerContainer = document.querySelector('.icon-picker');
+        this.iconSearchInput = document.getElementById('icon-search');
         this.uploadCustomIconBtn = document.getElementById('upload-custom-icon-btn');
         this.customIconUploadInput = document.getElementById('custom-icon-upload');
         

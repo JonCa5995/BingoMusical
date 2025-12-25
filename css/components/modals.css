@@ -343,3 +343,37 @@ article.modal-content {
     background: rgba(220, 53, 69, 0.2);
 }
 
+/* Buscador de iconos */
+.icon-search-wrapper {
+    margin-bottom: 1rem;
+}
+
+.icon-search-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--background-color);
+    color: var(--text-color);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.icon-search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.icon-search-input::placeholder {
+    color: var(--text-muted);
+}
+
+.icon-picker-no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
