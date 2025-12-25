@@ -602,11 +602,28 @@ class BingoMusical {
     // GESTIÓN DE ICONOS
     // ============================================================
 
-    openIconPicker(songId) {
+    async openIconPicker(songId) {
         if (this.game.isGameStarted()) {
             const message = 'No puedes cambiar iconos una vez que el juego ha iniciado.';
             this.showAlert(message, 'Juego Iniciado');
             return;
+        }
+
+        // Verificar si existen cartones
+        const cartonesCount = this.game.getCartonesCount();
+        if (cartonesCount > 0) {
+            const confirmed = await this.showConfirm(
+                `Tienes ${cartonesCount} cartón(es) generado(s). Al cambiar el icono, se borrarán TODOS los cartones.\n\n¿Deseas continuar?`,
+                'Cartones Existentes'
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            // Borrar todos los cartones
+            this.game.clearCartones();
+            this.updateUIState();
         }
 
         const result = this.icons.openIconPicker(songId, this.songs, () => {
