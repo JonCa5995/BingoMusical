@@ -144,13 +144,13 @@ export class UIManager {
             this.dom.currentIconImg.src = song.icon;
         } else {
             const canvas = document.createElement('canvas');
-            canvas.width = 200;
-            canvas.height = 200;
+            canvas.width = 300;
+            canvas.height = 300;
             const ctx = canvas.getContext('2d');
-            ctx.font = '120px Arial';
+            ctx.font = '180px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(song.icon, 100, 100);
+            ctx.fillText(song.icon, 150, 150);
             this.dom.currentIconImg.src = canvas.toDataURL();
         }
 
@@ -252,13 +252,13 @@ export class UIManager {
             img.src = song.icon;
         } else {
             const canvas = document.createElement('canvas');
-            canvas.width = 120;
-            canvas.height = 120;
+            canvas.width = 150;
+            canvas.height = 150;
             const ctx = canvas.getContext('2d');
-            ctx.font = '80px Arial';
+            ctx.font = '100px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(song.icon, 60, 60);
+            ctx.fillText(song.icon, 75, 75);
             img.src = canvas.toDataURL();
         }
 

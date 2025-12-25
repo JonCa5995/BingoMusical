@@ -64,7 +64,11 @@ export class IconManager {
 
             // ⚽ Deportes y actividades (24)
             '⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🥏', '🎱', '🏓', '🏸', '🥊',
-            '🥋', '🥅', '⛳', '⛸️', '🎿', '🛷', '🥌', '🏒', '🏑', '🏏', '🤿', '🏹'
+            '🥋', '🥅', '⛳', '⛸️', '🎿', '🛷', '🥌', '🏒', '🏑', '🏏', '🤿', '🏹',
+
+            // 💪 Fuerza y poder (20)
+            '💪', '🦾', '⚡', '💥', '🦁', '🐯', '🦅', '🐉', '🦍', '🐺',
+            '🗡️', '⚔️', '🛡️', '🏋️', '🤺', '🧗', '💎', '👊', '🔱', '⚓'
         ];
     }
 
@@ -257,10 +261,10 @@ export class IconManager {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    canvas.width = 200;
-                    canvas.height = 200;
+                    canvas.width = 300;
+                    canvas.height = 300;
                     const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, 200, 200);
+                    ctx.drawImage(img, 0, 0, 300, 300);
                     song.icon = canvas.toDataURL('image/png');
                     handleUpdate();
                 };
