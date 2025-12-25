@@ -147,10 +147,10 @@ export class UIManager {
             canvas.width = 300;
             canvas.height = 300;
             const ctx = canvas.getContext('2d');
-            ctx.font = '180px Arial';
+            ctx.font = '200px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(song.icon, 150, 150);
+            ctx.fillText(song.icon, 150, 165);
             this.dom.currentIconImg.src = canvas.toDataURL();
         }
 
@@ -255,10 +255,10 @@ export class UIManager {
             canvas.width = 150;
             canvas.height = 150;
             const ctx = canvas.getContext('2d');
-            ctx.font = '100px Arial';
+            ctx.font = '120px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(song.icon, 75, 75);
+            ctx.fillText(song.icon, 75, 80);
             img.src = canvas.toDataURL();
         }
 
@@ -294,7 +294,7 @@ export class UIManager {
      */
     getSongIconHtml(song) {
         if (song.iconType === 'image') {
-            return `<img src="${song.icon}" alt="${song.title}" style="width:1.75rem;aspect-ratio:1;object-fit:contain;">`;
+            return `<img src="${song.icon}" alt="${song.title}" style="padding:.25rem;aspect-ratio:1;object-fit:contain;">`;
         }
         return `<span role="img" aria-label="${song.title}">${song.icon}</span>`;
     }
