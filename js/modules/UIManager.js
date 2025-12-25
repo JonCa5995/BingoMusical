@@ -9,6 +9,25 @@ export class UIManager {
     }
 
     /**
+     * Convierte un emoji a una imagen Data URL
+     * @param {string} emoji - El emoji a convertir
+     * @param {number} size - Tamaño del canvas (ancho y alto)
+     * @returns {string} - Data URL de la imagen
+     */
+    emojiToDataURL(emoji, size) {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const fontSize = Math.floor(size * 0.75);
+        ctx.font = `${fontSize}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(emoji, size / 2, size / 2 + size * 0.05);
+        return canvas.toDataURL();
+    }
+
+    /**
      * Renderiza la lista completa de canciones
      */
     renderSongsList(songs, totalSongsWithFiles, createSongItemCallback) {
@@ -143,15 +162,7 @@ export class UIManager {
         if (song.iconType === 'image' && song.icon) {
             this.dom.currentIconImg.src = song.icon;
         } else {
-            const canvas = document.createElement('canvas');
-            canvas.width = 300;
-            canvas.height = 300;
-            const ctx = canvas.getContext('2d');
-            ctx.font = '200px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(song.icon, 150, 165);
-            this.dom.currentIconImg.src = canvas.toDataURL();
+            this.dom.currentIconImg.src = this.emojiToDataURL(song.icon, 300);
         }
 
         // Revelar icono después del tiempo configurado (solo si el juego ha iniciado)
@@ -251,15 +262,7 @@ export class UIManager {
         if (song.iconType === 'image' && song.icon) {
             img.src = song.icon;
         } else {
-            const canvas = document.createElement('canvas');
-            canvas.width = 150;
-            canvas.height = 150;
-            const ctx = canvas.getContext('2d');
-            ctx.font = '120px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(song.icon, 75, 80);
-            img.src = canvas.toDataURL();
+            img.src = this.emojiToDataURL(song.icon, 150);
         }
 
         img.alt = song.title;

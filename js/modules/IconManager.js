@@ -121,8 +121,8 @@ export class IconManager {
         this.dom.iconPickerContainer.innerHTML = '';
         this.dom.iconPickerContainer.appendChild(fragment);
 
+        // Abrir modal
         this.dom.iconModal.classList.remove('hidden');
-        
         if (this.dom.iconModal.showModal) {
             this.dom.iconModal.showModal();
         }
@@ -136,11 +136,12 @@ export class IconManager {
      * Cierra el modal de iconos
      */
     closeIconModal() {
+        // Cerrar modal
         if (this.dom.iconModal.close) {
             this.dom.iconModal.close();
         }
-        
         this.dom.iconModal.classList.add('hidden');
+
         this.currentEditingSongId = null;
         this.onIconSelected = null;
 
@@ -149,11 +150,19 @@ export class IconManager {
     }
 
     /**
+     * Elimina los acentos de un texto
+     * @param {string} text - Texto a normalizar
+     * @returns {string} - Texto sin acentos
+     */
+    removeAccents(text) {
+        return text.normalize('NFD').replaceAll(/[\u0300-\u036f]/g, '');
+    }
+
+    /**
      * Filtra los iconos según el texto de búsqueda
      */
     filterIcons(searchText) {
-        const query = searchText.toLowerCase().trim()
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Eliminar acentos
+        const query = this.removeAccents(searchText.toLowerCase().trim());
 
         const iconOptions = this.dom.iconPickerContainer.querySelectorAll('.icon-option');
         let visibleCount = 0;
@@ -168,7 +177,7 @@ export class IconManager {
 
             // Buscar en las palabras clave (sin acentos)
             const matches = query === '' || keywords.some(keyword =>
-                keyword.normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(query)
+                this.removeAccents(keyword).includes(query)
             ) || icon.includes(query);
 
             option.style.display = matches ? '' : 'none';

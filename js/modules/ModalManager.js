@@ -11,17 +11,33 @@ export class ModalManager {
     }
 
     /**
+     * Abre un modal de forma genérica
+     */
+    openModal(modalElement) {
+        modalElement.classList.remove('hidden');
+        if (modalElement.showModal) {
+            modalElement.showModal();
+        }
+    }
+
+    /**
+     * Cierra un modal de forma genérica
+     */
+    closeModal(modalElement) {
+        if (modalElement.close) {
+            modalElement.close();
+        }
+        modalElement.classList.add('hidden');
+    }
+
+    /**
      * Muestra un modal de alerta
      */
     showAlert(message, title = 'Información') {
         this.dom.alertTitle.textContent = title;
         this.dom.alertMessage.innerHTML = message;
-        this.dom.alertModal.classList.remove('hidden');
-        
-        if (this.dom.alertModal.showModal) {
-            this.dom.alertModal.showModal();
-        }
-        
+        this.openModal(this.dom.alertModal);
+
         const isError = /error|inválido|insuficientes/i.test(title);
         this.audio.playEffect(isError ? 'error' : 'click');
     }
@@ -34,12 +50,7 @@ export class ModalManager {
             renderCallback();
             this.shouldRender = false;
         }
-        
-        if (this.dom.alertModal.close) {
-            this.dom.alertModal.close();
-        }
-        
-        this.dom.alertModal.classList.add('hidden');
+        this.closeModal(this.dom.alertModal);
     }
 
     /**
@@ -49,12 +60,8 @@ export class ModalManager {
         return new Promise((resolve) => {
             this.dom.confirmTitle.textContent = title;
             this.dom.confirmMessage.textContent = message;
-            this.dom.confirmModal.classList.remove('hidden');
-            
-            if (this.dom.confirmModal.showModal) {
-                this.dom.confirmModal.showModal();
-            }
-            
+            this.openModal(this.dom.confirmModal);
+
             this.confirmCallback = resolve;
             this.audio.playEffect('click');
         });
@@ -64,12 +71,8 @@ export class ModalManager {
      * Cierra el modal de confirmación
      */
     closeConfirmModal(result) {
-        if (this.dom.confirmModal.close) {
-            this.dom.confirmModal.close();
-        }
-        
-        this.dom.confirmModal.classList.add('hidden');
-        
+        this.closeModal(this.dom.confirmModal);
+
         if (this.confirmCallback) {
             this.confirmCallback(result);
             this.confirmCallback = null;
@@ -88,12 +91,8 @@ export class ModalManager {
             return;
         }
 
-        this.dom.cartonModal.classList.remove('hidden');
-        
-        if (this.dom.cartonModal.showModal) {
-            this.dom.cartonModal.showModal();
-        }
-        
+        this.openModal(this.dom.cartonModal);
+
         // Generar vista previa inicial
         if (updatePreviewCallback) {
             updatePreviewCallback();
@@ -106,40 +105,55 @@ export class ModalManager {
      * Cierra el modal de cartones
      */
     closeCartonModal() {
-        if (this.dom.cartonModal.close) {
-            this.dom.cartonModal.close();
-        }
-        
-        this.dom.cartonModal.classList.add('hidden');
+        this.closeModal(this.dom.cartonModal);
+    }
+
+    /**
+     * Verifica si un modal está abierto
+     * @param {HTMLElement} modalElement - Elemento del modal
+     * @returns {boolean} - true si está abierto
+     */
+    isModalOpen(modalElement) {
+        return !modalElement.classList.contains('hidden');
+    }
+
+    /**
+     * Configura el cierre de un modal al hacer click fuera del contenido
+     * @param {HTMLElement} modalElement - Elemento del modal
+     * @param {Function} closeCallback - Función a ejecutar para cerrar el modal
+     */
+    setupOutsideClickClose(modalElement, closeCallback) {
+        modalElement.addEventListener('click', (e) => {
+            if (e.target === modalElement) {
+                closeCallback();
+            }
+        });
     }
 
     /**
      * Verifica si algún modal está abierto
      */
     checkOpenModals() {
-        return !this.dom.iconModal.classList.contains('hidden') ||
-            !this.dom.cartonModal.classList.contains('hidden') ||
-            !this.dom.configModal.classList.contains('hidden') ||
-            !this.dom.confirmModal.classList.contains('hidden') ||
-            !this.dom.alertModal.classList.contains('hidden');
+        return this.isModalOpen(this.dom.iconModal) ||
+            this.isModalOpen(this.dom.cartonModal) ||
+            this.isModalOpen(this.dom.configModal) ||
+            this.isModalOpen(this.dom.confirmModal) ||
+            this.isModalOpen(this.dom.alertModal);
     }
 
     /**
      * Cierra modales con la tecla Escape
      */
     closeModalsOnEscape(iconCloseCallback) {
-        if (!this.dom.iconModal.classList.contains('hidden')) {
+        if (this.isModalOpen(this.dom.iconModal)) {
             if (iconCloseCallback) iconCloseCallback();
-        } else if (!this.dom.cartonModal.classList.contains('hidden')) {
+        } else if (this.isModalOpen(this.dom.cartonModal)) {
             this.closeCartonModal();
-        } else if (!this.dom.configModal.classList.contains('hidden')) {
-            if (this.dom.configModal.close) {
-                this.dom.configModal.close();
-            }
-            this.dom.configModal.classList.add('hidden');
-        } else if (!this.dom.confirmModal.classList.contains('hidden')) {
+        } else if (this.isModalOpen(this.dom.configModal)) {
+            this.closeModal(this.dom.configModal);
+        } else if (this.isModalOpen(this.dom.confirmModal)) {
             this.closeConfirmModal(false);
-        } else if (!this.dom.alertModal.classList.contains('hidden')) {
+        } else if (this.isModalOpen(this.dom.alertModal)) {
             this.closeAlertModal();
         }
     }
