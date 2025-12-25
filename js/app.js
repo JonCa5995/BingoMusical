@@ -68,6 +68,24 @@ class BingoMusical {
     }
 
     _setupSongManagementEventListeners() {
+        // Interceptar click en el label para verificar cartones antes de abrir selector
+        this.dom.addSongsLabel.addEventListener('click', async (e) => {
+            const cartonesCount = this.game.getCartonesCount();
+            if (cartonesCount > 0) {
+                e.preventDefault();
+                const confirmed = await this.showConfirm(
+                    `Tienes ${cartonesCount} cartón(es) generado(s). Al añadir canciones, se borrarán TODOS los cartones.\n\n¿Deseas continuar?`,
+                    'Cartones Existentes'
+                );
+
+                if (confirmed) {
+                    this.game.clearCartones();
+                    this.updateUIState();
+                    this.dom.addSongsInput.click();
+                }
+            }
+        });
+
         this.dom.addSongsInput.addEventListener('change', (e) => this.addSongs(e));
         this.dom.clearHistoryBtn.addEventListener('click', () => this.reiniciarJuego());
         this.dom.shuffleAllBtn.addEventListener('click', () => this.toggleContinuousMode());
@@ -604,7 +622,7 @@ class BingoMusical {
     // GESTIÓN DE CANCIONES
     // ============================================================
 
-    addSongs(event) {
+    async addSongs(event) {
         const files = Array.from(event.target.files);
         if (files.length === 0) return;
 
@@ -612,6 +630,24 @@ class BingoMusical {
             this.showAlert('No puedes agregar canciones una vez que el juego ha iniciado. Debes reiniciar el juego primero.', 'Juego Iniciado');
             event.target.value = '';
             return;
+        }
+
+        // Verificar si existen cartones (para drag & drop)
+        const cartonesCount = this.game.getCartonesCount();
+        if (cartonesCount > 0) {
+            const confirmed = await this.showConfirm(
+                `Tienes ${cartonesCount} cartón(es) generado(s). Al añadir canciones, se borrarán TODOS los cartones.\n\n¿Deseas continuar?`,
+                'Cartones Existentes'
+            );
+
+            if (!confirmed) {
+                event.target.value = '';
+                return;
+            }
+
+            // Borrar todos los cartones
+            this.game.clearCartones();
+            this.updateUIState();
         }
 
         // Usar SongManager para procesar las canciones
