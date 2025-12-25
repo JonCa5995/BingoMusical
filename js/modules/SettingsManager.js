@@ -62,11 +62,11 @@ export class SettingsManager {
 
         if (isFullscreen) {
             document.body.classList.add('fullscreen');
-            this.dom.fullscreenBtn.innerHTML = '<span class="fullscreen-icon" aria-hidden="true">⊗</span> Salir Pantalla Completa';
+            this.dom.fullscreenBtn.innerHTML = '<span class="fullscreen-icon" aria-hidden="true">⊗</span>';
             this.dom.fullscreenBtn.setAttribute('aria-label', 'Salir de pantalla completa');
         } else {
             document.body.classList.remove('fullscreen');
-            this.dom.fullscreenBtn.innerHTML = '<span class="fullscreen-icon" aria-hidden="true">⛶</span> Pantalla Completa';
+            this.dom.fullscreenBtn.innerHTML = '<span class="fullscreen-icon" aria-hidden="true">⛶</span>';
             this.dom.fullscreenBtn.setAttribute('aria-label', 'Activar pantalla completa');
         }
     }

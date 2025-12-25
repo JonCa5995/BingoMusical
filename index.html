@@ -158,17 +158,17 @@
           <figcaption class="player-info">
             <h2 id="song-title">Selecciona una canción o presiona reproducir</h2>
             <nav class="controls" aria-label="Controles de reproducción">
-              <button id="config-btn" class="btn btn-icon" type="button" aria-label="Configuración del juego" title="Configuración">
+              <button id="config-btn" class="btn btn-icon" type="button" aria-label="Configuración del juego" title="Configuración del juego">
                 <span aria-hidden="true">⚙️</span>
               </button>
               <button id="play-btn" class="btn btn-play" type="button" aria-label="Iniciar Bingo">
                 <span aria-hidden="true">▶️</span>
                 Iniciar Bingo
               </button>
-              <button type="button" id="pause-btn" class="btn btn-pause btn-icon" aria-label="Reproducir">
+              <button type="button" id="pause-btn" class="btn btn-pause btn-icon" aria-label="Reproducir" title="Reproducir/Pausar">
                 <span aria-hidden="true">▶</span>
               </button>
-              <button id="stop-btn" class="btn btn-stop" type="button" aria-label="Reiniciar Canción" disabled>
+              <button id="stop-btn" class="btn btn-stop" type="button" aria-label="Reiniciar Canción" title="Reiniciar Canción" disabled>
                 <span aria-hidden="true">⏮</span>
               </button>
             </nav>
@@ -202,6 +202,7 @@
                     type="button"
                     aria-label="Modo Continuo"
                     aria-pressed="false"
+                    title="Reproducción automática"
             >
               <span aria-hidden="true">🔄</span>
               Automático
@@ -210,6 +211,7 @@
                     class="btn btn-secondary btn-icon"
                     type="button"
                     aria-label="Borrar Lista"
+                    title="Borrar toda la lista"
             >
               <span aria-hidden="true">🗑️</span>
               Borrar Lista
@@ -218,17 +220,16 @@
                     class="btn btn-secondary btn-icon"
                     type="button"
                     aria-label="Generar Cartones"
+                    title="Generar cartones de bingo"
             >
               <span aria-hidden="true">🎴</span>
               Cartones
             </button>
-            <button id="export-list" class="btn btn-secondary btn-icon" type="button" aria-label="Exportar Lista">
-              <span aria-hidden="true">💾📝</span>
-              Exportar
+            <button id="export-list" class="btn btn-secondary btn-icon" type="button" aria-label="Exportar Lista" title="Exportar Lista">
+              <span aria-hidden="true">⬇️</span>
             </button>
-            <button id="import-list" class="btn btn-secondary btn-icon" type="button" aria-label="Importar Lista">
-              <span aria-hidden="true">📝</span>
-              Importar
+            <button id="import-list" class="btn btn-secondary btn-icon" type="button" aria-label="Importar Lista" title="Importar Lista">
+              <span aria-hidden="true">⬆️</span>
             </button>
             <input id="import-file"
                    class="file-import"
@@ -261,6 +262,7 @@
                   id="clear-history"
                   class="btn btn-secondary btn-icon"
                   aria-label="Reiniciar juego"
+                  title="Reiniciar juego"
                   disabled
           >
             <span aria-hidden="true">🔄</span>
