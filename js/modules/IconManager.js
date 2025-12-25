@@ -232,13 +232,17 @@ export class IconManager {
 
         const reader = new FileReader();
 
+        // Guardar referencia al callback antes de cerrar el modal
+        const callback = this.onIconSelected;
+
         const handleUpdate = () => {
             song.iconType = 'image';
             this.audio.playEffect('click');
             this.closeIconModal();
             
-            if (this.onIconSelected) {
-                this.onIconSelected();
+            // Usar la referencia guardada del callback
+            if (callback) {
+                callback();
             }
 
             return {
