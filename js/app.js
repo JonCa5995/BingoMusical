@@ -58,7 +58,7 @@ class BingoMusical {
     _setupPlayerEventListeners() {
         this.dom.playBtn.addEventListener('click', () => this.playRandomSong());
         this.dom.pauseBtn.addEventListener('click', () => this.pauseSong());
-        this.dom.stopBtn.addEventListener('click', () => this.stopSong());
+        this.dom.stopBtn.addEventListener('click', () => this.restartSong());
 
         // Evento cuando termina una canción
         this.dom.audioPlayer.addEventListener('ended', () => this.onSongEnded());
@@ -89,6 +89,7 @@ class BingoMusical {
         this.dom.createNewCartonesBtn.addEventListener('click', () => this.handleCreateNewCartones());
         this.dom.addCartonesBtn.addEventListener('click', () => this.handleAddCartones());
         this.dom.printExistingCartonesBtn.addEventListener('click', () => this.handlePrintExistingCartones());
+        this.dom.deleteAllCartonesBtn.addEventListener('click', () => this.handleDeleteAllCartones());
 
         this.dom.cartonOptionsModal.addEventListener('click', (e) => {
             if (e.target.id === 'carton-options-modal') {
@@ -278,7 +279,7 @@ class BingoMusical {
                 case 'r': // R → Reiniciar canción
                     e.preventDefault();
                     if (this.game.currentSongIndex !== null) {
-                        this.stopSong();
+                        this.restartSong();
                     }
                     break;
 
@@ -636,16 +637,33 @@ class BingoMusical {
         event.target.value = '';
     }
 
-    deleteSong(songId) {
+    async deleteSong(songId) {
         if (this.game.isGameStarted()) {
             this.showAlert('No puedes eliminar canciones una vez que el juego ha iniciado. Debes limpiar el historial primero.', 'Juego Iniciado');
-        } else {
-            this.songs = this.songManager.deleteSong(this.songs, songId);
-            this.renderSongsList();
-            this.updateCounters();
-            this.audio.playEffect('click');
-            this.updateUIState();
+            return;
         }
+
+        // Verificar si existen cartones
+        const cartonesCount = this.game.getCartonesCount();
+        if (cartonesCount > 0) {
+            const confirmed = await this.showConfirm(
+                `Tienes ${cartonesCount} cartón(es) generado(s). Al eliminar esta canción, se borrarán TODOS los cartones.\n\n¿Deseas continuar?`,
+                'Cartones Existentes'
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            // Borrar todos los cartones
+            this.game.clearCartones();
+        }
+
+        this.songs = this.songManager.deleteSong(this.songs, songId);
+        this.renderSongsList();
+        this.updateCounters();
+        this.audio.playEffect('click');
+        this.updateUIState();
     }
 
     // ============================================================
@@ -977,6 +995,15 @@ class BingoMusical {
         this.renderSongsList();
     }
 
+    restartSong() {
+        const currentSongId = this.game.getCurrentSong();
+        if (currentSongId !== null) {
+            this.audio.restart();
+            this.updateControls(true);
+            this.dom.songIconContainer.classList.add('playing');
+        }
+    }
+
     updatePlayerUI(song) {
         const titleRevealTime = this.game.getTitleRevealTime();
         const iconRevealTime = this.game.getIconRevealTime();
@@ -985,7 +1012,8 @@ class BingoMusical {
     }
 
     updateControls(playing) {
-        this.ui.updateControls(playing, this.game.currentSongIndex, this.game.isGameStarted());
+        const hasSongLoaded = this.dom.audioPlayer.src && this.dom.audioPlayer.src !== '';
+        this.ui.updateControls(playing, this.game.isGameStarted(), hasSongLoaded);
     }
 
     onSongEnded() {
@@ -1095,10 +1123,12 @@ class BingoMusical {
             this.dom.existingCartonesInfo.textContent =
                 `Tienes ${existingCount} cartón(es) guardado(s). ¿Qué deseas hacer?`;
             this.dom.printExistingCartonesBtn.disabled = false;
+            this.dom.deleteAllCartonesBtn.disabled = false;
         } else {
             this.dom.existingCartonesInfo.textContent =
                 `No tienes cartones guardados. Selecciona "Crear Nuevos" para generar.`;
             this.dom.printExistingCartonesBtn.disabled = true;
+            this.dom.deleteAllCartonesBtn.disabled = true;
         }
 
         // Abrir modal de opciones
@@ -1137,6 +1167,28 @@ class BingoMusical {
 
         // Abrir modal de impresión con personalización
         this.openPrintModal();
+    }
+
+    async handleDeleteAllCartones() {
+        const existingCount = this.game.getCartonesCount();
+
+        if (existingCount === 0) {
+            this.showAlert('No hay cartones para eliminar.', 'Sin Cartones');
+            return;
+        }
+
+        const confirmed = await this.showConfirm(
+            `¿Estás seguro de eliminar los ${existingCount} cartón(es) guardado(s)?`,
+            'Confirmar Eliminación'
+        );
+
+        if (confirmed) {
+            this.game.clearCartones();
+            this.audio.playEffect('click');
+            this.updateUIState();
+            this.closeCartonOptionsModal();
+            this.showAlert('Todos los cartones han sido eliminados.', 'Cartones Eliminados');
+        }
     }
 
     openCartonGenerationModal() {

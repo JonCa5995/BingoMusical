@@ -166,7 +166,7 @@ export class UIManager {
     /**
      * Actualiza los controles del reproductor
      */
-    updateControls(playing, gameStarted) {
+    updateControls(playing, gameStarted, hasSongLoaded = true) {
         if (playing) {
             this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span>';
             this.dom.pauseBtn.setAttribute('aria-label', 'Pausar canción actual');
@@ -176,8 +176,8 @@ export class UIManager {
         } else {
             this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">▶️</span>';
             this.dom.pauseBtn.setAttribute('aria-label', 'Reproducir canción seleccionada');
-            this.dom.stopBtn.disabled = true;
-            this.dom.pauseBtn.disabled = true;
+            this.dom.stopBtn.disabled = !hasSongLoaded;
+            this.dom.pauseBtn.disabled = !hasSongLoaded;
             this.dom.songIconContainer.classList.remove('playing');
         }
 

@@ -171,6 +171,19 @@ export class AudioManager {
     }
 
     /**
+     * Reinicia la canción al inicio y la reproduce
+     */
+    restart() {
+        this.playEffect('click');
+        this.dom.audioPlayer.currentTime = 0;
+        this.dom.audioPlayer.play();
+        this.isPlaying = true;
+
+        this.dom.progressFill.value = 0;
+        this.dom.progressFill.setAttribute('aria-valuenow', '0');
+    }
+
+    /**
      * Actualiza la barra de progreso
      */
     updateProgress() {

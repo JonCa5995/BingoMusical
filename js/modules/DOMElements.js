@@ -92,6 +92,7 @@ export class DOMElements {
         this.createNewCartonesBtn = document.getElementById('create-new-cartones-btn');
         this.addCartonesBtn = document.getElementById('add-cartones-btn');
         this.printExistingCartonesBtn = document.getElementById('print-existing-cartones-btn');
+        this.deleteAllCartonesBtn = document.getElementById('delete-all-cartones-btn');
 
         // Modal de configuración
         this.configBtn = document.getElementById('config-btn');
