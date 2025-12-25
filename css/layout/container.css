@@ -1,6 +1,6 @@
 .container {
     display: grid;
-    grid-template-columns: 380px 1fr;
+    grid-template-columns: 480px 1fr;
     gap: var(--spacing);
     max-width: 1800px;
     margin: 0 auto;

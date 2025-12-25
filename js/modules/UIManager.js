@@ -265,7 +265,10 @@ export class UIManager {
         img.alt = song.title;
         historyItem.appendChild(img);
         this.dom.historyGrid.appendChild(historyItem);
-        this.dom.historyGrid.scrollTop = this.dom.historyGrid.scrollHeight;
+
+        // Scroll suave al final del contenedor
+        const container = this.dom.historyGrid.parentElement;
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
 
         // Revelar icono después del tiempo configurado (solo si el juego ha iniciado)
         if (gameStarted) {
