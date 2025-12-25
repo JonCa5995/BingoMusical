@@ -2,11 +2,28 @@
  * CartonManager Module
  * Gestiona la generación, vista previa y descarga de cartones de bingo
  */
+import { DEFAULT_GAME_NAME } from '../constants.js';
+
 export class CartonManager {
     constructor(dom, audio, cartonGenerator) {
         this.dom = dom;
         this.audio = audio;
         this.cartonGenerator = cartonGenerator;
+    }
+
+    /**
+     * Prepara cartones para impresión, reconstruyéndolos si es necesario
+     * @param {Array} cartones - Cartones a preparar
+     * @param {Array} songs - Lista de canciones para reconstrucción
+     * @returns {Array} - Cartones listos para imprimir
+     */
+    prepareCartonesForPrint(cartones, songs) {
+        const firstCell = cartones[0]?.rows?.[0]?.cells?.[0];
+        const needsReconstruction = firstCell?.songId !== undefined && !firstCell?.song;
+
+        return needsReconstruction
+            ? this.reconstructCartones(cartones, songs)
+            : cartones;
     }
 
     /**
@@ -114,20 +131,12 @@ export class CartonManager {
         }
 
         try {
-            // Verificar si los cartones ya tienen la estructura completa (desde memoria)
-            // o si necesitan reconstrucción (desde JSON)
-            const firstCell = cartones[0]?.rows?.[0]?.cells?.[0];
-            const needsReconstruction = firstCell && firstCell.songId !== undefined && !firstCell.song;
-
-            // Solo reconstruir si vienen del JSON (tienen songId pero no song)
-            const cartonesParaImprimir = needsReconstruction
-                ? this.reconstructCartones(cartones, songs)
-                : cartones; // Ya están completos
+            const cartonesParaImprimir = this.prepareCartonesForPrint(cartones, songs);
 
             const config = {
                 primaryColor: this.dom.cartonPrimaryColorInput.value,
                 secondaryColor: this.dom.cartonSecondaryColorInput.value,
-                gameName: gameName || 'Bingo Musical'
+                gameName: gameName || DEFAULT_GAME_NAME
             };
 
             if (format === 'pdf') {
@@ -172,19 +181,13 @@ export class CartonManager {
                 cartonesToPrint = cartones.slice(from - 1, to);
             }
 
-            // Verificar si necesitan reconstrucción
-            const firstCell = cartonesToPrint[0]?.rows?.[0]?.cells?.[0];
-            const needsReconstruction = firstCell && firstCell.songId !== undefined && !firstCell.song;
-
-            const cartonesParaImprimir = needsReconstruction
-                ? this.reconstructCartones(cartonesToPrint, songs)
-                : cartonesToPrint;
+            const cartonesParaImprimir = this.prepareCartonesForPrint(cartonesToPrint, songs);
 
             // Obtener configuración del modal de impresión
             const config = {
                 primaryColor: this.dom.printPrimaryColorInput.value,
                 secondaryColor: this.dom.printSecondaryColorInput.value,
-                gameName: gameName || 'Bingo Musical'
+                gameName: gameName || DEFAULT_GAME_NAME
             };
 
             if (format === 'pdf') {

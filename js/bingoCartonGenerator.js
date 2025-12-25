@@ -1,13 +1,15 @@
-import {MIN_SONGS_REQUIRED} from "./app.js";
+import {
+    MIN_SONGS_REQUIRED,
+    SONGS_PER_CARTON,
+    ROWS_PER_CARTON,
+    CELLS_PER_ROW,
+    SONGS_IN_ROW,
+    MAX_CARTON_GENERATION_ATTEMPTS,
+    MAX_ROW_GENERATION_ATTEMPTS,
+    DEFAULT_GAME_NAME
+} from "./constants.js";
 
 export class BingoCartonGenerator {
-    static SONGS_PER_CARTON = 12;
-    static ROWS_PER_CARTON = 3;
-    static CELLS_PER_ROW = 8;
-    static SONGS_IN_ROW = 4;
-    static MAX_CARTON_GENERATION_ATTEMPTS = 1000;
-    static MAX_ROW_GENERATION_ATTEMPTS = 100;
-
     emptyIcon = '<img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración">';
 
     generateCartones(songs, count = 1, existingCartones = []) {
@@ -44,7 +46,7 @@ export class BingoCartonGenerator {
                 carton = this.generateSingleCarton(songs, startNumber + i);
                 attempts++;
 
-                if (attempts > BingoCartonGenerator.MAX_CARTON_GENERATION_ATTEMPTS) {
+                if (attempts > MAX_CARTON_GENERATION_ATTEMPTS) {
                     throw new Error('No se pudieron generar cartones únicos suficientes. Intenta con menos cartones.');
                 }
             } while (this.isDuplicateCarton(carton, usedCombinations));
@@ -61,20 +63,20 @@ export class BingoCartonGenerator {
     }
 
     generateSingleCarton(songs, cartonNumber) {
-        const selectedSongs = this.selectRandomSongs(songs, BingoCartonGenerator.SONGS_PER_CARTON);
+        const selectedSongs = this.selectRandomSongs(songs, SONGS_PER_CARTON);
         const rows = [];
         const usedRowCombinations = new Set();
 
-        for (let rowIndex = 0; rowIndex < BingoCartonGenerator.ROWS_PER_CARTON; rowIndex++) {
+        for (let rowIndex = 0; rowIndex < ROWS_PER_CARTON; rowIndex++) {
             let row;
             let attempts = 0;
 
             do {
-                const rowSongs = selectedSongs.slice(rowIndex * BingoCartonGenerator.SONGS_IN_ROW, (rowIndex + 1) * BingoCartonGenerator.SONGS_IN_ROW);
+                const rowSongs = selectedSongs.slice(rowIndex * SONGS_IN_ROW, (rowIndex + 1) * SONGS_IN_ROW);
                 row = this.generateRow(rowSongs);
                 attempts++;
 
-                if (attempts > BingoCartonGenerator.MAX_ROW_GENERATION_ATTEMPTS) break;
+                if (attempts > MAX_ROW_GENERATION_ATTEMPTS) break;
             } while (this.isDuplicateRow(row, usedRowCombinations));
 
             usedRowCombinations.add(this.getRowKey(row));
@@ -97,7 +99,7 @@ export class BingoCartonGenerator {
         const cells = [];
         const positions = this.generateRandomPositions();
 
-        for (let i = 0; i < BingoCartonGenerator.CELLS_PER_ROW; i++) {
+        for (let i = 0; i < CELLS_PER_ROW; i++) {
             if (positions.includes(i)) {
                 cells.push({
                     type: 'song',
@@ -119,8 +121,8 @@ export class BingoCartonGenerator {
 
     generateRandomPositions() {
         const positions = [];
-        while (positions.length < BingoCartonGenerator.SONGS_IN_ROW) {
-            const pos = Math.floor(Math.random() * BingoCartonGenerator.CELLS_PER_ROW);
+        while (positions.length < SONGS_IN_ROW) {
+            const pos = Math.floor(Math.random() * CELLS_PER_ROW);
             if (!positions.includes(pos)) positions.push(pos);
         }
         return positions.sort((a, b) => a - b);
@@ -146,7 +148,7 @@ export class BingoCartonGenerator {
     }
 
     _generateHTMLHeader(count, config = {}) {
-        const gameName = config.gameName || 'Bingo Musical';
+        const gameName = config.gameName || DEFAULT_GAME_NAME;
         return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -201,7 +203,7 @@ export class BingoCartonGenerator {
     }
 
     _generateCartonHTML(carton, config = {}) {
-        const gameName = config.gameName || 'Bingo Musical';
+        const gameName = config.gameName || DEFAULT_GAME_NAME;
         const rowsHTML = carton.rows.map(row =>
             row.cells.map(cell => this._generateCellHTML(cell)).join('')
         ).join('\n        \n');
@@ -229,7 +231,7 @@ ${rowsHTML}
     }
 
     downloadAsHTML(cartones, config = {}) {
-        const gameName = config.gameName || 'Bingo Musical';
+        const gameName = config.gameName || DEFAULT_GAME_NAME;
         const sanitizedName = gameName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
         const filename = `cartones-${sanitizedName}.html`;
 

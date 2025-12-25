@@ -7,7 +7,6 @@ export class ModalManager {
         this.dom = dom;
         this.audio = audio;
         this.confirmCallback = null;
-        this.shouldRender = false;
     }
 
     /**
@@ -46,9 +45,8 @@ export class ModalManager {
      * Cierra el modal de alerta
      */
     closeAlertModal(renderCallback) {
-        if (this.shouldRender && renderCallback) {
+        if (renderCallback) {
             renderCallback();
-            this.shouldRender = false;
         }
         this.closeModal(this.dom.alertModal);
     }
@@ -156,19 +154,5 @@ export class ModalManager {
         } else if (this.isModalOpen(this.dom.alertModal)) {
             this.closeAlertModal();
         }
-    }
-
-    /**
-     * Marca que se debe renderizar al cerrar el modal
-     */
-    setShouldRender(value) {
-        this.shouldRender = value;
-    }
-
-    /**
-     * Obtiene el callback de confirmación
-     */
-    getConfirmCallback() {
-        return this.confirmCallback;
     }
 }

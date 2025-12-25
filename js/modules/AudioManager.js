@@ -9,7 +9,8 @@ export class AudioManager {
         this.musicVolume = 1;
         this.effectsVolume = 0.7;
         this.soundEffects = { start: null, win: null, click: null, complete: null, error: null };
-        
+        this.audioContext = null;
+
         this.init();
     }
 
@@ -17,6 +18,20 @@ export class AudioManager {
         this.setupAudioEventListeners();
         this.setupVolumeControls();
         this.loadSoundEffects();
+    }
+
+    /**
+     * Obtiene o crea el AudioContext (lazy initialization)
+     */
+    getAudioContext() {
+        if (!this.audioContext || this.audioContext.state === 'closed') {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        // Reanudar si está suspendido (política de autoplay de navegadores)
+        if (this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+        return this.audioContext;
     }
 
     /**
@@ -60,7 +75,7 @@ export class AudioManager {
      * Crea un efecto de sonido simple
      */
     _createSoundEffect(startFreq, endFreq, duration, volumeMultiplier = 1, waveType = 'sine') {
-        const audioCtx = new AudioContext();
+        const audioCtx = this.getAudioContext();
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
 
@@ -85,8 +100,8 @@ export class AudioManager {
      * Crea una melodía con múltiples notas
      */
     _createMelody(notes, interval, volumeMultiplier, waveType = 'sine') {
-        const audioCtx = new AudioContext();
-        
+        const audioCtx = this.getAudioContext();
+
         for (const [index, freq] of notes.entries()) {
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();

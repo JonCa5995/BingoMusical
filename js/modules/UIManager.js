@@ -28,13 +28,14 @@ export class UIManager {
     }
 
     /**
-     * Renderiza la lista completa de canciones
+     * Método interno para renderizar canciones al DOM
+     * @private
      */
-    renderSongsList(songs, totalSongsWithFiles, createSongItemCallback) {
+    _renderToDOM(songs, totalSongsWithFiles, createSongItemCallback, emptyMessageFn) {
         const fragment = document.createDocumentFragment();
 
         if (songs.length === 0) {
-            const emptyLi = this.createEmptyListMessage();
+            const emptyLi = emptyMessageFn();
             fragment.appendChild(emptyLi);
             this.dom.songsListElement.innerHTML = '';
             this.dom.songsListElement.appendChild(fragment);
@@ -46,45 +47,27 @@ export class UIManager {
             fragment.appendChild(warning);
         }
 
-        // Renderizar todas las canciones en un solo batch
         for (const song of songs) {
             const li = createSongItemCallback(song);
             fragment.appendChild(li);
         }
 
-        // Una sola operación DOM
         this.dom.songsListElement.innerHTML = '';
         this.dom.songsListElement.appendChild(fragment);
+    }
+
+    /**
+     * Renderiza la lista completa de canciones
+     */
+    renderSongsList(songs, totalSongsWithFiles, createSongItemCallback) {
+        this._renderToDOM(songs, totalSongsWithFiles, createSongItemCallback, () => this.createEmptyListMessage());
     }
 
     /**
      * Renderiza una lista filtrada de canciones
      */
     renderFilteredSongsList(songsToShow, totalSongsWithFiles, createSongItemCallback) {
-        const fragment = document.createDocumentFragment();
-
-        if (songsToShow.length === 0) {
-            const emptyLi = this.createNoResultsMessage();
-            fragment.appendChild(emptyLi);
-            this.dom.songsListElement.innerHTML = '';
-            this.dom.songsListElement.appendChild(fragment);
-            return;
-        }
-
-        if (totalSongsWithFiles < this.MIN_SONGS_REQUIRED) {
-            const warning = this.createWarningMessage(totalSongsWithFiles);
-            fragment.appendChild(warning);
-        }
-
-        // Renderizar todas las canciones en un solo batch
-        for (const song of songsToShow) {
-            const li = createSongItemCallback(song);
-            fragment.appendChild(li);
-        }
-
-        // Una sola operación DOM
-        this.dom.songsListElement.innerHTML = '';
-        this.dom.songsListElement.appendChild(fragment);
+        this._renderToDOM(songsToShow, totalSongsWithFiles, createSongItemCallback, () => this.createNoResultsMessage());
     }
 
     /**

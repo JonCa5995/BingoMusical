@@ -4,7 +4,6 @@
  */
 export class SongManager {
     constructor() {
-        this.songs = [];
         this.songIdCounter = 1;
     }
 

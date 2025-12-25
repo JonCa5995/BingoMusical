@@ -2,6 +2,8 @@
  * GameManager Module
  * Gestiona la lógica del juego de bingo: reproducción aleatoria, historial, LÍNEA y BINGO
  */
+import { DEFAULT_TITLE_REVEAL_TIME, DEFAULT_ICON_REVEAL_TIME } from '../constants.js';
+
 export class GameManager {
     gameStarted = false;
     lineaCompleted = false;
@@ -9,11 +11,11 @@ export class GameManager {
     playedSongs = [];
     currentSongIndex = null;
     continuousMode = false;
-    titleRevealTime = 5; // segundos
-    iconRevealTime = 10; // segundos
-    gameName = ''; // Nombre del juego/lista
-    cartonesGenerated = false; // Flag para controlar si se generaron cartones
-    cartones = []; // Array de cartones generados
+    titleRevealTime = DEFAULT_TITLE_REVEAL_TIME;
+    iconRevealTime = DEFAULT_ICON_REVEAL_TIME;
+    gameName = '';
+    cartonesGenerated = false;
+    cartones = [];
 
     /**
      * Establece los cartones generados

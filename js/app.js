@@ -10,19 +10,21 @@ import {UIManager} from "./modules/UIManager.js";
 import {ModalManager} from "./modules/ModalManager.js";
 import {SettingsManager} from "./modules/SettingsManager.js";
 import {CartonManager} from "./modules/CartonManager.js";
-
-export const MIN_SONGS_REQUIRED = 24;
+import {
+    MIN_SONGS_REQUIRED,
+    MAX_CARTONS_GENERATED,
+    DEFAULT_SONGS_FOLDER,
+    LOGO_PATH,
+    DEFAULT_GAME_NAME
+} from "./constants.js";
 
 class BingoMusical {
-    static SRC_LOGO_PNG = 'icon.png';
-    static MAX_CARTONS_GENERATED = 1500;
-
     constructor() {
         this.songs = [];
         this.continuousMode = false;
         
         this.cartonGenerator = new BingoCartonGenerator();
-        this.songsFolder = 'canciones/';
+        this.songsFolder = DEFAULT_SONGS_FOLDER;
         this.dom = new DOMElements();
         this.audio = new AudioManager(this.dom);
         this.storage = new StorageManager();
@@ -101,21 +103,14 @@ class BingoMusical {
         this.dom.printExistingCartonesBtn.addEventListener('click', () => this.handlePrintExistingCartones());
         this.dom.deleteAllCartonesBtn.addEventListener('click', () => this.handleDeleteAllCartones());
 
-        this.dom.cartonOptionsModal.addEventListener('click', (e) => {
-            if (e.target.id === 'carton-options-modal') {
-                this.closeCartonOptionsModal();
-            }
-        });
+        // Cerrar modales al hacer click fuera
+        this.modal.setupOutsideClickClose(this.dom.cartonOptionsModal, () => this.closeCartonOptionsModal());
 
         // Modal de generación (simplificado - solo cantidad)
         this.dom.closeCartonModalBtn.addEventListener('click', () => this.closeCartonModal());
         this.dom.generateSaveCartonesBtn.addEventListener('click', () => this.generateCartones());
 
-        this.dom.cartonModal.addEventListener('click', (e) => {
-            if (e.target.id === 'carton-modal') {
-                this.closeCartonModal();
-            }
-        });
+        this.modal.setupOutsideClickClose(this.dom.cartonModal, () => this.closeCartonModal());
 
         // Modal de impresión (con personalización)
         this.dom.closePrintModalBtn.addEventListener('click', () => this.closePrintModal());
@@ -141,11 +136,7 @@ class BingoMusical {
             this.updatePrintPreview();
         });
 
-        this.dom.printModal.addEventListener('click', (e) => {
-            if (e.target.id === 'print-modal') {
-                this.closePrintModal();
-            }
-        });
+        this.modal.setupOutsideClickClose(this.dom.printModal, () => this.closePrintModal());
     }
 
     // ============================================================
@@ -205,13 +196,8 @@ class BingoMusical {
         });
 
         // Cerrar modal al hacer clic fuera
-        this.dom.configModal.addEventListener('click', (e) => {
-            if (e.target.id === 'config-modal') {
-                this.closeConfigModal();
-            }
-        });
+        this.modal.setupOutsideClickClose(this.dom.configModal, () => this.closeConfigModal());
     }
-
 
 
     _setupModalEventListeners() {
@@ -995,19 +981,21 @@ class BingoMusical {
                 const titleRevealTime = this.game.getTitleRevealTime();
                 const iconRevealTime = this.game.getIconRevealTime();
                 
+                // Capturar referencias DOM inmediatamente después del render (optimización)
+                const titleElement = document.querySelector(`.song-item-title[data-song-id="${songId}"]`);
+                const iconBtn = document.querySelector(`.song-item-icon[data-song-id="${songId}"]`);
+
                 // Revelar título
-                setTimeout(() => {
-                    const titleElement = document.querySelector(`.song-item-title[data-song-id="${songId}"]`);
-                    if (titleElement) {
+                if (titleElement) {
+                    setTimeout(() => {
                         titleElement.style.transition = 'opacity 1s ease-in';
                         titleElement.style.opacity = '1';
-                    }
-                }, titleRevealTime * 1000);
-                
+                    }, titleRevealTime * 1000);
+                }
+
                 // Revelar icono
                 setTimeout(() => {
                     song.justStarted = false;
-                    const iconBtn = document.querySelector(`.song-item-icon[data-song-id="${songId}"]`);
                     if (iconBtn) {
                         iconBtn.style.transition = 'opacity 1s ease-in';
                         iconBtn.style.opacity = '1';
@@ -1146,8 +1134,8 @@ class BingoMusical {
             }
             
             this.dom.currentIconImg.alt = 'Canción actual';
-            this.dom.currentIconImg.src = BingoMusical.SRC_LOGO_PNG;
-            
+            this.dom.currentIconImg.src = LOGO_PATH;
+
             // Restaurar opacidad de título e icono del reproductor
             this.dom.songTitleElement.style.opacity = '1';
             this.dom.currentIconImg.style.opacity = '1';
@@ -1249,7 +1237,7 @@ class BingoMusical {
 
         const result = await this.carton.generateCartones(
             this.songs,
-            BingoMusical.MAX_CARTONS_GENERATED,
+            MAX_CARTONS_GENERATED,
             MIN_SONGS_REQUIRED,
             (message, title) => this.showAlert(message, title),
             mode,
@@ -1333,12 +1321,8 @@ class BingoMusical {
     }
 
     updatePrintPreview() {
-        const gameName = this.game.getGameName() || 'Bingo Musical';
+        const gameName = this.game.getGameName() || DEFAULT_GAME_NAME;
         this.carton.updatePrintPreview(this.songs, gameName);
-    }
-
-    updateCartonPreview() {
-        // Este método ya no se usa - conservado para compatibilidad
     }
 }
 
