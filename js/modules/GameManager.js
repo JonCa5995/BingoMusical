@@ -70,12 +70,6 @@ export class GameManager {
         return this.gameName;
     }
 
-    /**
-     * Marca que se generaron cartones
-     */
-    setCartonesGenerated(generated) {
-        this.cartonesGenerated = generated;
-    }
 
     /**
      * Verifica si se generaron cartones
@@ -231,25 +225,6 @@ export class GameManager {
         this.bingoCompleted = false;
         this.playedSongs = [];
         this.currentSongIndex = null;
-        // NO resetear gameName ni cartonesGenerated
-        // El nombre y cartones persisten entre juegos
-    }
-
-    /**
-     * Obtiene estadísticas del juego
-     */
-    getGameStats(totalSongsWithFiles) {
-        return {
-            gameStarted: this.gameStarted,
-            songsPlayed: this.playedSongs.length,
-            totalSongs: totalSongsWithFiles,
-            percentage: totalSongsWithFiles > 0 
-                ? Math.round((this.playedSongs.length / totalSongsWithFiles) * 100) 
-                : 0,
-            lineaCompleted: this.lineaCompleted,
-            bingoCompleted: this.bingoCompleted,
-            continuousMode: this.continuousMode
-        };
     }
 
     /**
@@ -266,12 +241,6 @@ export class GameManager {
         return this.currentSongIndex;
     }
 
-    /**
-     * Limpia el historial de canciones reproducidas
-     */
-    clearHistory() {
-        this.playedSongs = [];
-    }
 
     /**
      * Obtiene el historial de canciones reproducidas

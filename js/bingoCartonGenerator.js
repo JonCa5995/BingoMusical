@@ -182,16 +182,16 @@ export class BingoCartonGenerator {
     .cartones-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 1rem; width: 210mm; margin: 0 auto; }
     .carton-container { background: white; border: 2px solid ${primaryColor}; padding: 12px; display: flex; flex-direction: column; }
     .carton-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid ${primaryColor}; }
-    .carton-title { font-size: 20px; font-weight: bold; color: ${secondaryColor}; text-transform: uppercase; }
+    .carton-title { font-size: 20px; font-weight: bold; color: ${primaryColor}; text-transform: uppercase; }
     .carton-number { font-size: 25px; font-weight: bold; color: ${primaryColor}; background: ${secondaryColor}; padding: 3px 10px; border-radius: 4px; }
     .carton-grid { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(3, 1fr); gap: 4px; width: 100%; height: 100%; border-collapse: separate; border-spacing: 4px; }
     .carton-cell { aspect-ratio: 1 / 1; border: 2px solid #e2e8f0; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: white; }
     .carton-cell.song { border-color: ${primaryColor}; background: white; }
     .carton-cell.decorative { background: white; border-color: #e2e8f0; border-style: dashed; }
     .cell-icon { font-size: 72px; line-height: 1; display: flex; align-items: center; justify-content: center; height: 100%; }
-    .cell-icon img { max-width: 90%; max-height: 90%; object-fit: contain; }
+    .cell-icon img { max-width: 100%; max-height: 100%; object-fit: contain; }
     .image-icon { height: 56px; aspect-ratio: 1; }
-    .song .image-icon { height: 72px; }
+    .song .image-icon { height: 100%; }
     .decorative-icon { font-size: 40px; opacity: 0.2; filter: grayscale(100%); }
     .print-info { text-align: center; padding: 20px; margin: 20px; background: #fef3c7; border-radius: 8px; border: 2px solid #f59e0b; }
     .print-info h1 { color: #92400e; margin-bottom: 10px; font-size: 1.25rem; }

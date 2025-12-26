@@ -3,9 +3,7 @@
  * Gestiona las operaciones CRUD de canciones y su filtrado/ordenamiento
  */
 export class SongManager {
-    constructor() {
-        this.songIdCounter = 1;
-    }
+    songIdCounter = 1;
 
     /**
      * Agrega nuevas canciones desde archivos
@@ -127,31 +125,6 @@ export class SongManager {
         return songs.filter(s => s.file).length;
     }
 
-    /**
-     * Obtiene canciones no reproducidas con archivos
-     */
-    getUnplayedSongsWithFiles(songs) {
-        return songs.filter(song => !song.played && song.file);
-    }
-
-    /**
-     * Obtiene canciones reproducidas
-     */
-    getPlayedSongs(songs) {
-        return songs.filter(song => song.played);
-    }
-
-    /**
-     * Marca una canción como reproducida
-     */
-    markAsPlayed(songs, songId) {
-        const song = songs.find(s => s.id === songId);
-        if (song) {
-            song.played = true;
-            return true;
-        }
-        return false;
-    }
 
     /**
      * Reinicia el estado de reproducción de todas las canciones
@@ -159,7 +132,7 @@ export class SongManager {
     resetPlayedStatus(songs) {
         for (const song of songs) {
             song.played = false;
-            song.playedOrder = undefined; // Limpiar el orden de reproducción
+            song.playedOrder = undefined;
         }
         return songs;
     }
@@ -169,13 +142,6 @@ export class SongManager {
      */
     findSongById(songs, songId) {
         return songs.find(s => s.id === songId);
-    }
-
-    /**
-     * Valida si hay suficientes canciones para jugar
-     */
-    hasEnoughSongs(songs, minRequired) {
-        return this.getTotalSongsWithFiles(songs) >= minRequired;
     }
 
     /**
@@ -194,36 +160,12 @@ export class SongManager {
     }
 
     /**
-     * Obtiene estadísticas de canciones
-     */
-    getStats(songs) {
-        const total = songs.length;
-        const withFiles = this.getTotalSongsWithFiles(songs);
-        const played = this.getPlayedSongs(songs).length;
-        const pending = withFiles - played;
-
-        return {
-            total,
-            withFiles,
-            played,
-            pending,
-            percentage: withFiles > 0 ? Math.round((played / withFiles) * 100) : 0
-        };
-    }
-
-    /**
      * Reinicia el contador de IDs
      */
     resetIdCounter() {
         this.songIdCounter = 1;
     }
 
-    /**
-     * Establece el contador de IDs
-     */
-    setIdCounter(value) {
-        this.songIdCounter = value;
-    }
 
     /**
      * Obtiene el siguiente ID disponible

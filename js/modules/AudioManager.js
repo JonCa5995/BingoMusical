@@ -25,7 +25,8 @@ export class AudioManager {
      */
     getAudioContext() {
         if (!this.audioContext || this.audioContext.state === 'closed') {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const AudioContextClass = globalThis.AudioContext || globalThis.webkitAudioContext;
+            this.audioContext = new AudioContextClass();
         }
         // Reanudar si está suspendido (política de autoplay de navegadores)
         if (this.audioContext.state === 'suspended') {
@@ -243,29 +244,5 @@ export class AudioManager {
 
         this.dom.audioPlayer.currentTime = percentage * this.dom.audioPlayer.duration;
         this.playEffect('click');
-    }
-
-    /**
-     * Obtiene el estado actual de reproducción
-     */
-    getPlayingState() {
-        return {
-            isPlaying: this.isPlaying,
-            currentTime: this.dom.audioPlayer.currentTime,
-            duration: this.dom.audioPlayer.duration,
-            volume: this.musicVolume
-        };
-    }
-
-    /**
-     * Limpia los recursos de audio
-     */
-    cleanup() {
-        if (this.dom.audioPlayer.src) {
-            this.dom.audioPlayer.pause();
-            URL.revokeObjectURL(this.dom.audioPlayer.src);
-            this.dom.audioPlayer.src = '';
-        }
-        this.isPlaying = false;
     }
 }

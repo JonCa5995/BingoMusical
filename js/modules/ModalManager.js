@@ -77,34 +77,6 @@ export class ModalManager {
         }
     }
 
-    /**
-     * Abre el modal de generación de cartones
-     */
-    openCartonModal(totalSongs, minRequired, updatePreviewCallback) {
-        if (totalSongs < minRequired) {
-            this.showAlert(
-                `Necesitas al menos ${minRequired} canciones cargadas para poder generar cartones.`,
-                'Canciones Insuficientes'
-            );
-            return;
-        }
-
-        this.openModal(this.dom.cartonModal);
-
-        // Generar vista previa inicial
-        if (updatePreviewCallback) {
-            updatePreviewCallback();
-        }
-        
-        this.audio.playEffect('click');
-    }
-
-    /**
-     * Cierra el modal de cartones
-     */
-    closeCartonModal() {
-        this.closeModal(this.dom.cartonModal);
-    }
 
     /**
      * Verifica si un modal está abierto
@@ -146,7 +118,7 @@ export class ModalManager {
         if (this.isModalOpen(this.dom.iconModal)) {
             if (iconCloseCallback) iconCloseCallback();
         } else if (this.isModalOpen(this.dom.cartonModal)) {
-            this.closeCartonModal();
+            this.closeModal(this.dom.cartonModal);
         } else if (this.isModalOpen(this.dom.configModal)) {
             this.closeModal(this.dom.configModal);
         } else if (this.isModalOpen(this.dom.confirmModal)) {

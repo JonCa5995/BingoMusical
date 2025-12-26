@@ -26,32 +26,6 @@ export class CartonManager {
             : cartones;
     }
 
-    /**
-     * Actualiza la vista previa del cartón
-     */
-    updateCartonPreview(songs, gameName = '') {
-        try {
-            // Obtener configuración
-            const config = {
-                primaryColor: this.dom.cartonPrimaryColorInput.value,
-                secondaryColor: this.dom.cartonSecondaryColorInput.value
-            };
-            
-            // Generar un cartón de ejemplo
-            const previewCarton = this.cartonGenerator.generateSingleCarton(songs, 1);
-            
-            // Renderizar vista previa
-            this.dom.cartonPreviewContainer.innerHTML = this.generatePreviewHTML(previewCarton, config, gameName);
-        } catch (error) {
-            this.dom.cartonPreviewContainer.innerHTML = `
-                <div class="carton-preview-placeholder">
-                    <p>❌ Error al generar vista previa</p>
-                    <p>${error.message}</p>
-                </div>
-            `;
-            console.error(error);
-        }
-    }
 
     /**
      * Actualiza vista previa de impresión (modal de imprimir)
@@ -112,7 +86,7 @@ export class CartonManager {
         return `
             <div class="preview-carton" style="color: ${primaryColor}; border-color: ${primaryColor};">
                 <div class="preview-carton-header" style="border-color: ${primaryColor};">
-                    <div class="preview-carton-title" style="color: ${secondaryColor};">🎵 ${displayName}</div>
+                    <div class="preview-carton-title" style="color: ${primaryColor};">🎵 ${displayName}</div>
                     <div class="preview-carton-number" style="background-color: ${secondaryColor};">#1</div>
                 </div>
                 <div class="preview-carton-grid">
@@ -122,34 +96,6 @@ export class CartonManager {
         `;
     }
 
-    /**
-     * Imprime cartones existentes
-     */
-    async printExistingCartones(cartones, songs, gameName = '', format = 'html') {
-        if (!cartones || cartones.length === 0) {
-            return { success: false, error: 'No hay cartones para imprimir' };
-        }
-
-        try {
-            const cartonesParaImprimir = this.prepareCartonesForPrint(cartones, songs);
-
-            const config = {
-                primaryColor: this.dom.cartonPrimaryColorInput.value,
-                secondaryColor: this.dom.cartonSecondaryColorInput.value,
-                gameName: gameName || DEFAULT_GAME_NAME
-            };
-
-            if (format === 'pdf') {
-                await this.cartonGenerator.downloadAsPDF(cartonesParaImprimir, config);
-            } else {
-                this.cartonGenerator.downloadAsHTML(cartonesParaImprimir, config);
-            }
-
-            return { success: true };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    }
 
     /**
      * Imprime cartones con configuración personalizada del modal
@@ -294,41 +240,5 @@ export class CartonManager {
                 generatedAt: cartonData.generatedAt
             };
         });
-    }
-
-    /**
-     * Obtiene la configuración actual de colores
-     */
-    getCurrentConfig() {
-        return {
-            primaryColor: this.dom.cartonPrimaryColorInput.value,
-            secondaryColor: this.dom.cartonSecondaryColorInput.value
-        };
-    }
-
-    /**
-     * Establece la configuración de colores
-     */
-    setConfig(config) {
-        if (config.primaryColor) {
-            this.dom.cartonPrimaryColorInput.value = config.primaryColor;
-        }
-        if (config.secondaryColor) {
-            this.dom.cartonSecondaryColorInput.value = config.secondaryColor;
-        }
-    }
-
-    /**
-     * Obtiene el número de cartones a generar
-     */
-    getCartonCount() {
-        return Number.parseInt(this.dom.cartonCountInput.value) || 1;
-    }
-
-    /**
-     * Establece el número de cartones a generar
-     */
-    setCartonCount(count) {
-        this.dom.cartonCountInput.value = count;
     }
 }
