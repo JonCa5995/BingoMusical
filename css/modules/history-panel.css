@@ -28,7 +28,7 @@
 .history-counter {
     margin-top: 1rem;
     text-align: center;
-    font-size: 1.1rem;
+    font-size: 1.5rem;
     color: var(--text-muted);
     font-weight: 600;
     padding: 0.75rem;
@@ -39,5 +39,5 @@
 .history-counter #played-counter {
     color: var(--success-color);
     font-weight: 700;
-    font-size: 1.5rem;
+    font-size: 2rem;
 }
