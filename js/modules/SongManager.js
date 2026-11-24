@@ -22,7 +22,8 @@ export class SongManager {
                 continue;
             }
 
-            const randomIcon = getRandomIcon(existingSongs);
+            // Incluir las canciones de este mismo lote para no repetir iconos
+            const randomIcon = getRandomIcon([...existingSongs, ...newSongs]);
 
             newSongs.push({
                 id: this.songIdCounter++,

@@ -554,7 +554,10 @@ class BingoMusical {
             let {icon, iconType = 'emoji'} = songData;
 
             if (!icon || usedIcons.has(icon)) {
-                icon = this.icons.getRandomAvailableIcon(this.songs);
+                // this.songs está vacío durante la importación: excluir los iconos ya asignados
+                const assigned = [...usedIcons].map(usedIcon => ({icon: usedIcon, iconType: 'emoji'}));
+                icon = this.icons.getRandomAvailableIcon(assigned);
+                iconType = 'emoji';
             }
 
             usedIcons.add(icon);
