@@ -191,10 +191,10 @@ export class CartonManager {
      * Reconstruye cartones desde datos almacenados
      */
     reconstructCartones(cartonesData, songs) {
-        return cartonesData.map(cartonData => {
-            // Crear mapa de canciones por ID
-            const songMap = new Map(songs.map(s => [s.id, s]));
+        // Crear mapa de canciones por ID (una sola vez para todos los cartones)
+        const songMap = new Map(songs.map(s => [s.id, s]));
 
+        return cartonesData.map(cartonData => {
             // Reconstruir filas con referencias a canciones actuales
             const rows = cartonData.rows.map(rowData => ({
                 cells: rowData.cells.map(cellData => {
