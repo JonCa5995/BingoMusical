@@ -3,6 +3,7 @@
  * Gestiona la generación, vista previa y descarga de cartones de bingo
  */
 import { DEFAULT_GAME_NAME } from '../constants.js';
+import { escapeHTML } from '../utils.js';
 
 export class CartonManager {
     constructor(dom, audio, cartonGenerator) {
@@ -46,7 +47,7 @@ export class CartonManager {
             this.dom.printCartonPreview.innerHTML = `
                 <div class="carton-preview-placeholder">
                     <p>❌ Error al generar vista previa</p>
-                    <p>${error.message}</p>
+                    <p>${escapeHTML(error.message)}</p>
                 </div>
             `;
             console.error(error);
@@ -58,7 +59,7 @@ export class CartonManager {
      */
     generatePreviewHTML(carton, config, gameName = '') {
         const { primaryColor, secondaryColor } = config;
-        const displayName = gameName || 'Bingo Musical';
+        const displayName = escapeHTML(gameName || DEFAULT_GAME_NAME);
 
         const cellsHTML = carton.rows.flatMap(row => 
             row.cells.map(cell => {
@@ -68,9 +69,9 @@ export class CartonManager {
                 if (cell.type === 'song' && cell.song) {
                     // Celda con canción
                     if (cell.song.iconType === 'image') {
-                        icon = `<img src="${cell.song.icon}" alt="${cell.song.title}" style="max-width: 90%; max-height: 90%;">`;
+                        icon = `<img src="${escapeHTML(cell.song.icon)}" alt="${escapeHTML(cell.song.title)}" style="max-width: 90%; max-height: 90%;">`;
                     } else {
-                        icon = cell.song.icon;
+                        icon = escapeHTML(cell.song.icon);
                     }
                 } else {
                     // Celda decorativa

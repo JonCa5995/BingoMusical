@@ -2,6 +2,8 @@
  * UIManager Module
  * Gestiona el renderizado y actualización de la interfaz de usuario
  */
+import { escapeHTML } from '../utils.js';
+
 export class UIManager {
     constructor(dom, minSongsRequired) {
         this.dom = dom;
@@ -291,10 +293,11 @@ export class UIManager {
      * Obtiene el HTML del icono de una canción
      */
     getSongIconHtml(song) {
+        const title = escapeHTML(song.title);
         if (song.iconType === 'image') {
-            return `<img src="${song.icon}" alt="${song.title}" style="padding:.25rem;aspect-ratio:1;object-fit:contain;">`;
+            return `<img src="${escapeHTML(song.icon)}" alt="${title}" style="padding:.25rem;aspect-ratio:1;object-fit:contain;">`;
         }
-        return `<span role="img" aria-label="${song.title}">${song.icon}</span>`;
+        return `<span role="img" aria-label="${title}">${escapeHTML(song.icon)}</span>`;
     }
 
     /**

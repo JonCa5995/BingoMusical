@@ -34,7 +34,8 @@ export class ModalManager {
      */
     showAlert(message, title = 'Información') {
         this.dom.alertTitle.textContent = title;
-        this.dom.alertMessage.innerHTML = message;
+        // textContent: los mensajes pueden incluir nombres de archivo; los saltos de línea se respetan por CSS
+        this.dom.alertMessage.textContent = message;
         this.openModal(this.dom.alertModal);
 
         const isError = /error|inválido|insuficientes/i.test(title);

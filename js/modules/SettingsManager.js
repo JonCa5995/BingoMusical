@@ -75,18 +75,18 @@ export class SettingsManager {
      * Muestra la ayuda de atajos de teclado
      */
     getKeyboardShortcutsHelp() {
-        return `
-ATAJOS DE TECLADO DISPONIBLES:<br><br>
-
-▶ ESPACIO → Reproducir/Pausar<br>
-🔄 R → Reiniciar canción actual<br>
-⏭ N → Siguiente canción (en modo continuo)<br>
-⛶ F → Pantalla completa<br>
-📏 L → Cantar LÍNEA<br>
-🎉 B → Cantar BINGO<br>
-❌ ESC → Cerrar modal<br>
-❓ ? → Mostrar esta ayuda
-        `.trim();
+        return [
+            'ATAJOS DE TECLADO DISPONIBLES:',
+            '',
+            '▶ ESPACIO → Reproducir/Pausar',
+            '🔄 R → Reiniciar canción actual',
+            '⏭ N → Siguiente canción (en modo continuo)',
+            '⛶ F → Pantalla completa',
+            '📏 L → Cantar LÍNEA',
+            '🎉 B → Cantar BINGO',
+            '❌ ESC → Cerrar modal',
+            '❓ ? → Mostrar esta ayuda'
+        ].join('\n');
     }
 
     /**
