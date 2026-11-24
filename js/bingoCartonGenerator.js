@@ -15,7 +15,7 @@ export class BingoCartonGenerator {
 
     generateCartones(songs, count = 1, existingCartones = []) {
         if (songs.length < MIN_SONGS_REQUIRED) {
-            throw new Error('Se necesitan al menos 24 canciones para generar cartones');
+            throw new Error(`Se necesitan al menos ${MIN_SONGS_REQUIRED} canciones para generar cartones`);
         }
 
         const cartones = [];
