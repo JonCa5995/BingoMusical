@@ -93,7 +93,14 @@ export class BingoCartonGenerator {
     }
 
     selectRandomSongs(songs, count) {
-        return [...songs].sort(() => Math.random() - 0.5).slice(0, count);
+        // Fisher-Yates parcial: uniforme (sort con random no lo es) y solo baraja lo necesario
+        const pool = [...songs];
+        const n = Math.min(count, pool.length);
+        for (let i = 0; i < n; i++) {
+            const j = i + Math.floor(Math.random() * (pool.length - i));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        return pool.slice(0, n);
     }
 
     generateRow(songs) {
