@@ -540,6 +540,7 @@ class BingoMusical {
         const newSongs = [];
         const titlesAdded = new Set();
         const usedIcons = new Set();
+        const usedIds = new Set();
 
         for (const songData of playlist.songs) {
             const title = songData.title;
@@ -567,8 +568,14 @@ class BingoMusical {
                 const resp = await fetch(audioPath);
                 const blob = await resp.blob();
 
+                // Conservar el ID original para que los cartones importados
+                // sigan apuntando a la misma canción
+                const hasValidId = Number.isInteger(songData.id) && !usedIds.has(songData.id);
+                const id = hasValidId ? songData.id : null;
+                if (hasValidId) usedIds.add(id);
+
                 newSongs.push({
-                    id: this.songManager.getNextId(),
+                    id,
                     title: title,
                     icon,
                     iconType,
@@ -581,6 +588,8 @@ class BingoMusical {
             }
         }
 
+        // Asignar IDs nuevos solo a las canciones sin ID válido, sin colisionar con los conservados
+        this.songManager.assignMissingIds(newSongs);
         this.songs = newSongs;
 
         // Cargar el nombre del juego desde el playlist

@@ -168,9 +168,14 @@ export class SongManager {
 
 
     /**
-     * Obtiene el siguiente ID disponible
+     * Ajusta el contador por encima del mayor ID existente y asigna ID
+     * a las canciones que no lo tengan
      */
-    getNextId() {
-        return this.songIdCounter++;
+    assignMissingIds(songs) {
+        const maxId = songs.reduce((max, s) => (s.id === null ? max : Math.max(max, s.id)), 0);
+        this.songIdCounter = Math.max(this.songIdCounter, maxId + 1);
+        for (const song of songs) {
+            if (song.id === null) song.id = this.songIdCounter++;
+        }
     }
 }
