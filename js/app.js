@@ -597,11 +597,13 @@ class BingoMusical {
         this.game.setGameName(gameName);
         this.dom.gameNameInput.value = gameName;
 
-        // Cargar cartones si existen en el playlist
-        if (playlist.cartones && Array.isArray(playlist.cartones) && playlist.cartones.length > 0) {
+        // Cargar cartones del playlist (o limpiar los anteriores, que apuntan a canciones ya descartadas)
+        if (Array.isArray(playlist.cartones) && playlist.cartones.length > 0) {
             // Reconstruir cartones con referencias a las canciones actuales
             const reconstructedCartones = this.carton.reconstructCartones(playlist.cartones, this.songs);
             this.game.setCartones(reconstructedCartones);
+        } else {
+            this.game.clearCartones();
         }
 
         this.refreshUI();
