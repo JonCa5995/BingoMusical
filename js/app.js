@@ -956,10 +956,6 @@ class BingoMusical {
             return;
         }
 
-        if (this.game.onlyOneSongLeft(this.songs)) {
-            this.dom.playBtn.disabled = true;
-        }
-
         this.playSong(randomSong.id);
     }
 
@@ -1074,8 +1070,9 @@ class BingoMusical {
     }
 
     updateControls(playing) {
-        const hasSongLoaded = this.dom.audioPlayer.src && this.dom.audioPlayer.src !== '';
-        this.ui.updateControls(playing, this.game.isGameStarted(), hasSongLoaded);
+        const hasSongLoaded = Boolean(this.dom.audioPlayer.src);
+        const noSongsLeft = this.game.allSongsPlayed(this.songs);
+        this.ui.updateControls(playing, this.game.isGameStarted(), hasSongLoaded, noSongsLeft);
     }
 
     onSongEnded() {

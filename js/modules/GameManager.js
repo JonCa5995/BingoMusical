@@ -213,14 +213,6 @@ export class GameManager {
     }
 
     /**
-     * Verifica si solo queda una canción sin reproducir
-     */
-    onlyOneSongLeft(songs) {
-        const unplayedSongs = songs.filter(song => !song.played && song.file);
-        return unplayedSongs.length === 1;
-    }
-
-    /**
      * Reinicia el estado del juego
      */
     resetGame() {

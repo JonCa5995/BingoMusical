@@ -174,7 +174,7 @@ export class UIManager {
     /**
      * Actualiza los controles del reproductor
      */
-    updateControls(playing, gameStarted, hasSongLoaded = true) {
+    updateControls(playing, gameStarted, hasSongLoaded = true, noSongsLeft = false) {
         if (playing) {
             this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span>';
             this.dom.pauseBtn.setAttribute('aria-label', 'Pausar canción actual');
@@ -189,7 +189,8 @@ export class UIManager {
             this.dom.songIconContainer.classList.remove('playing');
         }
 
-        this.dom.playBtn.disabled = playing && gameStarted;
+        // En partida: desactivado mientras suena o cuando ya no quedan canciones por sacar
+        this.dom.playBtn.disabled = gameStarted && (playing || noSongsLeft);
     }
 
     /**
