@@ -758,9 +758,6 @@ class BingoMusical {
 
         let songStateLabel = this.ui.getSongStateLabel(song);
 
-        // Usar template fragment para mejor rendimiento
-        document.createDocumentFragment();
-        
         const iconBtn = document.createElement('button');
         iconBtn.type = 'button';
         iconBtn.className = 'song-item-icon';
@@ -1347,11 +1344,8 @@ class BingoMusical {
 }
 
 // Inicializar la aplicación cuando el DOM esté listo
-let app;
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        app = new BingoMusical();
-    });
+    document.addEventListener('DOMContentLoaded', () => new BingoMusical());
 } else {
-    app = new BingoMusical();
+    new BingoMusical();
 }
