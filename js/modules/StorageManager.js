@@ -113,7 +113,8 @@ export class StorageManager {
             link.click();
             link.remove();
 
-            URL.revokeObjectURL(url);
+            // Liberar tras un margen: revocar justo después de click() puede cancelar la descarga en Firefox/Safari
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
 
             const cartonesInfo = cartones.length > 0
                 ? `\n${cartones.length} cartón(es) incluido(s) en el archivo.`

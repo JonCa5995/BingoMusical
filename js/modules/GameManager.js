@@ -2,7 +2,12 @@
  * GameManager Module
  * Gestiona la lógica del juego de bingo: reproducción aleatoria, historial, LÍNEA y BINGO
  */
-import { DEFAULT_TITLE_REVEAL_TIME, DEFAULT_ICON_REVEAL_TIME } from '../constants.js';
+import {
+    DEFAULT_TITLE_REVEAL_TIME,
+    DEFAULT_ICON_REVEAL_TIME,
+    MIN_SONGS_FOR_LINEA,
+    MIN_SONGS_FOR_BINGO
+} from '../constants.js';
 
 export class GameManager {
     gameStarted = false;
@@ -151,10 +156,10 @@ export class GameManager {
             };
         }
 
-        if (this.playedSongs.length < 4) {
+        if (this.playedSongs.length < MIN_SONGS_FOR_LINEA) {
             return {
                 valid: false,
-                error: 'Debes reproducir al menos 4 canciones antes de cantar LÍNEA.',
+                error: `Debes reproducir al menos ${MIN_SONGS_FOR_LINEA} canciones antes de cantar LÍNEA.`,
                 title: 'Canciones Insuficientes'
             };
         }
@@ -181,10 +186,10 @@ export class GameManager {
             };
         }
 
-        if (this.playedSongs.length < 12) {
+        if (this.playedSongs.length < MIN_SONGS_FOR_BINGO) {
             return {
                 valid: false,
-                error: 'Debes reproducir al menos 12 canciones antes de cantar BINGO.',
+                error: `Debes reproducir al menos ${MIN_SONGS_FOR_BINGO} canciones antes de cantar BINGO.`,
                 title: 'Canciones Insuficientes'
             };
         }
@@ -205,14 +210,6 @@ export class GameManager {
     allSongsPlayed(songs) {
         const unplayedSongs = songs.filter(song => !song.played && song.file);
         return unplayedSongs.length === 0;
-    }
-
-    /**
-     * Verifica si solo queda una canción sin reproducir
-     */
-    onlyOneSongLeft(songs) {
-        const unplayedSongs = songs.filter(song => !song.played && song.file);
-        return unplayedSongs.length === 1;
     }
 
     /**

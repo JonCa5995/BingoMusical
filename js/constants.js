@@ -13,6 +13,10 @@ export const ROWS_PER_CARTON = 3;
 export const CELLS_PER_ROW = 8;
 export const SONGS_IN_ROW = 4;
 
+// Canciones mínimas reproducidas para poder cantar (una fila / un cartón completo)
+export const MIN_SONGS_FOR_LINEA = SONGS_IN_ROW;
+export const MIN_SONGS_FOR_BINGO = SONGS_PER_CARTON;
+
 // Límites de generación
 export const MAX_CARTON_GENERATION_ATTEMPTS = 1000;
 export const MAX_ROW_GENERATION_ATTEMPTS = 100;

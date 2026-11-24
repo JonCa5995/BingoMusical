@@ -34,7 +34,8 @@ export class ModalManager {
      */
     showAlert(message, title = 'Información') {
         this.dom.alertTitle.textContent = title;
-        this.dom.alertMessage.innerHTML = message;
+        // textContent: los mensajes pueden incluir nombres de archivo; los saltos de línea se respetan por CSS
+        this.dom.alertMessage.textContent = message;
         this.openModal(this.dom.alertModal);
 
         const isError = /error|inválido|insuficientes/i.test(title);
@@ -105,7 +106,9 @@ export class ModalManager {
      */
     checkOpenModals() {
         return this.isModalOpen(this.dom.iconModal) ||
+            this.isModalOpen(this.dom.cartonOptionsModal) ||
             this.isModalOpen(this.dom.cartonModal) ||
+            this.isModalOpen(this.dom.printModal) ||
             this.isModalOpen(this.dom.configModal) ||
             this.isModalOpen(this.dom.confirmModal) ||
             this.isModalOpen(this.dom.alertModal);
@@ -115,16 +118,21 @@ export class ModalManager {
      * Cierra modales con la tecla Escape
      */
     closeModalsOnEscape(iconCloseCallback) {
-        if (this.isModalOpen(this.dom.iconModal)) {
+        // Primero los modales que se abren encima de otros (confirmación y alerta)
+        if (this.isModalOpen(this.dom.confirmModal)) {
+            this.closeConfirmModal(false);
+        } else if (this.isModalOpen(this.dom.alertModal)) {
+            this.closeAlertModal();
+        } else if (this.isModalOpen(this.dom.iconModal)) {
             if (iconCloseCallback) iconCloseCallback();
+        } else if (this.isModalOpen(this.dom.printModal)) {
+            this.closeModal(this.dom.printModal);
+        } else if (this.isModalOpen(this.dom.cartonOptionsModal)) {
+            this.closeModal(this.dom.cartonOptionsModal);
         } else if (this.isModalOpen(this.dom.cartonModal)) {
             this.closeModal(this.dom.cartonModal);
         } else if (this.isModalOpen(this.dom.configModal)) {
             this.closeModal(this.dom.configModal);
-        } else if (this.isModalOpen(this.dom.confirmModal)) {
-            this.closeConfirmModal(false);
-        } else if (this.isModalOpen(this.dom.alertModal)) {
-            this.closeAlertModal();
         }
     }
 }

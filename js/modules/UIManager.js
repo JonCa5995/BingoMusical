@@ -2,10 +2,13 @@
  * UIManager Module
  * Gestiona el renderizado y actualización de la interfaz de usuario
  */
+import { escapeHTML } from '../utils.js';
+
 export class UIManager {
     constructor(dom, minSongsRequired) {
         this.dom = dom;
         this.MIN_SONGS_REQUIRED = minSongsRequired;
+        this.playerRevealTimers = [];
     }
 
     /**
@@ -114,6 +117,9 @@ export class UIManager {
      * Actualiza la UI del reproductor con información de la canción
      */
     updatePlayerUI(song, titleRevealTime = 0, iconRevealTime = 0, gameStarted = false) {
+        // Cancelar revelados pendientes de la canción anterior para que no destapen la nueva antes de tiempo
+        this.clearPlayerRevealTimers();
+
         // Si el juego no ha iniciado, mostrar todo inmediatamente
         if (!gameStarted) {
             this.dom.songTitleElement.textContent = song.title;
@@ -129,10 +135,10 @@ export class UIManager {
             this.dom.songTitleElement.style.opacity = '0';
             
             // Revelar título después del tiempo configurado
-            setTimeout(() => {
+            this.playerRevealTimers.push(setTimeout(() => {
                 this.dom.songTitleElement.style.transition = 'opacity 1s ease-in';
                 this.dom.songTitleElement.style.opacity = '1';
-            }, titleRevealTime * 1000);
+            }, titleRevealTime * 1000));
             
             // Icono se maneja más abajo
             this.dom.currentIconImg.style.transition = '';
@@ -150,17 +156,25 @@ export class UIManager {
 
         // Revelar icono después del tiempo configurado (solo si el juego ha iniciado)
         if (gameStarted) {
-            setTimeout(() => {
+            this.playerRevealTimers.push(setTimeout(() => {
                 this.dom.currentIconImg.style.transition = 'opacity 1s ease-in';
                 this.dom.currentIconImg.style.opacity = '1';
-            }, iconRevealTime * 1000);
+            }, iconRevealTime * 1000));
         }
+    }
+
+    /**
+     * Cancela los revelados pendientes del reproductor
+     */
+    clearPlayerRevealTimers() {
+        for (const timer of this.playerRevealTimers) clearTimeout(timer);
+        this.playerRevealTimers = [];
     }
 
     /**
      * Actualiza los controles del reproductor
      */
-    updateControls(playing, gameStarted, hasSongLoaded = true) {
+    updateControls(playing, gameStarted, hasSongLoaded = true, noSongsLeft = false) {
         if (playing) {
             this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span>';
             this.dom.pauseBtn.setAttribute('aria-label', 'Pausar canción actual');
@@ -175,7 +189,8 @@ export class UIManager {
             this.dom.songIconContainer.classList.remove('playing');
         }
 
-        this.dom.playBtn.disabled = playing && gameStarted;
+        // En partida: desactivado mientras suena o cuando ya no quedan canciones por sacar
+        this.dom.playBtn.disabled = gameStarted && (playing || noSongsLeft);
     }
 
     /**
@@ -279,10 +294,11 @@ export class UIManager {
      * Obtiene el HTML del icono de una canción
      */
     getSongIconHtml(song) {
+        const title = escapeHTML(song.title);
         if (song.iconType === 'image') {
-            return `<img src="${song.icon}" alt="${song.title}" style="padding:.25rem;aspect-ratio:1;object-fit:contain;">`;
+            return `<img src="${escapeHTML(song.icon)}" alt="${title}" style="padding:.25rem;aspect-ratio:1;object-fit:contain;">`;
         }
-        return `<span role="img" aria-label="${song.title}">${song.icon}</span>`;
+        return `<span role="img" aria-label="${title}">${escapeHTML(song.icon)}</span>`;
     }
 
     /**

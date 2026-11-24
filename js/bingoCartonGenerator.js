@@ -8,13 +8,14 @@ import {
     MAX_ROW_GENERATION_ATTEMPTS,
     DEFAULT_GAME_NAME
 } from "./constants.js";
+import {escapeHTML} from "./utils.js";
 
 export class BingoCartonGenerator {
     emptyIcon = '<img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración">';
 
     generateCartones(songs, count = 1, existingCartones = []) {
         if (songs.length < MIN_SONGS_REQUIRED) {
-            throw new Error('Se necesitan al menos 24 canciones para generar cartones');
+            throw new Error(`Se necesitan al menos ${MIN_SONGS_REQUIRED} canciones para generar cartones`);
         }
 
         const cartones = [];
@@ -92,7 +93,14 @@ export class BingoCartonGenerator {
     }
 
     selectRandomSongs(songs, count) {
-        return [...songs].sort(() => Math.random() - 0.5).slice(0, count);
+        // Fisher-Yates parcial: uniforme (sort con random no lo es) y solo baraja lo necesario
+        const pool = [...songs];
+        const n = Math.min(count, pool.length);
+        for (let i = 0; i < n; i++) {
+            const j = i + Math.floor(Math.random() * (pool.length - i));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        return pool.slice(0, n);
     }
 
     generateRow(songs) {
@@ -148,7 +156,7 @@ export class BingoCartonGenerator {
     }
 
     _generateHTMLHeader(count, config = {}) {
-        const gameName = config.gameName || DEFAULT_GAME_NAME;
+        const gameName = escapeHTML(config.gameName || DEFAULT_GAME_NAME);
         return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -203,7 +211,7 @@ export class BingoCartonGenerator {
     }
 
     _generateCartonHTML(carton, config = {}) {
-        const gameName = config.gameName || DEFAULT_GAME_NAME;
+        const gameName = escapeHTML(config.gameName || DEFAULT_GAME_NAME);
         const rowsHTML = carton.rows.map(row =>
             row.cells.map(cell => this._generateCellHTML(cell)).join('')
         ).join('\n        \n');
@@ -222,9 +230,10 @@ ${rowsHTML}
 
     _generateCellHTML(cell) {
         if (cell.type === 'song') {
+            const title = escapeHTML(cell.song.title);
             const iconHTML = cell.song.iconType === 'image'
-                ? `<img src="${cell.song.icon}" alt="${cell.song.title}" class="image-icon">`
-                : `<span role="img" aria-label="${cell.song.title}">${cell.song.icon}</span>`;
+                ? `<img src="${escapeHTML(cell.song.icon)}" alt="${title}" class="image-icon">`
+                : `<span role="img" aria-label="${title}">${escapeHTML(cell.song.icon)}</span>`;
             return `          <div class="carton-cell song" role="gridcell"><div class="cell-icon">${iconHTML}</div></div>\n`;
         }
         return `          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true">${cell.icon}</div></div>\n`;
@@ -248,7 +257,8 @@ ${rowsHTML}
         link.click();
         link.remove();
 
-        URL.revokeObjectURL(url);
+        // Liberar tras un margen: revocar justo después de click() puede cancelar la descarga en Firefox/Safari
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
     
     async downloadAsPDF(cartones, config = {}) {
