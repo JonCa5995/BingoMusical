@@ -6,6 +6,7 @@ export class UIManager {
     constructor(dom, minSongsRequired) {
         this.dom = dom;
         this.MIN_SONGS_REQUIRED = minSongsRequired;
+        this.playerRevealTimers = [];
     }
 
     /**
@@ -114,6 +115,9 @@ export class UIManager {
      * Actualiza la UI del reproductor con información de la canción
      */
     updatePlayerUI(song, titleRevealTime = 0, iconRevealTime = 0, gameStarted = false) {
+        // Cancelar revelados pendientes de la canción anterior para que no destapen la nueva antes de tiempo
+        this.clearPlayerRevealTimers();
+
         // Si el juego no ha iniciado, mostrar todo inmediatamente
         if (!gameStarted) {
             this.dom.songTitleElement.textContent = song.title;
@@ -129,10 +133,10 @@ export class UIManager {
             this.dom.songTitleElement.style.opacity = '0';
             
             // Revelar título después del tiempo configurado
-            setTimeout(() => {
+            this.playerRevealTimers.push(setTimeout(() => {
                 this.dom.songTitleElement.style.transition = 'opacity 1s ease-in';
                 this.dom.songTitleElement.style.opacity = '1';
-            }, titleRevealTime * 1000);
+            }, titleRevealTime * 1000));
             
             // Icono se maneja más abajo
             this.dom.currentIconImg.style.transition = '';
@@ -150,11 +154,19 @@ export class UIManager {
 
         // Revelar icono después del tiempo configurado (solo si el juego ha iniciado)
         if (gameStarted) {
-            setTimeout(() => {
+            this.playerRevealTimers.push(setTimeout(() => {
                 this.dom.currentIconImg.style.transition = 'opacity 1s ease-in';
                 this.dom.currentIconImg.style.opacity = '1';
-            }, iconRevealTime * 1000);
+            }, iconRevealTime * 1000));
         }
+    }
+
+    /**
+     * Cancela los revelados pendientes del reproductor
+     */
+    clearPlayerRevealTimers() {
+        for (const timer of this.playerRevealTimers) clearTimeout(timer);
+        this.playerRevealTimers = [];
     }
 
     /**

@@ -22,7 +22,8 @@ class BingoMusical {
     constructor() {
         this.songs = [];
         this.continuousMode = false;
-        
+        this.listRevealTimers = [];
+
         this.cartonGenerator = new BingoCartonGenerator();
         this.songsFolder = DEFAULT_SONGS_FOLDER;
         this.dom = new DOMElements();
@@ -768,8 +769,8 @@ class BingoMusical {
         if (iconDisabled) iconBtn.disabled = true;
         iconBtn.innerHTML = iconHtml;
         
-        // Si es la canción actualmente reproduciéndose y el juego ha iniciado, ocultar el icono inicialmente
-        if (this.game.getCurrentSong() === song.id && this.game.isGameStarted() && song.justStarted) {
+        // Si es la canción actualmente reproduciéndose y el juego ha iniciado, ocultar el icono hasta revelarlo
+        if (this.game.getCurrentSong() === song.id && this.game.isGameStarted() && song.hideIcon) {
             iconBtn.style.opacity = '0';
         }
         
@@ -781,8 +782,8 @@ class BingoMusical {
         titleStrong.dataset.songId = song.id;
         titleStrong.textContent = song.title;
         
-        // Si es la canción actualmente reproduciéndose y el juego ha iniciado, ocultar el título inicialmente
-        if (this.game.getCurrentSong() === song.id && this.game.isGameStarted() && song.justStarted) {
+        // Si es la canción actualmente reproduciéndose y el juego ha iniciado, ocultar el título hasta revelarlo
+        if (this.game.getCurrentSong() === song.id && this.game.isGameStarted() && song.hideTitle) {
             titleStrong.style.opacity = '0';
         }
         
@@ -967,8 +968,14 @@ class BingoMusical {
             return;
         }
 
-        // Marcar la canción como "recién iniciada" para ocultar el icono en la lista
-        song.justStarted = true;
+        // Cancelar revelados pendientes de la canción anterior y mostrarla del todo
+        this._clearListRevealTimers();
+        const previousSong = this.songManager.findSongById(this.songs, this.game.getCurrentSong());
+        if (previousSong) this._revealSongInList(previousSong);
+
+        // Ocultar título e icono de la canción en la lista hasta que se revelen
+        song.hideTitle = true;
+        song.hideIcon = true;
 
         // Usar AudioManager para reproducir
         this.audio.play(song.file, () => {
@@ -989,34 +996,41 @@ class BingoMusical {
             // Programar la revelación del título e icono en la lista después del tiempo configurado
             // Solo si el juego ha iniciado
             if (this.game.isGameStarted()) {
-                const titleRevealTime = this.game.getTitleRevealTime();
-                const iconRevealTime = this.game.getIconRevealTime();
-                
-                // Capturar referencias DOM inmediatamente después del render (optimización)
-                const titleElement = document.querySelector(`.song-item-title[data-song-id="${songId}"]`);
-                const iconBtn = document.querySelector(`.song-item-icon[data-song-id="${songId}"]`);
-
-                // Revelar título
-                if (titleElement) {
+                // Los elementos se buscan al dispararse el temporizador porque la lista
+                // puede haberse vuelto a pintar entretanto (filtros, cierre de alertas...)
+                this.listRevealTimers.push(
                     setTimeout(() => {
-                        titleElement.style.transition = 'opacity 1s ease-in';
-                        titleElement.style.opacity = '1';
-                    }, titleRevealTime * 1000);
-                }
-
-                // Revelar icono
-                setTimeout(() => {
-                    song.justStarted = false;
-                    if (iconBtn) {
-                        iconBtn.style.transition = 'opacity 1s ease-in';
-                        iconBtn.style.opacity = '1';
-                    }
-                }, iconRevealTime * 1000);
+                        song.hideTitle = false;
+                        this._fadeIn(`.song-item-title[data-song-id="${songId}"]`);
+                    }, this.game.getTitleRevealTime() * 1000),
+                    setTimeout(() => {
+                        song.hideIcon = false;
+                        this._fadeIn(`.song-item-icon[data-song-id="${songId}"]`);
+                    }, this.game.getIconRevealTime() * 1000)
+                );
             } else {
-                // Si el juego no ha iniciado, limpiar la bandera inmediatamente
-                song.justStarted = false;
+                // Si el juego no ha iniciado, mostrar todo inmediatamente
+                this._revealSongInList(song);
             }
         });
+    }
+
+    _fadeIn(selector) {
+        const element = document.querySelector(selector);
+        if (element) {
+            element.style.transition = 'opacity 1s ease-in';
+            element.style.opacity = '1';
+        }
+    }
+
+    _revealSongInList(song) {
+        song.hideTitle = false;
+        song.hideIcon = false;
+    }
+
+    _clearListRevealTimers() {
+        for (const timer of this.listRevealTimers) clearTimeout(timer);
+        this.listRevealTimers = [];
     }
 
     pauseSong() {
@@ -1024,15 +1038,17 @@ class BingoMusical {
         this.updateControls(isNowPlaying);
     }
 
+    /**
+     * Cancela los revelados pendientes y muestra la canción actual sin ocultar
+     */
+    _revealCurrentSong() {
+        this._clearListRevealTimers();
+        const currentSong = this.songManager.findSongById(this.songs, this.game.getCurrentSong());
+        if (currentSong) this._revealSongInList(currentSong);
+    }
+
     stopSong() {
-        const currentSongId = this.game.getCurrentSong();
-        if (currentSongId !== null) {
-            const currentSong = this.songManager.findSongById(this.songs, currentSongId);
-            if (currentSong) {
-                currentSong.justStarted = false;
-            }
-        }
-        
+        this._revealCurrentSong();
         this.audio.stop();
         this.updateControls(false);
         this.dom.songIconContainer.classList.remove('playing');
@@ -1064,14 +1080,8 @@ class BingoMusical {
         this.audio.isPlaying = false;
         this.dom.songIconContainer.classList.remove('playing');
         
-        // Limpiar la bandera justStarted de la canción que terminó
-        const currentSongId = this.game.getCurrentSong();
-        if (currentSongId !== null) {
-            const currentSong = this.songManager.findSongById(this.songs, currentSongId);
-            if (currentSong) {
-                currentSong.justStarted = false;
-            }
-        }
+        // La canción que terminó ya no debe ocultarse en la lista
+        this._revealCurrentSong();
 
         // Handle continuous PREVIEW mode
         if (this.continuousMode && !this.game.isGameStarted()) {
@@ -1131,10 +1141,9 @@ class BingoMusical {
             this.game.resetGame();
             this.songs = this.songManager.resetPlayedStatus(this.songs);
             
-            // Limpiar la bandera justStarted de todas las canciones
-            this.songs.forEach(song => {
-                song.justStarted = false;
-            });
+            // Ninguna canción debe quedar oculta tras el reinicio
+            this._clearListRevealTimers();
+            this.songs.forEach(song => this._revealSongInList(song));
             
             this.dom.historyGrid.innerHTML = '';
             this.refreshUI();
@@ -1148,6 +1157,7 @@ class BingoMusical {
             this.dom.currentIconImg.src = LOGO_PATH;
 
             // Restaurar opacidad de título e icono del reproductor
+            this.ui.clearPlayerRevealTimers();
             this.dom.songTitleElement.style.opacity = '1';
             this.dom.currentIconImg.style.opacity = '1';
         }
