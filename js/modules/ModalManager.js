@@ -105,7 +105,9 @@ export class ModalManager {
      */
     checkOpenModals() {
         return this.isModalOpen(this.dom.iconModal) ||
+            this.isModalOpen(this.dom.cartonOptionsModal) ||
             this.isModalOpen(this.dom.cartonModal) ||
+            this.isModalOpen(this.dom.printModal) ||
             this.isModalOpen(this.dom.configModal) ||
             this.isModalOpen(this.dom.confirmModal) ||
             this.isModalOpen(this.dom.alertModal);
@@ -115,16 +117,21 @@ export class ModalManager {
      * Cierra modales con la tecla Escape
      */
     closeModalsOnEscape(iconCloseCallback) {
-        if (this.isModalOpen(this.dom.iconModal)) {
+        // Primero los modales que se abren encima de otros (confirmación y alerta)
+        if (this.isModalOpen(this.dom.confirmModal)) {
+            this.closeConfirmModal(false);
+        } else if (this.isModalOpen(this.dom.alertModal)) {
+            this.closeAlertModal();
+        } else if (this.isModalOpen(this.dom.iconModal)) {
             if (iconCloseCallback) iconCloseCallback();
+        } else if (this.isModalOpen(this.dom.printModal)) {
+            this.closeModal(this.dom.printModal);
+        } else if (this.isModalOpen(this.dom.cartonOptionsModal)) {
+            this.closeModal(this.dom.cartonOptionsModal);
         } else if (this.isModalOpen(this.dom.cartonModal)) {
             this.closeModal(this.dom.cartonModal);
         } else if (this.isModalOpen(this.dom.configModal)) {
             this.closeModal(this.dom.configModal);
-        } else if (this.isModalOpen(this.dom.confirmModal)) {
-            this.closeConfirmModal(false);
-        } else if (this.isModalOpen(this.dom.alertModal)) {
-            this.closeAlertModal();
         }
     }
 }
