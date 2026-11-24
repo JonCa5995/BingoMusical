@@ -541,11 +541,12 @@ class BingoMusical {
         this.songManager.resetIdCounter();
 
         const duplicates = [];
-        const newSongs = [];
+        const candidates = [];
         const titlesAdded = new Set();
         const usedIcons = new Set();
         const usedIds = new Set();
 
+        // 1) Preparar los datos de cada canción (síncrono)
         for (const songData of playlist.songs) {
             const title = songData.title;
 
@@ -566,34 +567,28 @@ class BingoMusical {
             usedIcons.add(icon);
             titlesAdded.add(title);
 
-            const audioPath = this.songsFolder + title + '.mp3';
-            const exists = await fetch(audioPath, {method: 'HEAD'})
-                .then(response => response.ok)
-                .catch(() => false);
+            // Conservar el ID original para que los cartones importados
+            // sigan apuntando a la misma canción
+            const hasValidId = Number.isInteger(songData.id) && !usedIds.has(songData.id);
+            const id = hasValidId ? songData.id : null;
+            if (hasValidId) usedIds.add(id);
 
-            if (exists) {
-                const resp = await fetch(audioPath);
-                const blob = await resp.blob();
-
-                // Conservar el ID original para que los cartones importados
-                // sigan apuntando a la misma canción
-                const hasValidId = Number.isInteger(songData.id) && !usedIds.has(songData.id);
-                const id = hasValidId ? songData.id : null;
-                if (hasValidId) usedIds.add(id);
-
-                newSongs.push({
-                    id,
-                    title: title,
-                    icon,
-                    iconType,
-                    audioPath,
-                    file: blob,
-                    played: false
-                });
-            } else {
-                console.warn(`Archivo no encontrado: ${audioPath}`);
-            }
+            candidates.push({id, title, icon, iconType, audioPath: this.songsFolder + title + '.mp3'});
         }
+
+        // 2) Descargar todos los audios en paralelo, con una sola petición por canción
+        const loaded = await Promise.all(candidates.map(async candidate => {
+            try {
+                const url = this.songsFolder + encodeURIComponent(candidate.title) + '.mp3';
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return {...candidate, file: await response.blob(), played: false};
+            } catch {
+                console.warn(`Archivo no encontrado: ${candidate.audioPath}`);
+                return null;
+            }
+        }));
+        const newSongs = loaded.filter(Boolean);
 
         // Asignar IDs nuevos solo a las canciones sin ID válido, sin colisionar con los conservados
         this.songManager.assignMissingIds(newSongs);
