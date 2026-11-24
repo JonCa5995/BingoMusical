@@ -337,7 +337,8 @@ class BingoMusical {
     }
 
     closeAlertModal() {
-        this.modal.closeAlertModal(() => this.renderSongsList());
+        // Las acciones que cambian canciones ya repintan la lista; cerrar una alerta no cambia nada
+        this.modal.closeAlertModal();
     }
 
     showConfirm(message, title = 'Confirmar') {
