@@ -238,14 +238,16 @@ export class AudioManager {
      */
     updateDuration() {
         this.dom.durationSpan.textContent = this.formatTime(this.dom.audioPlayer.duration);
-        this.dom.durationSpan.setAttribute('datetime', `PT${Math.floor(this.dom.audioPlayer.duration)}S`);
+        const duration = this.dom.audioPlayer.duration;
+        this.dom.durationSpan.setAttribute('datetime', `PT${Number.isFinite(duration) ? Math.floor(duration) : 0}S`);
     }
 
     /**
      * Formatea segundos a formato MM:SS
      */
     formatTime(seconds) {
-        if (Number.isNaN(seconds)) return '0:00';
+        // NaN (sin metadatos) o Infinity (streams) no tienen duración representable
+        if (!Number.isFinite(seconds)) return '0:00';
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
