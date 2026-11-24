@@ -2,13 +2,33 @@
  * AudioManager Module
  * Gestiona la reproducción de audio, efectos de sonido y controles de volumen
  */
+
+/**
+ * Definición de los efectos de sonido (datos, no código).
+ * - sweep: un tono que va de startFreq a endFreq
+ * - melody: una secuencia de notas separadas por `interval` segundos
+ */
+export const SOUND_EFFECTS = {
+    start: { type: 'sweep', startFreq: 400, endFreq: 800, duration: 0.3, volume: 1, waveType: 'sine' },
+    click: { type: 'sweep', startFreq: 800, endFreq: 800, duration: 0.05, volume: 0.2, waveType: 'sine' },
+    error: { type: 'sweep', startFreq: 600, endFreq: 100, duration: 0.6, volume: 0.6, waveType: 'square' },
+    win: {
+        type: 'melody', notes: [523.25, 587.33, 659.25, 783.99],
+        interval: 0.15, noteDuration: 0.15, volume: 0.3, waveType: 'sine'
+    },
+    complete: {
+        type: 'melody', notes: [523.25, 659.25, 783.99, 1046.5],
+        interval: 0.1, noteDuration: 0.5, volume: 0.4, waveType: 'triangle'
+    }
+};
+
 export class AudioManager {
     constructor(dom) {
         this.dom = dom;
         this.isPlaying = false;
         this.musicVolume = 1;
         this.effectsVolume = 0.7;
-        this.soundEffects = { start: null, win: null, click: null, complete: null, error: null };
+        this.soundEffects = {};
         this.audioContext = null;
         this.currentObjectUrl = null;
 
@@ -66,11 +86,17 @@ export class AudioManager {
      * Carga los efectos de sonido usando Web Audio API
      */
     loadSoundEffects() {
-        this.soundEffects.start = () => this._createSoundEffect(400, 800, 0.3);
-        this.soundEffects.win = () => this._createMelody([523.25, 587.33, 659.25, 783.99], 0.15, 0.3);
-        this.soundEffects.click = () => this._createSoundEffect(800, 800, 0.05, 0.2);
-        this.soundEffects.complete = () => this._createMelody([523.25, 659.25, 783.99, 1046.5], 0.1, 0.4, 'triangle');
-        this.soundEffects.error = () => this._createSoundEffect(600, 100, 0.6, 0.6, 'square');
+        // Cada tipo de efecto sabe cómo sintetizarse; añadir un efecto es añadir datos en SOUND_EFFECTS
+        const synthesizers = {
+            sweep: ({ startFreq, endFreq, duration, volume, waveType }) =>
+                this._createSoundEffect(startFreq, endFreq, duration, volume, waveType),
+            melody: ({ notes, interval, noteDuration, volume, waveType }) =>
+                this._createMelody(notes, interval, volume, waveType, noteDuration)
+        };
+
+        this.soundEffects = Object.fromEntries(
+            Object.entries(SOUND_EFFECTS).map(([name, effect]) => [name, () => synthesizers[effect.type](effect)])
+        );
     }
 
     /**
@@ -101,7 +127,7 @@ export class AudioManager {
     /**
      * Crea una melodía con múltiples notas
      */
-    _createMelody(notes, interval, volumeMultiplier, waveType = 'sine') {
+    _createMelody(notes, interval, volumeMultiplier, waveType = 'sine', noteDuration = 0.15) {
         const audioCtx = this.getAudioContext();
 
         for (const [index, freq] of notes.entries()) {
@@ -115,8 +141,8 @@ export class AudioManager {
             oscillator.frequency.value = freq;
 
             const startTime = audioCtx.currentTime + (index * interval);
-            const duration = waveType === 'triangle' ? 0.5 : 0.15;
-            
+            const duration = noteDuration;
+
             gainNode.gain.setValueAtTime(this.effectsVolume * volumeMultiplier, startTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
 

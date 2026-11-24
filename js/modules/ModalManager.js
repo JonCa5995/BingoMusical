@@ -7,6 +7,9 @@ export class ModalManager {
         this.dom = dom;
         this.audio = audio;
         this.confirmCallback = null;
+        this.modals = [];
+
+        this._registerOwnModals();
     }
 
     /**
@@ -45,10 +48,7 @@ export class ModalManager {
     /**
      * Cierra el modal de alerta
      */
-    closeAlertModal(renderCallback) {
-        if (renderCallback) {
-            renderCallback();
-        }
+    closeAlertModal() {
         this.closeModal(this.dom.alertModal);
     }
 
@@ -89,50 +89,48 @@ export class ModalManager {
     }
 
     /**
-     * Configura el cierre de un modal al hacer click fuera del contenido
-     * @param {HTMLElement} modalElement - Elemento del modal
-     * @param {Function} closeCallback - Función a ejecutar para cerrar el modal
+     * Registra un modal para que lo tengan en cuenta los atajos de teclado y Escape.
+     * Añadir un modal nuevo solo requiere registrarlo; no hay que tocar este módulo.
+     * @param {HTMLElement} element - Elemento del modal
+     * @param {Function} onClose - Cómo se cierra (con su lógica propia: sonidos, limpieza...)
+     * @param {Object} [options]
+     * @param {number} [options.priority=0] - Con varios abiertos, Escape cierra el de mayor prioridad
+     * @param {boolean} [options.closeOnOutsideClick=true] - Cerrar al hacer clic fuera del contenido
      */
-    setupOutsideClickClose(modalElement, closeCallback) {
-        modalElement.addEventListener('click', (e) => {
-            if (e.target === modalElement) {
-                closeCallback();
-            }
-        });
+    registerModal(element, onClose, { priority = 0, closeOnOutsideClick = true } = {}) {
+        this.modals.push({ element, onClose, priority });
+        // Mantener ordenado de mayor a menor prioridad
+        this.modals.sort((a, b) => b.priority - a.priority);
+
+        if (closeOnOutsideClick) {
+            element.addEventListener('click', (e) => {
+                if (e.target === element) onClose();
+            });
+        }
     }
 
     /**
-     * Verifica si algún modal está abierto
+     * Registra los modales propios de este módulo. Se abren encima de los demás,
+     * así que tienen prioridad para Escape.
+     */
+    _registerOwnModals() {
+        const options = { priority: 10, closeOnOutsideClick: false };
+        this.registerModal(this.dom.confirmModal, () => this.closeConfirmModal(false), options);
+        this.registerModal(this.dom.alertModal, () => this.closeAlertModal(), options);
+    }
+
+    /**
+     * Verifica si algún modal registrado está abierto
      */
     checkOpenModals() {
-        return this.isModalOpen(this.dom.iconModal) ||
-            this.isModalOpen(this.dom.cartonOptionsModal) ||
-            this.isModalOpen(this.dom.cartonModal) ||
-            this.isModalOpen(this.dom.printModal) ||
-            this.isModalOpen(this.dom.configModal) ||
-            this.isModalOpen(this.dom.confirmModal) ||
-            this.isModalOpen(this.dom.alertModal);
+        return this.modals.some(({ element }) => this.isModalOpen(element));
     }
 
     /**
-     * Cierra modales con la tecla Escape
+     * Cierra con Escape el modal abierto de mayor prioridad
      */
-    closeModalsOnEscape(iconCloseCallback) {
-        // Primero los modales que se abren encima de otros (confirmación y alerta)
-        if (this.isModalOpen(this.dom.confirmModal)) {
-            this.closeConfirmModal(false);
-        } else if (this.isModalOpen(this.dom.alertModal)) {
-            this.closeAlertModal();
-        } else if (this.isModalOpen(this.dom.iconModal)) {
-            if (iconCloseCallback) iconCloseCallback();
-        } else if (this.isModalOpen(this.dom.printModal)) {
-            this.closeModal(this.dom.printModal);
-        } else if (this.isModalOpen(this.dom.cartonOptionsModal)) {
-            this.closeModal(this.dom.cartonOptionsModal);
-        } else if (this.isModalOpen(this.dom.cartonModal)) {
-            this.closeModal(this.dom.cartonModal);
-        } else if (this.isModalOpen(this.dom.configModal)) {
-            this.closeModal(this.dom.configModal);
-        }
+    closeModalsOnEscape() {
+        const topModal = this.modals.find(({ element }) => this.isModalOpen(element));
+        topModal?.onClose();
     }
 }

@@ -2,6 +2,33 @@
  * SongManager Module
  * Gestiona las operaciones CRUD de canciones y su filtrado/ordenamiento
  */
+
+/** Reproducidas antes que pendientes; entre reproducidas, según `playedOrderDirection` (1 o -1) */
+const playedFirst = (playedOrderDirection) => (a, b) => {
+    if (a.played && b.played) {
+        return playedOrderDirection * ((a.playedOrder || 0) - (b.playedOrder || 0));
+    }
+    if (a.played === b.played) return 0;
+    return a.played ? -1 : 1;
+};
+
+/**
+ * Estrategias de ordenación, indexadas por el valor del <select id="sort-order">.
+ * Para añadir una ordenación nueva basta con añadir aquí su comparador.
+ */
+export const SORT_STRATEGIES = {
+    'alphabetical': (a, b) => a.title.localeCompare(b.title),
+    'alphabetical-reverse': (a, b) => b.title.localeCompare(a.title),
+    // Reproducidas primero, de la más antigua a la más reciente
+    'played-first': playedFirst(1),
+    // Reproducidas primero, de la más reciente a la más antigua
+    'played-last': playedFirst(-1),
+    'pending-first': (a, b) => {
+        if (a.played === b.played) return 0;
+        return a.played ? 1 : -1;
+    }
+};
+
 export class SongManager {
     songIdCounter = 1;
 
@@ -77,43 +104,10 @@ export class SongManager {
             filteredSongs = filteredSongs.filter(song => !song.played);
         }
 
-        // Ordenamiento
-        switch (sortOrder) {
-            case 'alphabetical':
-                filteredSongs.sort((a, b) => a.title.localeCompare(b.title));
-                break;
-            case 'alphabetical-reverse':
-                filteredSongs.sort((a, b) => b.title.localeCompare(a.title));
-                break;
-            case 'played-first':
-                filteredSongs.sort((a, b) => {
-                    // Si ambas reproducidas, ordenar por orden de reproducción (antiguas primero)
-                    if (a.played && b.played) {
-                        return (a.playedOrder || 0) - (b.playedOrder || 0);
-                    }
-                    // Si una está reproducida y la otra no
-                    if (a.played === b.played) return 0;
-                    return a.played ? -1 : 1;
-                });
-                break;
-            case 'played-last':
-                filteredSongs.sort((a, b) => {
-                    // Si ambas reproducidas, ordenar por orden de reproducción inverso (recientes primero)
-                    if (a.played && b.played) {
-                        return (b.playedOrder || 0) - (a.playedOrder || 0);
-                    }
-                    // Si una está reproducida y la otra no
-                    if (a.played === b.played) return 0;
-                    return a.played ? -1 : 1;
-                });
-                break;
-            case 'pending-first':
-                filteredSongs.sort((a, b) => {
-                    if (a.played === b.played) return 0;
-                    return a.played ? 1 : -1;
-                });
-                break;
-            // 'default' mantiene el orden original
+        // Ordenamiento ('default' u otro valor sin estrategia mantiene el orden original)
+        const comparator = SORT_STRATEGIES[sortOrder];
+        if (comparator) {
+            filteredSongs.sort(comparator);
         }
 
         return filteredSongs;

@@ -2,8 +2,11 @@
  * StorageManager Module
  * Gestiona la persistencia de datos (export/import JSON y localStorage)
  */
+import {downloadFile, slugify} from '../utils.js';
+
 export class StorageManager {
     STORAGE_PREFIX = 'bingoMusical_';
+
     constructor() {
         this.STORAGE_KEYS = {
             THEME: this.STORAGE_PREFIX + 'theme',
@@ -69,7 +72,7 @@ export class StorageManager {
      */
     exportPlaylist(songs, songsFolder, gameName = '', cartones = []) {
         if (!songs || songs.length === 0) {
-            return { success: false, error: 'No hay canciones para exportar' };
+            return {success: false, error: 'No hay canciones para exportar'};
         }
 
         try {
@@ -96,25 +99,15 @@ export class StorageManager {
                 }))
             };
 
-            const dataStr = JSON.stringify(playlist, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(dataBlob);
-
-            const link = document.createElement('a');
             const date = new Date().toISOString().split('T')[0];
-            const fileName = gameName
-                ? `${gameName.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-')}-${date}.json`
-                : `bingo-musical-${date}.json`;
-            link.href = url;
-            link.download = fileName;
-            link.setAttribute('aria-label', 'Descargar lista de canciones en formato JSON');
-            
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
+            const fileName = `${gameName ? slugify(gameName) : 'bingo-musical'}-${date}.json`;
 
-            // Liberar tras un margen: revocar justo después de click() puede cancelar la descarga en Firefox/Safari
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            downloadFile(
+                JSON.stringify(playlist, null, 2),
+                fileName,
+                'application/json',
+                'Descargar lista de canciones en formato JSON'
+            );
 
             const cartonesInfo = cartones.length > 0
                 ? `\n${cartones.length} cartón(es) incluido(s) en el archivo.`
@@ -123,12 +116,12 @@ export class StorageManager {
             return {
                 success: true,
                 message: `Lista "${gameName || 'Bingo Musical'}" exportada correctamente.${cartonesInfo}\n\n` +
-                        `Coloca el archivo JSON en la carpeta raíz del proyecto.\n` +
-                        `Coloca los archivos de audio en: ${songsFolder}`
+                    `Coloca el archivo JSON en la carpeta raíz del proyecto.\n` +
+                    `Coloca los archivos de audio en: ${songsFolder}`
             };
         } catch (error) {
             console.error('Error al exportar playlist:', error);
-            return { success: false, error: error.message };
+            return {success: false, error: error.message};
         }
     }
 
@@ -137,7 +130,7 @@ export class StorageManager {
      */
     async importPlaylist(file) {
         if (!file) {
-            return { success: false, error: 'No se seleccionó ningún archivo' };
+            return {success: false, error: 'No se seleccionó ningún archivo'};
         }
 
         try {
@@ -145,13 +138,13 @@ export class StorageManager {
             const playlist = JSON.parse(text);
 
             if (!playlist.songs || !Array.isArray(playlist.songs)) {
-                return { success: false, error: 'Formato de archivo inválido' };
+                return {success: false, error: 'Formato de archivo inválido'};
             }
 
-            return { success: true, playlist };
+            return {success: true, playlist};
         } catch (error) {
             console.error('Error al importar playlist:', error);
-            return { success: false, error: error.message };
+            return {success: false, error: error.message};
         }
     }
 

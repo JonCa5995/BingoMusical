@@ -4,12 +4,33 @@
  */
 import { DEFAULT_GAME_NAME } from '../constants.js';
 import { escapeHTML } from '../utils.js';
+import { DECORATIVE_ICON_HTML } from './CartonHtmlRenderer.js';
 
 export class CartonManager {
-    constructor(dom, audio, cartonGenerator) {
+    /**
+     * @param {DOMElements} dom
+     * @param {AudioManager} audio
+     * @param {BingoCartonGenerator} cartonGenerator - Genera los datos de los cartones
+     * @param {CartonExporter} cartonExporter - Entrega los cartones (HTML/PDF)
+     */
+    constructor(dom, audio, cartonGenerator, cartonExporter) {
         this.dom = dom;
         this.audio = audio;
         this.cartonGenerator = cartonGenerator;
+
+        // Exportadores por formato: añadir uno nuevo no requiere modificar printCartonesWithConfig
+        this.exporters = new Map();
+        this.registerExporter('html', (cartones, config) => cartonExporter.downloadAsHTML(cartones, config));
+        this.registerExporter('pdf', (cartones, config) => cartonExporter.downloadAsPDF(cartones, config));
+    }
+
+    /**
+     * Registra un formato de impresión
+     * @param {string} format - Identificador del formato (el que se pasa a printCartonesWithConfig)
+     * @param {Function} exporter - (cartones, config) => void | Promise<void>
+     */
+    registerExporter(format, exporter) {
+        this.exporters.set(format, exporter);
     }
 
     /**
@@ -75,7 +96,7 @@ export class CartonManager {
                     }
                 } else {
                     // Celda decorativa
-                    icon = `<span class="decorative-icon">${cell.icon || '🎵'}</span>`;
+                    icon = `<span class="decorative-icon">${DECORATIVE_ICON_HTML}</span>`;
                 }
                     
                 return `<div class="preview-cell ${cellClass}">
@@ -137,11 +158,11 @@ export class CartonManager {
                 gameName: gameName || DEFAULT_GAME_NAME
             };
 
-            if (format === 'pdf') {
-                await this.cartonGenerator.downloadAsPDF(cartonesParaImprimir, config);
-            } else {
-                this.cartonGenerator.downloadAsHTML(cartonesParaImprimir, config);
+            const exporter = this.exporters.get(format);
+            if (!exporter) {
+                return { success: false, error: `Formato de impresión no soportado: ${format}` };
             }
+            await exporter(cartonesParaImprimir, config);
 
             return { success: true, count: cartonesParaImprimir.length };
         } catch (error) {
@@ -208,8 +229,7 @@ export class CartonManager {
                             // Convertir a celda decorativa si la canción no existe
                             return {
                                 type: 'decorative',
-                                position: cellData.position,
-                                icon: this.cartonGenerator.emptyIcon
+                                position: cellData.position
                             };
                         }
 
@@ -222,8 +242,7 @@ export class CartonManager {
                     } else {
                         return {
                             type: 'decorative',
-                            position: cellData.position,
-                            icon: this.cartonGenerator.emptyIcon
+                            position: cellData.position
                         };
                     }
                 })

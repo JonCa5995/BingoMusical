@@ -1,6 +1,6 @@
 /**
  * SettingsManager Module
- * Gestiona configuraciones de la aplicación: temas, pantalla completa, drag&drop, atajos
+ * Gestiona configuraciones de la aplicación: temas, pantalla completa y drag&drop
  */
 export class SettingsManager {
     constructor(dom, audio, storage) {
@@ -69,24 +69,6 @@ export class SettingsManager {
             this.dom.fullscreenBtn.innerHTML = '<span class="fullscreen-icon" aria-hidden="true">⛶</span>';
             this.dom.fullscreenBtn.setAttribute('aria-label', 'Activar pantalla completa');
         }
-    }
-
-    /**
-     * Muestra la ayuda de atajos de teclado
-     */
-    getKeyboardShortcutsHelp() {
-        return [
-            'ATAJOS DE TECLADO DISPONIBLES:',
-            '',
-            '▶ ESPACIO → Reproducir/Pausar',
-            '🔄 R → Reiniciar canción actual',
-            '⏭ N → Siguiente canción (en modo continuo)',
-            '⛶ F → Pantalla completa',
-            '📏 L → Cantar LÍNEA',
-            '🎉 B → Cantar BINGO',
-            '❌ ESC → Cerrar modal',
-            '❓ ? → Mostrar esta ayuda'
-        ].join('\n');
     }
 
     /**
