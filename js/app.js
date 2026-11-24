@@ -66,6 +66,9 @@ class BingoMusical {
         // Evento cuando termina una canción
         this.dom.audioPlayer.addEventListener('ended', () => this.onSongEnded());
 
+        // Si el navegador rechaza la reproducción, reflejar en los controles que no suena
+        this.dom.audioPlayer.addEventListener('playbackfailed', () => this.updateControls(false));
+
         // Clic en barra de progreso
         this.dom.progressBar.addEventListener('click', (e) => this.audio.seekTo(e));
     }

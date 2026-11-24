@@ -10,6 +10,7 @@ export class AudioManager {
         this.effectsVolume = 0.7;
         this.soundEffects = { start: null, win: null, click: null, complete: null, error: null };
         this.audioContext = null;
+        this.currentObjectUrl = null;
 
         this.init();
     }
@@ -145,11 +146,16 @@ export class AudioManager {
     play(audioFile, onPlayCallback) {
         this.playEffect('start');
         this.dom.audioPlayer.pause();
-        this.dom.audioPlayer.src = URL.createObjectURL(audioFile);
-        this.dom.audioPlayer.volume = this.musicVolume;
-        this.dom.audioPlayer.play();
 
-        this.isPlaying = true;
+        // Liberar la URL de la canción anterior para no acumular blobs en memoria
+        if (this.currentObjectUrl) {
+            URL.revokeObjectURL(this.currentObjectUrl);
+        }
+        this.currentObjectUrl = URL.createObjectURL(audioFile);
+
+        this.dom.audioPlayer.src = this.currentObjectUrl;
+        this.dom.audioPlayer.volume = this.musicVolume;
+        this._startPlayback();
 
         if (onPlayCallback) {
             onPlayCallback();
@@ -167,10 +173,25 @@ export class AudioManager {
             this.isPlaying = false;
             return false; // Indica que está pausado
         } else {
-            this.dom.audioPlayer.play();
-            this.isPlaying = true;
+            this._startPlayback();
             return true; // Indica que está reproduciendo
         }
+    }
+
+    /**
+     * Inicia la reproducción gestionando el rechazo de play()
+     * (p. ej. bloqueo de autoplay o formato no soportado)
+     */
+    _startPlayback() {
+        this.isPlaying = true;
+        const playPromise = this.dom.audioPlayer.play();
+        playPromise?.catch(error => {
+            // AbortError: se interrumpió porque se cargó otra canción; no es un fallo
+            if (error.name === 'AbortError') return;
+            console.warn('No se pudo reproducir el audio:', error);
+            this.isPlaying = false;
+            this.dom.audioPlayer.dispatchEvent(new Event('playbackfailed'));
+        });
     }
 
     /**
@@ -192,8 +213,7 @@ export class AudioManager {
     restart() {
         this.playEffect('click');
         this.dom.audioPlayer.currentTime = 0;
-        this.dom.audioPlayer.play();
-        this.isPlaying = true;
+        this._startPlayback();
 
         this.dom.progressFill.value = 0;
         this.dom.progressFill.setAttribute('aria-valuenow', '0');
