@@ -1,13 +1,10 @@
-/**
- * GameManager Module
- * Gestiona la lógica del juego de bingo: reproducción aleatoria, historial, LÍNEA y BINGO
- */
 import {
-    DEFAULT_TITLE_REVEAL_TIME,
     DEFAULT_ICON_REVEAL_TIME,
-    MIN_SONGS_FOR_LINEA,
-    MIN_SONGS_FOR_BINGO
+    DEFAULT_TITLE_REVEAL_TIME,
+    MIN_SONGS_FOR_BINGO,
+    MIN_SONGS_FOR_LINEA
 } from '../constants.js';
+import {MSG} from '../messages.js';
 
 export class GameManager {
     gameStarted = false;
@@ -19,216 +16,124 @@ export class GameManager {
     titleRevealTime = DEFAULT_TITLE_REVEAL_TIME;
     iconRevealTime = DEFAULT_ICON_REVEAL_TIME;
     gameName = '';
-    cartonesGenerated = false;
     cartones = [];
 
-    /**
-     * Establece los cartones generados
-     */
     setCartones(cartones) {
         this.cartones = cartones || [];
-        this.cartonesGenerated = this.cartones.length > 0;
     }
 
-    /**
-     * Obtiene los cartones almacenados
-     */
     getCartones() {
         return this.cartones;
     }
 
-    /**
-     * Añade cartones a los existentes
-     */
     addCartones(newCartones) {
         if (!Array.isArray(newCartones)) return;
         this.cartones = [...this.cartones, ...newCartones];
-        this.cartonesGenerated = this.cartones.length > 0;
     }
 
-    /**
-     * Elimina todos los cartones
-     */
     clearCartones() {
         this.cartones = [];
-        this.cartonesGenerated = false;
     }
 
-    /**
-     * Obtiene el número de cartones almacenados
-     */
     getCartonesCount() {
         return this.cartones.length;
     }
 
-    /**
-     * Establece el nombre del juego
-     */
     setGameName(name) {
         this.gameName = name || '';
     }
 
-    /**
-     * Obtiene el nombre del juego
-     */
     getGameName() {
         return this.gameName;
     }
 
-
-    /**
-     * Verifica si se generaron cartones
-     */
     hasCartonesGenerated() {
-        return this.cartonesGenerated;
+        return this.cartones.length > 0;
     }
 
-    /**
-     * Inicia el juego
-     */
     startGame() {
         this.gameStarted = true;
     }
 
-    /**
-     * Verifica si el juego ha comenzado
-     */
     isGameStarted() {
         return this.gameStarted;
     }
 
-    /**
-     * Alterna el modo continuo
-     */
     toggleContinuousMode() {
         this.continuousMode = !this.continuousMode;
         return this.continuousMode;
     }
 
-    /**
-     * Indica si el modo continuo (escucha previa automática) está activo
-     */
     isContinuousMode() {
         return this.continuousMode;
     }
 
-    /**
-     * Obtiene una canción aleatoria no reproducida
-     */
+    _unplayedSongs(songs) {
+        return songs.filter(song => !song.played && song.file);
+    }
+
+    _pickRandom(list) {
+        if (list.length === 0) {
+            return null;
+        }
+
+        return list[Math.floor(Math.random() * list.length)];
+    }
+
     getRandomUnplayedSong(songs) {
-        const unplayedSongs = songs.filter(song => !song.played && song.file);
-        
-        if (unplayedSongs.length === 0) {
-            return null;
-        }
-
-        return unplayedSongs[Math.floor(Math.random() * unplayedSongs.length)];
+        return this._pickRandom(this._unplayedSongs(songs));
     }
 
-    /**
-     * Obtiene una canción aleatoria (cualquiera con archivo)
-     */
     getRandomSong(songs) {
-        const availableSongs = songs.filter(song => song.file);
-        
-        if (availableSongs.length === 0) {
-            return null;
-        }
-
-        return availableSongs[Math.floor(Math.random() * availableSongs.length)];
+        return this._pickRandom(songs.filter(song => song.file));
     }
 
-    /**
-     * Marca una canción como reproducida y la agrega al historial
-     */
     markSongAsPlayed(song) {
         if (!song.played && this.gameStarted) {
             song.played = true;
-            song.playedOrder = this.playedSongs.length + 1; // Añadir orden de reproducción
+            song.playedOrder = this.playedSongs.length + 1;
             this.playedSongs.push(song);
             return true;
         }
         return false;
     }
 
-    /**
-     * Valida si se puede cantar LÍNEA
-     */
-    canCallLinea() {
-        if (this.lineaCompleted) {
-            return {
-                valid: false,
-                error: 'La línea ya fue cantada. Solo puedes cantar línea una vez por juego.',
-                title: 'Línea Ya Cantada'
-            };
+    _canCall(completed, alreadyAlert, needed, needsAlert) {
+        if (completed) {
+            return {valid: false, alert: alreadyAlert};
         }
 
-        if (this.playedSongs.length < MIN_SONGS_FOR_LINEA) {
-            return {
-                valid: false,
-                error: `Debes reproducir al menos ${MIN_SONGS_FOR_LINEA} canciones antes de cantar LÍNEA.`,
-                title: 'Canciones Insuficientes'
-            };
+        if (this.playedSongs.length < needed) {
+            return {valid: false, alert: needsAlert(needed)};
         }
 
-        return { valid: true };
+        return {valid: true};
     }
 
-    /**
-     * Marca LÍNEA como completada
-     */
+    canCallLinea() {
+        return this._canCall(this.lineaCompleted, MSG.game.lineaAlreadyCalled, MIN_SONGS_FOR_LINEA, MSG.game.lineaNeedsSongs);
+    }
+
     completeLinea() {
         this.lineaCompleted = true;
     }
 
-    /**
-     * Valida si se puede cantar BINGO
-     */
     canCallBingo() {
-        if (this.bingoCompleted) {
-            return {
-                valid: false,
-                error: 'El bingo ya fue completado. Reinicia el juego para comenzar de nuevo.',
-                title: 'Bingo Ya Completado'
-            };
-        }
-
-        if (this.playedSongs.length < MIN_SONGS_FOR_BINGO) {
-            return {
-                valid: false,
-                error: `Debes reproducir al menos ${MIN_SONGS_FOR_BINGO} canciones antes de cantar BINGO.`,
-                title: 'Canciones Insuficientes'
-            };
-        }
-
-        return { valid: true };
+        return this._canCall(this.bingoCompleted, MSG.game.bingoAlreadyCalled, MIN_SONGS_FOR_BINGO, MSG.game.bingoNeedsSongs);
     }
 
-    /**
-     * Marca BINGO como completado
-     */
     completeBingo() {
         this.bingoCompleted = true;
     }
 
-    /**
-     * Indica si ya se cantó BINGO
-     */
     isBingoCompleted() {
         return this.bingoCompleted;
     }
 
-    /**
-     * Verifica si todas las canciones han sido reproducidas
-     */
     allSongsPlayed(songs) {
-        const unplayedSongs = songs.filter(song => !song.played && song.file);
-        return unplayedSongs.length === 0;
+        return this._unplayedSongs(songs).length === 0;
     }
 
-    /**
-     * Reinicia el estado del juego
-     */
     resetGame() {
         this.gameStarted = false;
         this.continuousMode = false;
@@ -238,59 +143,34 @@ export class GameManager {
         this.currentSongIndex = null;
     }
 
-    /**
-     * Establece la canción actual
-     */
     setCurrentSong(songId) {
         this.currentSongIndex = songId;
     }
 
-    /**
-     * Obtiene la canción actual
-     */
     getCurrentSong() {
         return this.currentSongIndex;
     }
 
-
-    /**
-     * Obtiene el historial de canciones reproducidas
-     */
     getHistory() {
         return this.playedSongs;
     }
 
-    /**
-     * Vacía el historial de canciones reproducidas
-     */
     clearHistory() {
         this.playedSongs = [];
     }
 
-    /**
-     * Establece el tiempo de revelación del título
-     */
     setTitleRevealTime(seconds) {
         this.titleRevealTime = seconds;
     }
 
-    /**
-     * Establece el tiempo de revelación del icono
-     */
     setIconRevealTime(seconds) {
         this.iconRevealTime = seconds;
     }
 
-    /**
-     * Obtiene el tiempo de revelación del título
-     */
     getTitleRevealTime() {
         return this.titleRevealTime;
     }
 
-    /**
-     * Obtiene el tiempo de revelación del icono
-     */
     getIconRevealTime() {
         return this.iconRevealTime;
     }

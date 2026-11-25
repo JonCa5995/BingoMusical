@@ -1,5 +1,4 @@
 /**
- * IconDictionary Module
  * Diccionario de iconos con sus palabras clave para búsqueda
  */
 export const iconKeywords = {

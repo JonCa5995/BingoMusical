@@ -1,181 +1,134 @@
-/**
- * IconManager Module
- * Gestiona la selección y personalización de iconos para las canciones
- */
 import {availableIcons, iconKeywords} from './IconDictionary.js';
+import {CUSTOM_ICON_SIZE, ICON_MODAL_CLOSE_DELAY_MS, ICON_TYPE, SOUND} from '../constants.js';
+import {MSG, TEXT} from '../messages.js';
 
 export class IconManager {
-    constructor(dom, sounds, getSongs) {
-        this.dom = dom;
+    constructor(elements, sounds, getSongs, modals) {
+        this.el = elements;
         this.sounds = sounds;
-        this.getSongs = getSongs; // Función para obtener las canciones actuales
-        this.availableIcons = availableIcons;
-        this.iconKeywords = iconKeywords;
+        this.getSongs = getSongs;
+        this.modals = modals;
         this.currentEditingSongId = null;
 
         this.setupEventListeners();
     }
 
-
-    /**
-     * Configura event listeners para el modal de iconos
-     */
     setupEventListeners() {
-        this.dom.closeIconModalBtn.addEventListener('click', () => this.closeIconModal());
-        this.dom.iconModal.addEventListener('click', (e) => {
-            if (e.target.id === 'icon-modal') this.closeIconModal();
-        });
+        this.el.closeIconModalBtn.addEventListener('click', () => this.closeIconModal());
+        this.modals.registerModal(this.el.iconModal, () => this.closeIconModal());
 
-        this.dom.uploadCustomIconBtn.addEventListener('click', () => {
-            this.dom.customIconUploadInput.click();
+        this.el.uploadCustomIconBtn.addEventListener('click', () => {
+            this.el.customIconUploadInput.click();
         });
-        this.dom.customIconUploadInput.addEventListener('change', (e) => {
+        this.el.customIconUploadInput.addEventListener('change', (e) => {
             const songs = this.getSongs();
             this.uploadCustomIcon(e, songs);
         });
 
-        // Event listener para búsqueda de iconos
-        this.dom.iconSearchInput.addEventListener('input', (e) => {
+        this.el.iconSearchInput.addEventListener('input', (e) => {
             this.filterIcons(e.target.value);
         });
     }
 
-    /**
-     * Obtiene los iconos disponibles (no usados)
-     */
     getAvailableIcons(songs) {
         const usedIcons = new Set(
             songs
-                .filter(song => song.iconType === 'emoji' && song.icon != null)
+                .filter(song => song.iconType === ICON_TYPE.EMOJI && song.icon != null)
                 .map(song => song.icon)
         );
-        return this.availableIcons.filter(icon => !usedIcons.has(icon));
+        return availableIcons.filter(icon => !usedIcons.has(icon));
     }
 
-    /**
-     * Verifica si un icono está en uso
-     */
     isIconUsed(icon, songs) {
         return songs.some(s =>
             s.icon === icon &&
-            s.iconType === 'emoji' &&
+            s.iconType === ICON_TYPE.EMOJI &&
             s.id !== this.currentEditingSongId
         );
     }
 
-    /**
-     * Abre el modal de selección de iconos
-     */
     openIconPicker(songId, songs, onIconSelected) {
         const song = songs.find(s => s.id === songId);
-        if (!song) return {success: false, error: 'Canción no encontrada'};
+        if (!song) return {success: false, alert: MSG.icons.songNotFound};
 
         if (song.played) {
-            return {
-                success: false,
-                error: 'No puedes cambiar el icono de una canción que ya fue reproducida.',
-                title: 'Canción Ya Reproducida'
-            };
+            return {success: false, alert: MSG.songs.iconLocked};
         }
 
         this.currentEditingSongId = songId;
         this.onIconSelected = onIconSelected;
-        this.dom.modalSongTitle.textContent = song.title;
+        this.el.modalSongTitle.textContent = song.title;
 
-        // Renderizar iconos usando DocumentFragment
         const fragment = document.createDocumentFragment();
 
-        for (const icon of this.availableIcons) {
-            const iconOption = document.createElement('button');
-            iconOption.type = 'button';
-            iconOption.className = 'icon-option';
-            iconOption.setAttribute('aria-label', `Seleccionar icono ${icon}`);
-
-            const isUsed = this.isIconUsed(icon, songs);
-            const isCurrentSongIcon = icon === song.icon;
-
-            if (isCurrentSongIcon) {
-                iconOption.classList.add('selected');
-                iconOption.setAttribute('aria-pressed', 'true');
-            } else {
-                iconOption.setAttribute('aria-pressed', 'false');
-            }
-
-            if (isUsed && !isCurrentSongIcon) {
-                iconOption.style.opacity = '0.3';
-                iconOption.style.cursor = 'not-allowed';
-                iconOption.title = 'Este icono ya está en uso';
-                iconOption.disabled = true;
-            } else {
-                iconOption.onclick = () => {
-                    if (!isUsed || isCurrentSongIcon) {
-                        this.selectIcon(icon, 'emoji', songs);
-                    }
-                };
-            }
-
-            iconOption.textContent = icon;
-            fragment.appendChild(iconOption);
+        for (const icon of availableIcons) {
+            fragment.appendChild(this._createIconOption(icon, song, songs));
         }
 
-        this.dom.iconPickerContainer.innerHTML = '';
-        this.dom.iconPickerContainer.appendChild(fragment);
+        this.el.iconPickerContainer.innerHTML = '';
+        this.el.iconPickerContainer.appendChild(fragment);
 
-        // Abrir modal
-        this.dom.iconModal.classList.remove('hidden');
-        if (this.dom.iconModal.showModal) {
-            this.dom.iconModal.showModal();
-        }
-
-        this.sounds.play('click');
+        this.modals.openModal(this.el.iconModal);
+        this.sounds.play(SOUND.CLICK);
 
         return {success: true};
     }
 
-    /**
-     * Cierra el modal de iconos
-     */
-    closeIconModal() {
-        // Cerrar modal
-        if (this.dom.iconModal.close) {
-            this.dom.iconModal.close();
+    _createIconOption(icon, song, songs) {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'icon-option';
+        option.setAttribute('aria-label', TEXT.icons.selectLabel(icon));
+
+        const isUsed = this.isIconUsed(icon, songs);
+        const isCurrentSongIcon = icon === song.icon;
+
+        if (isCurrentSongIcon) {
+            option.classList.add('selected');
+            option.setAttribute('aria-pressed', 'true');
+        } else {
+            option.setAttribute('aria-pressed', 'false');
         }
-        this.dom.iconModal.classList.add('hidden');
+
+        if (isUsed && !isCurrentSongIcon) {
+            option.style.opacity = '0.3';
+            option.style.cursor = 'not-allowed';
+            option.title = TEXT.icons.inUse;
+            option.disabled = true;
+        } else {
+            option.onclick = () => this.selectIcon(icon, songs);
+        }
+
+        option.textContent = icon;
+        return option;
+    }
+
+    closeIconModal() {
+        this.modals.closeModal(this.el.iconModal);
 
         this.currentEditingSongId = null;
         this.onIconSelected = null;
 
-        // Limpiar búsqueda al cerrar
-        this.dom.iconSearchInput.value = '';
+        this.el.iconSearchInput.value = '';
     }
 
-    /**
-     * Elimina los acentos de un texto
-     * @param {string} text - Texto a normalizar
-     * @returns {string} - Texto sin acentos
-     */
     removeAccents(text) {
         return text.normalize('NFD').replaceAll(/[\u0300-\u036f]/g, '');
     }
 
-    /**
-     * Filtra los iconos según el texto de búsqueda
-     */
     filterIcons(searchText) {
         const query = this.removeAccents(searchText.toLowerCase().trim());
 
-        const iconOptions = this.dom.iconPickerContainer.querySelectorAll('.icon-option');
+        const iconOptions = this.el.iconPickerContainer.querySelectorAll('.icon-option');
         let visibleCount = 0;
 
-        // Eliminar mensaje de "sin resultados" si existe
-        const noResults = this.dom.iconPickerContainer.querySelector('.icon-picker-no-results');
+        const noResults = this.el.iconPickerContainer.querySelector('.icon-picker-no-results');
         if (noResults) noResults.remove();
 
         for (const option of iconOptions) {
             const icon = option.textContent;
-            const keywords = this.iconKeywords[icon] || [];
+            const keywords = iconKeywords[icon] || [];
 
-            // Buscar en las palabras clave (sin acentos)
             const matches = query === '' || keywords.some(keyword =>
                 this.removeAccents(keyword).includes(query)
             ) || icon.includes(query);
@@ -184,106 +137,91 @@ export class IconManager {
             if (matches) visibleCount++;
         }
 
-        // Mostrar mensaje si no hay resultados
         if (visibleCount === 0 && query !== '') {
             const noResultsMsg = document.createElement('div');
             noResultsMsg.className = 'icon-picker-no-results';
-            noResultsMsg.textContent = `No se encontraron iconos para "${searchText}"`;
-            this.dom.iconPickerContainer.appendChild(noResultsMsg);
+            noResultsMsg.textContent = TEXT.icons.noResults(searchText);
+            this.el.iconPickerContainer.appendChild(noResultsMsg);
         }
     }
 
-    /**
-     * Selecciona un icono para la canción actual
-     */
-    selectIcon(icon, iconType, songs) {
+    selectIcon(icon, songs) {
         if (this.currentEditingSongId === null) return;
 
         const song = songs.find(s => s.id === this.currentEditingSongId);
         if (!song || song.played) return;
 
         song.icon = icon;
-        song.iconType = iconType;
+        song.iconType = ICON_TYPE.EMOJI;
 
-        this.sounds.play('click');
+        this.sounds.play(SOUND.CLICK);
 
-        // Actualizar visualización de iconos seleccionados
         for (const opt of document.querySelectorAll('.icon-option')) {
             const isSelected = opt.textContent === icon;
             opt.classList.toggle('selected', isSelected);
             opt.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
         }
 
-        // Llamar callback para actualizar UI
         if (this.onIconSelected) {
             this.onIconSelected();
         }
 
-        setTimeout(() => this.closeIconModal(), 300);
+        setTimeout(() => this.closeIconModal(), ICON_MODAL_CLOSE_DELAY_MS);
     }
 
-    /**
-     * Carga un icono personalizado desde archivo
-     */
-    async uploadCustomIcon(e, songs) {
+    uploadCustomIcon(e, songs) {
         const file = e.target.files[0];
         if (!file) return;
 
         const song = songs.find(s => s.id === this.currentEditingSongId);
         if (!song) return;
 
-        const reader = new FileReader();
-
-        // Guardar referencia al callback antes de cerrar el modal
         const callback = this.onIconSelected;
 
-        const handleUpdate = () => {
-            song.iconType = 'image';
-            this.sounds.play('click');
+        this._readIconFile(file, (icon) => {
+            song.icon = icon;
+            song.iconType = ICON_TYPE.IMAGE;
+            this.sounds.play(SOUND.CLICK);
             this.closeIconModal();
 
-            // Usar la referencia guardada del callback
             if (callback) {
                 callback();
             }
+        });
+    }
 
-            return {
-                success: true,
-                message: 'Icono personalizado cargado correctamente.',
-                title: 'Icono Actualizado'
-            };
-        };
+    _readIconFile(file, onReady) {
+        const reader = new FileReader();
 
         reader.onload = (event) => {
             if (file.type === 'image/png') {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 300;
-                    canvas.height = 300;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, 300, 300);
-                    song.icon = canvas.toDataURL('image/png');
-                    handleUpdate();
-                };
-                img.src = event.target.result;
+                this._resizeToIconSize(event.target.result, onReady);
             } else {
-                song.icon = event.target.result;
-                handleUpdate();
+                onReady(event.target.result);
             }
         };
 
         reader.readAsDataURL(file);
     }
 
-    /**
-     * Obtiene un icono aleatorio disponible
-     */
+    _resizeToIconSize(dataUrl, onReady) {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = CUSTOM_ICON_SIZE;
+            canvas.height = CUSTOM_ICON_SIZE;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, CUSTOM_ICON_SIZE, CUSTOM_ICON_SIZE);
+            onReady(canvas.toDataURL('image/png'));
+        };
+        img.src = dataUrl;
+    }
+
     getRandomAvailableIcon(songs) {
         const availableIconsList = this.getAvailableIcons(songs);
         if (availableIconsList.length > 0) {
             return availableIconsList[Math.floor(Math.random() * availableIconsList.length)];
         }
-        return this.availableIcons[Math.floor(Math.random() * this.availableIcons.length)];
+        return availableIcons[Math.floor(Math.random() * availableIcons.length)];
     }
 }

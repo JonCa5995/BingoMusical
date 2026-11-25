@@ -1,58 +1,32 @@
-/**
- * CartonManager Module
- * Gestiona la generación, vista previa y descarga de cartones de bingo
- */
-import {DEFAULT_GAME_NAME} from '../constants.js';
-import {escapeHTML} from '../utils.js';
+import {CELL_TYPE, ICON_TYPE, PRINT_FORMAT, SOUND} from '../constants.js';
+import {escapeHTML, gameNameOrDefault} from '../utils.js';
 import {DECORATIVE_ICON_HTML} from './CartonHtmlRenderer.js';
+import {MSG, TEXT} from '../messages.js';
 
 export class CartonManager {
-    /**
-     * @param {DOMElements} dom
-     * @param {SoundEffects} sounds - Efectos de sonido de cada acción
-     * @param {BingoCartonGenerator} cartonGenerator - Genera los datos de los cartones
-     * @param {CartonExporter} cartonExporter - Entrega los cartones (HTML/PDF)
-     */
-    constructor(dom, sounds, cartonGenerator, cartonExporter) {
-        this.dom = dom;
+    constructor(previewContainer, sounds, cartonGenerator, cartonExporter) {
+        this.previewContainer = previewContainer;
         this.sounds = sounds;
         this.cartonGenerator = cartonGenerator;
 
-        // Exportadores por formato: añadir uno nuevo no requiere modificar printCartonesWithConfig
         this.exporters = new Map();
-        this.registerExporter('html', (cartones, config) => cartonExporter.downloadAsHTML(cartones, config));
-        this.registerExporter('pdf', (cartones, config) => cartonExporter.downloadAsPDF(cartones, config));
+        this.registerExporter(PRINT_FORMAT.HTML, (cartones, config) => cartonExporter.downloadAsHTML(cartones, config));
+        this.registerExporter(PRINT_FORMAT.PDF, (cartones, config) => cartonExporter.downloadAsPDF(cartones, config));
     }
 
-    /**
-     * Registra un formato de impresión
-     * @param {string} format - Identificador del formato (el que se pasa a printCartonesWithConfig)
-     * @param {Function} exporter - (cartones, config) => void | Promise<void>
-     */
     registerExporter(format, exporter) {
         this.exporters.set(format, exporter);
     }
 
-
-    /**
-     * Actualiza vista previa de impresión (modal de imprimir)
-     */
-    updatePrintPreview(songs, gameName = '') {
+    updatePrintPreview(songs, gameName, colors) {
         try {
-            const config = {
-                primaryColor: this.dom.printPrimaryColorInput.value,
-                secondaryColor: this.dom.printSecondaryColorInput.value
-            };
-
-            // Generar un cartón de ejemplo
             const previewCarton = this.cartonGenerator.generateSingleCarton(songs, 1);
 
-            // Renderizar vista previa
-            this.dom.printCartonPreview.innerHTML = this.generatePreviewHTML(previewCarton, config, gameName);
+            this.previewContainer.innerHTML = this.generatePreviewHTML(previewCarton, colors, gameName);
         } catch (error) {
-            this.dom.printCartonPreview.innerHTML = `
+            this.previewContainer.innerHTML = `
                 <div class="carton-preview-placeholder">
-                    <p>❌ Error al generar vista previa</p>
+                    <p>${TEXT.cartones.previewError}</p>
                     <p>${escapeHTML(error.message)}</p>
                 </div>
             `;
@@ -60,29 +34,14 @@ export class CartonManager {
         }
     }
 
-    /**
-     * Genera HTML para la vista previa del cartón
-     */
     generatePreviewHTML(carton, config, gameName = '') {
         const {primaryColor, secondaryColor} = config;
-        const displayName = escapeHTML(gameName || DEFAULT_GAME_NAME);
+        const displayName = escapeHTML(gameNameOrDefault(gameName));
 
         const cellsHTML = carton.rows.flatMap(row =>
             row.cells.map(cell => {
-                const cellClass = cell.type === 'song' ? 'song' : 'decorative';
-                let icon;
-
-                if (cell.type === 'song' && cell.song) {
-                    // Celda con canción
-                    if (cell.song.iconType === 'image') {
-                        icon = `<img src="${escapeHTML(cell.song.icon)}" alt="${escapeHTML(cell.song.title)}" style="max-width: 90%; max-height: 90%;">`;
-                    } else {
-                        icon = escapeHTML(cell.song.icon);
-                    }
-                } else {
-                    // Celda decorativa
-                    icon = `<span class="decorative-icon">${DECORATIVE_ICON_HTML}</span>`;
-                }
+                const cellClass = cell.type === CELL_TYPE.SONG ? 'song' : 'decorative';
+                const icon = this._previewCellIcon(cell);
 
                 return `<div class="preview-cell ${cellClass}">
                     ${icon}
@@ -93,7 +52,7 @@ export class CartonManager {
         return `
             <div class="preview-carton" style="color: ${primaryColor}; border-color: ${primaryColor};">
                 <div class="preview-carton-header" style="border-color: ${primaryColor};">
-                    <div class="preview-carton-title" style="color: ${primaryColor};">🎵 ${displayName}</div>
+                    <div class="preview-carton-title" style="color: ${primaryColor};">${TEXT.document.cartonTitle(displayName)}</div>
                     <div class="preview-carton-number" style="background-color: ${secondaryColor};">#1</div>
                 </div>
                 <div class="preview-carton-grid">
@@ -103,49 +62,35 @@ export class CartonManager {
         `;
     }
 
+    _previewCellIcon(cell) {
+        if (cell.type === CELL_TYPE.SONG && cell.song) {
+            if (cell.song.iconType === ICON_TYPE.IMAGE) {
+                return `<img src="${escapeHTML(cell.song.icon)}" alt="${escapeHTML(cell.song.title)}" style="max-width: 90%; max-height: 90%;">`;
+            }
+            return escapeHTML(cell.song.icon);
+        }
+        return `<span class="decorative-icon">${DECORATIVE_ICON_HTML}</span>`;
+    }
 
-    /**
-     * Imprime cartones con configuración personalizada del modal
-     */
-    async printCartonesWithConfig(cartones, gameName, format = 'html') {
+    async printCartonesWithConfig(cartones, gameName, format = PRINT_FORMAT.HTML, options = {}) {
+        const {printAll, from, to, primaryColor, secondaryColor} = options;
+
         if (!cartones || cartones.length === 0) {
-            return {success: false, error: 'No hay cartones para imprimir'};
+            return {success: false, error: TEXT.cartones.noneToPrint};
         }
 
         try {
-            // Obtener selección de rango
-            const printAll = this.dom.printRangeRadios[0].checked;
-            let cartonesToPrint = cartones;
-
-            if (!printAll) {
-                // Filtrar por rango
-                const from = Number.parseInt(this.dom.rangeFromInput.value) || 1;
-                const to = Number.parseInt(this.dom.rangeToInput.value) || cartones.length;
-
-                // Validar rango
-                if (from < 1 || from > cartones.length || to < 1 || to > cartones.length || from > to) {
-                    return {
-                        success: false,
-                        error: `Rango inválido. Debe ser entre 1 y ${cartones.length}, y "Desde" debe ser menor o igual que "Hasta".`
-                    };
-                }
-
-                // Filtrar cartones por índice (0-based)
-                cartonesToPrint = cartones.slice(from - 1, to);
+            const cartonesToPrint = printAll ? cartones : this._selectRange(cartones, from, to);
+            if (!cartonesToPrint) {
+                return {success: false, error: TEXT.cartones.invalidRange(cartones.length)};
             }
-
-            // Obtener configuración del modal de impresión
-            const config = {
-                primaryColor: this.dom.printPrimaryColorInput.value,
-                secondaryColor: this.dom.printSecondaryColorInput.value,
-                gameName: gameName || DEFAULT_GAME_NAME
-            };
 
             const exporter = this.exporters.get(format);
             if (!exporter) {
-                return {success: false, error: `Formato de impresión no soportado: ${format}`};
+                return {success: false, error: TEXT.cartones.unsupportedFormat(format)};
             }
-            await exporter(cartonesToPrint, config);
+
+            await exporter(cartonesToPrint, {primaryColor, secondaryColor, gameName: gameNameOrDefault(gameName)});
 
             return {success: true, count: cartonesToPrint.length};
         } catch (error) {
@@ -153,42 +98,39 @@ export class CartonManager {
         }
     }
 
-    /**
-     * Genera cartones sin descargarlos
-     */
-    async generateCartones(songs, maxCartones, minRequired, showAlertCallback, mode = 'new', existingCartones = []) {
-        const count = Number.parseInt(this.dom.cartonCountInput.value);
+    _selectRange(cartones, rawFrom, rawTo) {
+        const from = rawFrom || 1;
+        const to = rawTo || cartones.length;
 
+        if (from < 1 || from > cartones.length || to < 1 || to > cartones.length || from > to) {
+            return null;
+        }
+
+        return cartones.slice(from - 1, to);
+    }
+
+    async generateCartones(songs, count, maxCartones, minRequired, showAlertCallback, existingCartones = []) {
         if (Number.isNaN(count) || count < 1 || count > maxCartones) {
-            showAlertCallback(
-                `Por favor ingresa un número válido entre 1 y ${maxCartones}.`,
-                'Número Inválido'
-            );
+            showAlertCallback(MSG.cartones.invalidCount(maxCartones));
             return {success: false};
         }
 
         const totalSongs = songs.filter(s => s.file).length;
         if (totalSongs < minRequired) {
-            showAlertCallback(
-                `Necesitas al menos ${minRequired} canciones cargadas para poder generar cartones.`,
-                'Canciones Insuficientes'
-            );
+            showAlertCallback(MSG.cartones.notEnoughSongs(minRequired));
             return {success: false};
         }
 
-        this.sounds.play('start');
+        this.sounds.play(SOUND.START);
 
         try {
-            // Generar cartones pasando los existentes si estamos en modo añadir
-            const cartonesToPass = mode === 'add' ? existingCartones : [];
-            const cartones = this.cartonGenerator.generateCartones(songs, count, cartonesToPass);
+            const cartones = this.cartonGenerator.generateCartones(songs, count, existingCartones);
 
-            this.sounds.play('win');
+            this.sounds.play(SOUND.WIN);
             return {success: true, cartones};
         } catch (error) {
-            showAlertCallback(`Error al generar cartones: ${error.message}`, 'Error');
+            showAlertCallback(MSG.cartones.generateFailed(error.message));
             return {success: false};
         }
     }
-
 }

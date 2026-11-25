@@ -1,12 +1,17 @@
-/**
- * CartonHtmlRenderer Module
- * Convierte cartones (datos) en HTML imprimible. No genera cartones ni descarga nada.
- */
-import { DEFAULT_GAME_NAME } from '../constants.js';
-import { escapeHTML } from '../utils.js';
+import {
+    CARTONS_PER_PRINT_PAGE,
+    CELL_TYPE,
+    CELLS_PER_ROW,
+    DECORATIVE_ICON_PATH,
+    DEFAULT_PRINT_PRIMARY_COLOR,
+    DEFAULT_PRINT_SECONDARY_COLOR,
+    ICON_TYPE,
+    ROWS_PER_CARTON
+} from '../constants.js';
+import {escapeHTML, gameNameOrDefault} from '../utils.js';
+import {TEXT} from '../messages.js';
 
-/** Icono que se dibuja en las celdas decorativas (sin canción). Es presentación, no dato del cartón */
-export const DECORATIVE_ICON_HTML = '<img class="image-icon" src="img/icon-decorative.svg" alt="Icono de decoración">';
+export const DECORATIVE_ICON_HTML = `<img class="image-icon" src="${DECORATIVE_ICON_PATH}" alt="${TEXT.document.decorativeAlt}">`;
 
 export class CartonHtmlRenderer {
     generatePrintableHTML(cartones, config = {}) {
@@ -17,27 +22,27 @@ export class CartonHtmlRenderer {
     }
 
     _generateHTMLHeader(count, config = {}) {
-        const gameName = escapeHTML(config.gameName || DEFAULT_GAME_NAME);
+        const gameName = escapeHTML(gameNameOrDefault(config.gameName));
         return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Cartones de ${gameName} generados - ${count} cartones únicos">
-  <title>Cartones de ${gameName}</title>
+  <meta name="description" content="${TEXT.document.metaDescription(gameName, count)}">
+  <title>${TEXT.document.title(gameName)}</title>
   <style>${this._generateCSS(config)}</style>
 </head>
 <body>
   <header class="print-info no-print">
-    <h1>ℹ️ Información de Impresión</h1>
-    <p><strong>${count} cartones generados</strong> • Configuración recomendada: A4, márgenes 0 mm • ${Math.ceil(count / 3)} página(s)</p>
+    <h1>${TEXT.document.infoTitle}</h1>
+    <p><strong>${TEXT.document.generated(count)}</strong>${TEXT.document.recommendation(Math.ceil(count / CARTONS_PER_PRINT_PAGE))}</p>
   </header>`;
     }
 
     _generateCSS(config = {}) {
-        const primaryColor = config.primaryColor || '#6366f1';
-        const secondaryColor = config.secondaryColor || '#f8faff';
-        
+        const primaryColor = config.primaryColor || DEFAULT_PRINT_PRIMARY_COLOR;
+        const secondaryColor = config.secondaryColor || DEFAULT_PRINT_SECONDARY_COLOR;
+
         return `
     @page { size: A4; margin: 0; }
     @media print {
@@ -53,7 +58,7 @@ export class CartonHtmlRenderer {
     .carton-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid ${primaryColor}; }
     .carton-title { font-size: 20px; font-weight: bold; color: ${primaryColor}; text-transform: uppercase; }
     .carton-number { font-size: 25px; font-weight: bold; color: ${primaryColor}; background: ${secondaryColor}; padding: 3px 10px; border-radius: 4px; }
-    .carton-grid { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(3, 1fr); gap: 4px; width: 100%; height: 100%; border-collapse: separate; border-spacing: 4px; }
+    .carton-grid { display: grid; grid-template-columns: repeat(${CELLS_PER_ROW}, 1fr); grid-template-rows: repeat(${ROWS_PER_CARTON}, 1fr); gap: 4px; width: 100%; height: 100%; border-collapse: separate; border-spacing: 4px; }
     .carton-cell { aspect-ratio: 1 / 1; border: 2px solid #e2e8f0; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: white; }
     .carton-cell.song { border-color: ${primaryColor}; background: white; }
     .carton-cell.decorative { background: white; border-color: #e2e8f0; border-style: dashed; }
@@ -72,17 +77,17 @@ export class CartonHtmlRenderer {
     }
 
     _generateCartonHTML(carton, config = {}) {
-        const gameName = escapeHTML(config.gameName || DEFAULT_GAME_NAME);
+        const gameName = escapeHTML(gameNameOrDefault(config.gameName));
         const rowsHTML = carton.rows.map(row =>
             row.cells.map(cell => this._generateCellHTML(cell)).join('')
         ).join('\n        \n');
 
         return `    <article class="carton-container" role="region" aria-labelledby="carton-title-${carton.id}">
       <header class="carton-header">
-        <h2 id="carton-title-${carton.id}" class="carton-title">🎵 ${gameName}</h2>
-        <span class="carton-number" aria-label="Cartón número ${carton.id}">#${carton.id}</span>
+        <h2 id="carton-title-${carton.id}" class="carton-title">${TEXT.document.cartonTitle(gameName)}</h2>
+        <span class="carton-number" aria-label="${TEXT.document.cartonNumberLabel(carton.id)}">#${carton.id}</span>
       </header>
-      <div class="carton-grid" role="grid" aria-label="Cuadrícula de bingo con 3 filas y 8 columnas">
+      <div class="carton-grid" role="grid" aria-label="${TEXT.document.gridLabel(ROWS_PER_CARTON, CELLS_PER_ROW)}">
         
 ${rowsHTML}        
       </div>
@@ -90,9 +95,9 @@ ${rowsHTML}
     }
 
     _generateCellHTML(cell) {
-        if (cell.type === 'song') {
+        if (cell.type === CELL_TYPE.SONG) {
             const title = escapeHTML(cell.song.title);
-            const iconHTML = cell.song.iconType === 'image'
+            const iconHTML = cell.song.iconType === ICON_TYPE.IMAGE
                 ? `<img src="${escapeHTML(cell.song.icon)}" alt="${title}" class="image-icon">`
                 : `<span role="img" aria-label="${title}">${escapeHTML(cell.song.icon)}</span>`;
             return `          <div class="carton-cell song" role="gridcell"><div class="cell-icon">${iconHTML}</div></div>\n`;

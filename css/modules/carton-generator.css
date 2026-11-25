@@ -127,34 +127,6 @@
     object-fit: contain;
 }
 
-.preview-qr-code {
-    text-align: center;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px dashed #e2e8f0;
-}
-
-.preview-qr-placeholder {
-    font-size: 10px;
-    color: #64748b;
-}
-
-.carton-input-group {
-    margin-bottom: 1.5rem;
-    border: none;
-    padding: 0;
-}
-
-form.carton-input-group {
-    margin-bottom: 1.5rem;
-}
-
-.carton-label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-}
-
 .upload-wrapper {
     margin-bottom: 1.5rem;
 }
