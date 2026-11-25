@@ -26,6 +26,7 @@ import {PlaylistImporter} from "./modules/PlaylistImporter.js";
 import {linkAudioFiles} from "./modules/AudioLinker.js";
 import {SavedGameController} from "./modules/SavedGameController.js";
 import {GameStateStore} from "./modules/GameStateStore.js";
+import {ProjectionChannel, buildProjectionState} from "./modules/ProjectionChannel.js";
 import {deserializeCartones} from "./modules/CartonSerializer.js";
 import {
     CELEBRATION_DELAY_MS,
@@ -58,6 +59,7 @@ class BingoMusical {
         this._createCartones();
         this._createSongList();
         this._createSavedGame();
+        this._createProjection();
 
         this.init();
     }
@@ -111,7 +113,7 @@ class BingoMusical {
             preferences: this.preferences,
             toggleButton: this.dom.toolbar.themeToggleBtn,
             icon: this.dom.toolbar.themeIcon,
-            onToggle: () => this.sounds.play(SOUND.CLICK)
+            onToggle: () => { this.sounds.play(SOUND.CLICK); this.projection.schedulePublish(); }
         });
         this.fullscreen = new FullscreenManager({
             button: this.dom.toolbar.fullscreenBtn,
@@ -189,6 +191,23 @@ class BingoMusical {
         });
     }
 
+    _createProjection() {
+        this.songStartedAt = null;
+        this.projection = new ProjectionChannel({
+            getState: () => buildProjectionState({
+                songs: this.songs,
+                game: this.game,
+                theme: this.theme.getCurrent(),
+                startedAt: this.songStartedAt
+            })
+        });
+    }
+
+    _onGameChanged() {
+        this.savedGame.scheduleAutosave();
+        this.projection.schedulePublish();
+    }
+
     _createSavedGame() {
         this.initialPlayerTitle = this.dom.player.songTitleElement.textContent;
         this.savedGame = new SavedGameController({
@@ -211,6 +230,7 @@ class BingoMusical {
         this.configModal.init();
         this.cartonModals.init();
         this.cartonCheck.init();
+        this.dom.toolbar.openProjectionBtn.addEventListener('click', () => this.projection.open());
         this.audioControls.bind();
         this.dragAndDrop.init();
         this.theme.init();
@@ -299,7 +319,7 @@ class BingoMusical {
 
     _onCartonesChanged() {
         this.updateUIState();
-        this.savedGame.scheduleAutosave();
+        this._onGameChanged();
     }
 
     _renderRestoredGame({playedSongs, currentSong}) {
@@ -471,6 +491,10 @@ class BingoMusical {
                 ...SHORTCUTS.check,
                 action: () => this.cartonCheck.open()
             })
+            .register('p', {
+                ...SHORTCUTS.projection,
+                action: () => this.projection.open()
+            })
             .register('escape', {
                 ...SHORTCUTS.escape,
                 allowInModal: true, preventDefault: false,
@@ -521,7 +545,7 @@ class BingoMusical {
         this.songList.render();
         this.updateCounters();
         this.updateUIState();
-        this.savedGame.scheduleAutosave();
+        this._onGameChanged();
     }
 
     // ============================================================
@@ -556,7 +580,7 @@ class BingoMusical {
         }
 
         complete();
-        this.savedGame.scheduleAutosave();
+        this._onGameChanged();
         this.sounds.play(sound);
         setTimeout(() => overlay.classList.remove('hidden'), CELEBRATION_DELAY_MS);
     }
@@ -688,7 +712,7 @@ class BingoMusical {
 
         const result = this.icons.openIconPicker(songId, this.songs, () => {
             this.songList.render();
-            this.savedGame.scheduleAutosave();
+            this._onGameChanged();
         });
 
         if (!result.success) {
@@ -862,6 +886,7 @@ class BingoMusical {
 
     _onSongStarted(song) {
         this.game.setCurrentSong(song.id);
+        this.songStartedAt = Date.now();
         this.updatePlayerUI(song);
         this.updateControls(true);
 
@@ -873,7 +898,7 @@ class BingoMusical {
 
         this.songList.render();
         this._scheduleListReveal(song);
-        this.savedGame.scheduleAutosave();
+        this._onGameChanged();
     }
 
     _scheduleListReveal(song) {
@@ -958,7 +983,7 @@ class BingoMusical {
         if (this.game.isGameStarted()) {
             if (this.game.allSongsPlayed(this.songs) && !this.game.isBingoCompleted()) {
                 this.game.completeBingo();
-                this.savedGame.scheduleAutosave();
+                this._onGameChanged();
                 setTimeout(() => {
                     this.sounds.play(SOUND.COMPLETE);
                     this.dom.celebration.celebrationOverlay.classList.remove('hidden');

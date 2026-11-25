@@ -242,6 +242,10 @@ export const TEXT = {
         noResults: (query) => `No se encontraron iconos para "${query}"`
     },
 
+    projection: {
+        waiting: 'Esperando la primera canción…',
+        counter: (played, total) => `${played} de ${total} canciones`
+    },
     theme: {
         toLight: 'Cambiar a tema claro',
         toDark: 'Cambiar a tema oscuro'
@@ -308,5 +312,6 @@ export const SHORTCUTS = {
     bingo: {icon: '🎉', label: 'B', description: 'Cantar BINGO'},
     escape: {icon: '❌', label: 'ESC', description: 'Cerrar modal'},
     check: {icon: '🔍', label: 'C', description: 'Comprobar un cartón'},
+    projection: {icon: '📺', label: 'P', description: 'Abrir la ventana de proyección'},
     help: {icon: '❓', label: '?', description: 'Mostrar esta ayuda'}
 };

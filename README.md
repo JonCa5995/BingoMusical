@@ -34,6 +34,11 @@ y abrir <http://localhost:8000>.
 
 Cuando alguien canta LÍNEA o BINGO, el botón **🔍** (o la tecla **C**) abre «Comprobar cartón». Se escribe el número del cartón y la aplicación lo compara con las canciones que han salido: muestra sus tres filas con ✓/✗ en cada canción, si hay **LÍNEA** (y en qué fila o filas) y si hay **BINGO**. Si aún no lo hay, dice cuántas canciones le faltan a la fila más cercana y al cartón entero. Solo informa: no cambia el estado de la partida. El botón está desactivado mientras no haya cartones.
 
+### Proyección para el público
+El botón **📺** (o la tecla **P**) abre una segunda ventana, `projection.html`, pensada para un proyector o una pantalla grande: nombre de la partida, contador (`5 de 24 canciones`), el icono y el título de la canción actual, y las últimas canciones que han salido. Respeta los **mismos tiempos de revelado** que la ventana principal: el título y el icono aparecen con su retardo, y el icono solo entra en las últimas canciones cuando ya se ha mostrado, para no adelantar nada. Sigue también el tema claro u oscuro. **Doble clic** en la ventana para pasar a pantalla completa.
+
+La ventana se alimenta con un `BroadcastChannel`, así que tiene que abrirse desde la propia aplicación (mismo navegador y mismo origen); no recibe ni los archivos de audio ni los cartones. Se puede abrir en cualquier momento, también a mitad de canción, o cerrar y volver a abrir.
+
 ### Modo continuo
 
 El botón **«Automático»** (modo continuo) sirve para **reproducir las canciones sin empezar el juego**: al terminar una canción pasa sola a la siguiente, sin pulsar ningún botón. Es útil para ambientar o para probar la lista. Se desactiva solo al iniciar una partida (el botón pasa a mostrar «Manual» mientras está activo).
@@ -139,6 +144,7 @@ Los campos desconocidos se descartan y los ajustes inválidos se ignoran.
 | `L` | Cantar LÍNEA |
 | `B` | Cantar BINGO |
 | `C` | Comprobar un cartón |
+| `P` | Abrir la ventana de proyección |
 | `Esc` | Cerrar la ventana abierta |
 | `?` | Mostrar la ayuda de atajos |
 
@@ -146,6 +152,7 @@ Los campos desconocidos se descartan y los ajustes inválidos se ignoran.
 
 ```
 index.html            Página única
+projection.html       Ventana de proyección para el público (css/projection.css, js/projection.js)
 css/                  Estilos por zonas (base, layout, components, modules, themes, utilities)
 js/app.js             Coordinador: crea los módulos y conecta sus eventos
 js/constants.js       Reglas del juego, tiempos, rutas y enumeraciones
@@ -157,6 +164,7 @@ js/modules/
   SongManager         Lista de canciones: alta, filtrado, orden
   AudioManager        Reproducción de la canción actual
   SoundEffects        Sonidos sintetizados de la interfaz
+  Projection*         Envío del estado de la partida (canal) y dibujo de la ventana de proyección
   Carton*             Gestión, modales, exportación, renderizado y serialización de cartones
   UIManager, SongListView, DOMElements, ModalManager, Dialogs, ...   Interfaz
 tests/                Pruebas automáticas

@@ -49,6 +49,14 @@ export const ICON_MODAL_CLOSE_DELAY_MS = 300;      // el modal de iconos se cier
 export const AUTOSAVE_DELAY_MS = 750;              // tras el último cambio, antes de guardar la partida en el navegador
 export const MS_PER_SECOND = 1000;
 
+// Ventana de proyección para el público
+export const PROJECTION_CHANNEL = 'bingo-musical-projection';
+export const PROJECTION_PAGE = 'projection.html';
+export const PROJECTION_WINDOW_NAME = 'bingo-projection';
+export const PROJECTION_FEATURES = 'popup,width=1280,height=720';
+export const PROJECTION_HISTORY_LIMIT = 12;
+export const PROJECTION_STATE_VERSION = 1;
+
 // ============================================================
 // IMÁGENES Y AUDIO
 // ============================================================

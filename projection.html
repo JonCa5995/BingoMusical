@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bingo Musical - Proyección</title>
+  <link rel="stylesheet" href="css/base/variables.css">
+  <link rel="stylesheet" href="css/base/reset.css">
+  <link rel="stylesheet" href="css/projection.css">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+</head>
+
+<body class="projection">
+  <header class="projection-header">
+    <h1 id="projection-game-name" class="projection-game-name"></h1>
+    <p id="projection-counter" class="projection-counter"></p>
+  </header>
+
+  <main class="projection-main" aria-live="polite">
+    <p id="projection-status" class="projection-status"></p>
+    <div id="projection-icon" class="projection-icon"></div>
+    <h2 id="projection-title" class="projection-title"></h2>
+  </main>
+
+  <footer class="projection-footer">
+    <div id="projection-history" class="projection-history" role="list" aria-label="Últimas canciones"></div>
+    <p class="projection-hint">Doble clic para pantalla completa</p>
+  </footer>
+
+  <script type="module" src="js/projection.js"></script>
+</body>
+</html>

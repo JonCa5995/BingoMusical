@@ -21,7 +21,7 @@ const GROUPS = {
         'lineaOverlay', 'continueLineaBtn', 'celebrationOverlay', 'restartBtn'
     ],
     toolbar: [
-        'themeToggleBtn', 'themeIcon', 'fullscreenBtn', 'shortcutsHelpBtn', 'openCheckCartonBtn'
+        'themeToggleBtn', 'themeIcon', 'fullscreenBtn', 'shortcutsHelpBtn', 'openCheckCartonBtn', 'openProjectionBtn'
     ],
     checkCarton: [
         'checkCartonModal', 'closeCheckCartonModalBtn', 'checkCartonNumberInput', 'checkCartonSubmitBtn', 'checkCartonResult'
@@ -162,6 +162,7 @@ const IDS = {
 
     exportListBtn: 'export-list',
     openCheckCartonBtn: 'open-check-carton-btn',
+    openProjectionBtn: 'open-projection-btn',
     checkCartonModal: 'check-carton-modal',
     closeCheckCartonModalBtn: 'close-check-carton-modal',
     checkCartonNumberInput: 'check-carton-number',

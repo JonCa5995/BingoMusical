@@ -51,7 +51,7 @@ test('todas las hojas de estilo importadas existen y ninguna queda sin importar'
     const imports = [...read('css/style.css').matchAll(/@import\s+(?:url\()?['"]([^'"]+)['"]/g)].map(match => match[1]);
     const missing = imports.filter(file => !fs.existsSync(path.join(root, 'css', file)));
     const imported = new Set(imports.map(file => path.posix.join('css', file.replace(/^\.\//, ''))));
-    const orphans = walk('css', '.css').filter(file => file !== 'css/style.css' && !imported.has(file));
+    const orphans = walk('css', '.css').filter(file => file !== 'css/style.css' && file !== 'css/projection.css' && !imported.has(file));
 
     assert.ok(imports.length > 0);
     assert.deepEqual(missing, []);

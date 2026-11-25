@@ -14,8 +14,8 @@ import {
 import {TEXT} from '../messages.js';
 import {serializeCartones} from './CartonSerializer.js';
 import {sanitizeSettings} from './Settings.js';
+import {isImageDataUrl} from '../utils.js';
 
-const IMAGE_DATA_URL = /^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/]+={0,2}$/;
 const MAX_EMOJI_LENGTH = 32;
 
 class InvalidGameFile extends Error {}
@@ -61,7 +61,7 @@ function validateSong(song, index) {
     if (!Object.values(ICON_TYPE).includes(iconType)) invalid(`${label} tiene un tipo de icono desconocido`);
 
     const iconIsValid = typeof song.icon === 'string' && (iconType === ICON_TYPE.IMAGE
-        ? song.icon.length <= MAX_ICON_DATA_LENGTH && IMAGE_DATA_URL.test(song.icon)
+        ? song.icon.length <= MAX_ICON_DATA_LENGTH && isImageDataUrl(song.icon)
         : song.icon.length > 0 && song.icon.length <= MAX_EMOJI_LENGTH);
     if (!iconIsValid) invalid(`${label} tiene un icono no válido`);
 
