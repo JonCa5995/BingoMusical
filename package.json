@@ -1,0 +1,13 @@
+{
+  "name": "bingo-musical",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bingo Musical: aplicación web para jugar al bingo con música.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
