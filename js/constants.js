@@ -120,6 +120,10 @@ export const THEME = Object.freeze({
 });
 
 /** Nombres de los efectos de sonido (sus parámetros están en SoundEffects.js) */
+export const ALERT_KIND = Object.freeze({
+    ERROR: 'error'
+});
+
 export const SOUND = Object.freeze({
     CLICK: 'click',
     START: 'start',

@@ -1,7 +1,5 @@
-import {SOUND} from '../constants.js';
+import {ALERT_KIND, SOUND} from '../constants.js';
 import {DEFAULT_TITLES} from '../messages.js';
-
-const ERROR_TITLE = /error|inválido|insuficientes/i;
 
 export class Dialogs {
     constructor(elements, modals, sounds) {
@@ -19,12 +17,12 @@ export class Dialogs {
         modals.registerModal(elements.alertModal, () => this.closeAlert(), options);
     }
 
-    showAlert({message, title = DEFAULT_TITLES.alert}) {
+    showAlert({message, title = DEFAULT_TITLES.alert, kind}) {
         this.el.alertTitle.textContent = title;
         this.el.alertMessage.textContent = message;
         this.modals.openModal(this.el.alertModal);
 
-        this.sounds.play(ERROR_TITLE.test(title) ? SOUND.ERROR : SOUND.CLICK);
+        this.sounds.play(kind === ALERT_KIND.ERROR ? SOUND.ERROR : SOUND.CLICK);
     }
 
     closeAlert() {

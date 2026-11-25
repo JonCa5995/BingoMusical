@@ -23,7 +23,8 @@
     gap: 0.75rem;
 }
 
-.color-preview {
+.color-preview-print,
+.color-preview-print-secondary {
     flex: 1;
     height: 40px;
     border-radius: 8px;

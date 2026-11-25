@@ -1,3 +1,5 @@
+import {ALERT_KIND} from './constants.js';
+
 const T = {
     insufficientSongs: 'Canciones Insuficientes',
     emptyList: 'Lista Vacía',
@@ -8,6 +10,7 @@ const T = {
 };
 
 const msg = (title, message) => ({title, message});
+const errorMsg = (title, message) => ({title, message, kind: ALERT_KIND.ERROR});
 
 export const DEFAULT_TITLES = {
     alert: 'Información',
@@ -30,9 +33,9 @@ export const MSG = {
     game: {
         nameTooLong: (max) => msg('Nombre muy largo', `El nombre del juego no puede tener más de ${max} caracteres.`),
         lineaAlreadyCalled: msg('Línea Ya Cantada', 'La línea ya fue cantada. Solo puedes cantar línea una vez por juego.'),
-        lineaNeedsSongs: (min) => msg(T.insufficientSongs, `Debes reproducir al menos ${min} canciones antes de cantar LÍNEA.`),
+        lineaNeedsSongs: (min) => errorMsg(T.insufficientSongs, `Debes reproducir al menos ${min} canciones antes de cantar LÍNEA.`),
         bingoAlreadyCalled: msg('Bingo Ya Completado', 'El bingo ya fue completado. Reinicia el juego para comenzar de nuevo.'),
-        bingoNeedsSongs: (min) => msg(T.insufficientSongs, `Debes reproducir al menos ${min} canciones antes de cantar BINGO.`),
+        bingoNeedsSongs: (min) => errorMsg(T.insufficientSongs, `Debes reproducir al menos ${min} canciones antes de cantar BINGO.`),
         confirmRestart: msg('Confirmar Reinicio', '¿Estás seguro de que quieres reiniciar el juego? Esto limpiará el historial y el progreso actual.')
     },
 
@@ -49,7 +52,7 @@ export const MSG = {
         iconLocked: msg(T.songPlayed, 'No puedes cambiar el icono de una canción que ya fue reproducida.'),
         noAudioFile: msg('Sin Archivo', 'Esta canción no tiene archivo de audio.'),
         noMoreSongs: msg('Sin Canciones', 'No hay más canciones disponibles. Limpia el historial para volver a empezar'),
-        notEnoughToPlay: (min) => msg(T.insufficientSongs, `Necesitas al menos ${min} canciones cargadas para poder jugar.`),
+        notEnoughToPlay: (min) => errorMsg(T.insufficientSongs, `Necesitas al menos ${min} canciones cargadas para poder jugar.`),
         duplicatesNotAdded: (titles) => msg('Canciones Duplicadas', `Las siguientes canciones ya existen y no se han añadido:\n\n- ${titles.join('\n- ')}`),
         nothingToDelete: msg(T.emptyList, 'No hay canciones para eliminar.'),
         confirmDeleteAll: (count) => msg('Confirmar Eliminación Total', `¿Estás seguro de eliminar TODAS las ${count} canciones de la lista?`),
@@ -57,15 +60,15 @@ export const MSG = {
     },
 
     icons: {
-        songNotFound: msg(T.error, 'Canción no encontrada')
+        songNotFound: errorMsg(T.error, 'Canción no encontrada')
     },
 
     playlist: {
         exportOk: (message) => msg('Exportación Exitosa', message),
-        exportFailed: (error) => msg('Error al Exportar', error),
-        importFailed: (error) => msg('Error de Importación', `Error al importar la lista: ${error}`),
+        exportFailed: (error) => errorMsg('Error al Exportar', error),
+        importFailed: (error) => errorMsg('Error de Importación', `Error al importar la lista: ${error}`),
         importDuplicates: (titles) => msg('Canciones Duplicadas Omitidas', `Se omitieron las siguientes canciones duplicadas:\n\n- ${titles.join('\n- ')}`),
-        importNoSongs: (folder) => msg('Error al Importar', `Se han importado 0 canciones.\n\nRevisa que los archivos de audio estén en: ${folder}\ny que los nombres coincidan con los títulos.`),
+        importNoSongs: (folder) => errorMsg('Error al Importar', `Se han importado 0 canciones.\n\nRevisa que los archivos de audio estén en: ${folder}\ny que los nombres coincidan con los títulos.`),
         importOk: (count, folder) => msg('Importación Exitosa', `Lista importada con ${count} canciones.\n\nLos archivos de audio deben estar en: ${folder}`)
     },
 
@@ -78,10 +81,10 @@ export const MSG = {
         generated: (count) => msg('Cartones Generados', `${count} cartón(es) generado(s) y guardado(s) exitosamente.\n\nUsa "Imprimir Existentes" para descargarlos.`),
         added: (count, total) => msg('Cartones Añadidos', `${count} cartón(es) añadido(s) exitosamente.\n\nTotal de cartones: ${total}`),
         printed: (count, format) => msg('Cartones Impresos', `${count} cartón(es) descargado(s) en ${format.toUpperCase()} exitosamente.`),
-        printFailed: (error) => msg(T.error, `Error al imprimir cartones: ${error}`),
-        invalidCount: (max) => msg('Número Inválido', `Por favor ingresa un número válido entre 1 y ${max}.`),
-        notEnoughSongs: (min) => msg(T.insufficientSongs, `Necesitas al menos ${min} canciones cargadas para poder generar cartones.`),
-        generateFailed: (error) => msg(T.error, `Error al generar cartones: ${error}`)
+        printFailed: (error) => errorMsg(T.error, `Error al imprimir cartones: ${error}`),
+        invalidCount: (max) => errorMsg('Número Inválido', `Por favor ingresa un número válido entre 1 y ${max}.`),
+        notEnoughSongs: (min) => errorMsg(T.insufficientSongs, `Necesitas al menos ${min} canciones cargadas para poder generar cartones.`),
+        generateFailed: (error) => errorMsg(T.error, `Error al generar cartones: ${error}`)
     }
 };
 

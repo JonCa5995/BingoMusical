@@ -88,8 +88,7 @@ export class BingoCartonGenerator {
                 cells.push({
                     type: CELL_TYPE.SONG,
                     position: i,
-                    song: songs[positions.indexOf(i)],
-                    marked: false
+                    song: songs[positions.indexOf(i)]
                 });
             } else {
                 cells.push({
