@@ -31,7 +31,6 @@ const build = ({listener = true, currentSong = null} = {}) => {
         game: {getCurrentSong: () => currentSong, getClip: () => null},
         projection: {hasListener: () => listener, dockLogo: () => { log.push('acopla'); return gate; }},
         audio: {play: (file) => log.push(['suena', file.name])},
-        _revealCurrentSong: () => log.push('revela'),
         _onSongStarted: () => {}
     });
 
@@ -51,7 +50,7 @@ test('con una proyección abierta y ninguna canción previa, primero se acopla e
     release();
     await tick();
 
-    assert.deepEqual(log, ['acopla', 'revela', ['suena', 'siete.mp3']]);
+    assert.deepEqual(log, ['acopla', ['suena', 'siete.mp3']]);
 });
 
 test('mientras espera al logo, otra petición de reproducir no arranca una segunda canción', async () => {
@@ -73,7 +72,7 @@ test('sin ninguna proyección abierta la primera canción suena al instante, sin
 
     app.playSong(song.id);
 
-    assert.deepEqual(log, ['revela', ['suena', 'siete.mp3']]);
+    assert.deepEqual(log, [['suena', 'siete.mp3']]);
 });
 
 test('si ya hay una canción en marcha, las siguientes no esperan al logo', () => {
@@ -81,7 +80,7 @@ test('si ya hay una canción en marcha, las siguientes no esperan al logo', () =
 
     app.playSong(song.id);
 
-    assert.deepEqual(log, ['revela', ['suena', 'siete.mp3']]);
+    assert.deepEqual(log, [['suena', 'siete.mp3']]);
 });
 
 test('una canción sin archivo avisa y no espera ni suena', async () => {

@@ -1,12 +1,11 @@
 import {escapeHTML, iconTextHtml} from '../utils.js';
-import {HISTORY_ICON_SIZE, ICON_TYPE, MS_PER_SECOND, PLAYER_ICON_SIZE} from '../constants.js';
+import {HISTORY_ICON_SIZE, ICON_TYPE, PLAYER_ICON_SIZE} from '../constants.js';
 import {TEXT} from '../messages.js';
 
 export class UIManager {
     constructor(elements, minSongsRequired) {
         this.el = elements;
         this.MIN_SONGS_REQUIRED = minSongsRequired;
-        this.playerRevealTimers = [];
     }
 
     emojiToDataURL(emoji, size) {
@@ -63,33 +62,12 @@ export class UIManager {
         return warning;
     }
 
-    updatePlayerUI(song, titleRevealTime = 0, iconRevealTime = 0, gameStarted = false) {
-        this.clearPlayerRevealTimers();
-        this._showPlayerTitle(song, gameStarted, titleRevealTime);
-        this._showPlayerIcon(song, gameStarted, iconRevealTime);
-    }
+    updatePlayerUI(song) {
+        this.el.songTitleElement.textContent = song.title;
 
-    _showPlayerTitle(song, gameStarted, revealTime) {
-        const title = this.el.songTitleElement;
-        title.textContent = song.title;
-        title.style.transition = '';
-        title.style.opacity = gameStarted ? '0' : '1';
-
-        if (gameStarted) {
-            this.playerRevealTimers.push(this._fadeInAfter(title, revealTime));
-        }
-    }
-
-    _showPlayerIcon(song, gameStarted, revealTime) {
         const icon = this.el.currentIconImg;
-        icon.style.transition = '';
-        icon.style.opacity = gameStarted ? '0' : '1';
         icon.alt = song.title;
         icon.src = this._iconSrc(song, PLAYER_ICON_SIZE);
-
-        if (gameStarted) {
-            this.playerRevealTimers.push(this._fadeInAfter(icon, revealTime));
-        }
     }
 
     _iconSrc(song, size) {
@@ -97,18 +75,6 @@ export class UIManager {
             return song.icon;
         }
         return this.emojiToDataURL(song.icon, size);
-    }
-
-    _fadeInAfter(element, seconds) {
-        return setTimeout(() => {
-            element.style.transition = 'opacity 1s ease-in';
-            element.style.opacity = '1';
-        }, seconds * MS_PER_SECOND);
-    }
-
-    clearPlayerRevealTimers() {
-        for (const timer of this.playerRevealTimers) clearTimeout(timer);
-        this.playerRevealTimers = [];
     }
 
     updateControls(playing, gameStarted, hasSongLoaded = true, noSongsLeft = false) {
@@ -162,7 +128,7 @@ export class UIManager {
         this.el.playBtn.setAttribute('aria-label', playLabel.label);
     }
 
-    addToHistory(song, iconRevealTime = 0, gameStarted = false) {
+    addToHistory(song) {
         const historyItem = document.createElement('div');
         historyItem.className = 'history-item';
         historyItem.title = song.title;
@@ -170,11 +136,6 @@ export class UIManager {
         historyItem.setAttribute('aria-label', TEXT.player.playedHistoryLabel(song.title));
 
         const img = document.createElement('img');
-
-        if (gameStarted) {
-            img.style.opacity = '0';
-        }
-
         img.src = this._iconSrc(song, HISTORY_ICON_SIZE);
 
         img.alt = song.title;
@@ -183,10 +144,6 @@ export class UIManager {
 
         const container = this.el.historyGrid.parentElement;
         container.scrollTo({top: container.scrollHeight, behavior: 'smooth'});
-
-        if (gameStarted) {
-            this._fadeInAfter(img, iconRevealTime);
-        }
 
         return historyItem;
     }

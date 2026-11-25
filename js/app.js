@@ -38,7 +38,6 @@ import {
     LOGO_PATH,
     MAX_GAME_NAME_LENGTH,
     MIN_SONGS_REQUIRED,
-    MS_PER_SECOND,
     SOUND
 } from "./constants.js";
 import {MSG, SHORTCUTS, TEXT} from "./messages.js";
@@ -49,7 +48,6 @@ export class BingoMusical {
         this.preferences = new PreferencesStore();
         this.settings = this.preferences.loadSettings();
         this.songs = [];
-        this.listRevealTimers = [];
         this.cartonGenerator = new BingoCartonGenerator();
         this.songsFolder = DEFAULT_SONGS_FOLDER;
 
@@ -334,15 +332,12 @@ export class BingoMusical {
     }
 
     _renderRestoredGame({playedSongs, currentSong}) {
-        this._clearListRevealTimers();
-        this.ui.clearPlayerRevealTimers();
-
         if (this.audio.hasSongLoaded()) {
             this.stopSong();
         }
 
         this.dom.history.historyGrid.innerHTML = '';
-        playedSongs.forEach(song => this._addHistoryItem(song, true));
+        playedSongs.forEach(song => this.addToHistory(song));
 
         this._showPlayerFor(currentSong);
         this._renderContinuousModeButton(false);
@@ -352,7 +347,7 @@ export class BingoMusical {
 
     _showPlayerFor(song) {
         if (song) {
-            this.ui.updatePlayerUI(song, 0, 0, false);
+            this.ui.updatePlayerUI(song);
             return;
         }
 
@@ -906,11 +901,6 @@ export class BingoMusical {
     }
 
     _startSong(song) {
-        this._revealCurrentSong();
-
-        song.hideTitle = true;
-        song.hideIcon = true;
-
         this.audio.play(song.file, () => this._onSongStarted(song), this.game.getClip());
     }
 
@@ -927,36 +917,7 @@ export class BingoMusical {
         }
 
         this.songList.render();
-        this._scheduleListReveal(song);
         this._onGameChanged();
-    }
-
-    _scheduleListReveal(song) {
-        if (!this.game.isGameStarted()) {
-            this._revealSongInList(song);
-            return;
-        }
-
-        this.listRevealTimers.push(
-            setTimeout(() => {
-                song.hideTitle = false;
-                this.songList.reveal(song.id, 'title');
-            }, this.game.getTitleRevealTime() * MS_PER_SECOND),
-            setTimeout(() => {
-                song.hideIcon = false;
-                this.songList.reveal(song.id, 'icon');
-            }, this.game.getIconRevealTime() * MS_PER_SECOND)
-        );
-    }
-
-    _revealSongInList(song) {
-        song.hideTitle = false;
-        song.hideIcon = false;
-    }
-
-    _clearListRevealTimers() {
-        for (const timer of this.listRevealTimers) clearTimeout(timer);
-        this.listRevealTimers = [];
     }
 
     pauseSong() {
@@ -964,14 +925,7 @@ export class BingoMusical {
         this.updateControls(isNowPlaying);
     }
 
-    _revealCurrentSong() {
-        this._clearListRevealTimers();
-        const currentSong = this.songManager.findSongById(this.songs, this.game.getCurrentSong());
-        if (currentSong) this._revealSongInList(currentSong);
-    }
-
     stopSong() {
-        this._revealCurrentSong();
         this.audio.stop();
         this.updateControls(false);
         this.songList.render();
@@ -986,10 +940,7 @@ export class BingoMusical {
     }
 
     updatePlayerUI(song) {
-        const titleRevealTime = this.game.getTitleRevealTime();
-        const iconRevealTime = this.game.getIconRevealTime();
-        const gameStarted = this.game.isGameStarted();
-        this.ui.updatePlayerUI(song, titleRevealTime, iconRevealTime, gameStarted);
+        this.ui.updatePlayerUI(song);
     }
 
     updateControls(playing) {
@@ -999,8 +950,6 @@ export class BingoMusical {
     }
 
     onSongEnded() {
-        this._revealCurrentSong();
-
         if (this.game.isContinuousMode() && !this.game.isGameStarted()) {
             this.playRandomContinuousSong();
             return;
@@ -1032,13 +981,7 @@ export class BingoMusical {
     }
 
     addToHistory(song) {
-        this._addHistoryItem(song, false);
-    }
-
-    _addHistoryItem(song, instant) {
-        const iconRevealTime = instant ? 0 : this.game.getIconRevealTime();
-        const gameStarted = instant ? false : this.game.isGameStarted();
-        const historyItem = this.ui.addToHistory(song, iconRevealTime, gameStarted);
+        const historyItem = this.ui.addToHistory(song);
 
         historyItem.addEventListener('click', () => {
             this.sounds.play(SOUND.CLICK);
@@ -1055,9 +998,6 @@ export class BingoMusical {
             this.game.resetGame();
             this.songs = this.songManager.resetPlayedStatus(this.songs);
 
-            this._clearListRevealTimers();
-            this.songs.forEach(song => this._revealSongInList(song));
-
             this.dom.history.historyGrid.innerHTML = '';
             this.refreshUI();
             this.stopSong();
@@ -1067,9 +1007,6 @@ export class BingoMusical {
             this.dom.player.currentIconImg.alt = TEXT.player.currentSongAlt;
             this.dom.player.currentIconImg.src = LOGO_PATH;
 
-            this.ui.clearPlayerRevealTimers();
-            this.dom.player.songTitleElement.style.opacity = '1';
-            this.dom.player.currentIconImg.style.opacity = '1';
         }
     }
 }

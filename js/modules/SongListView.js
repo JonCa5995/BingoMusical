@@ -40,15 +40,6 @@ export class SongListView {
         );
     }
 
-    reveal(songId, part) {
-        const selector = part === 'title' ? '.song-item-title' : '.song-item-icon';
-        const element = document.querySelector(`${selector}[data-song-id="${songId}"]`);
-        if (element) {
-            element.style.transition = 'opacity 1s ease-in';
-            element.style.opacity = '1';
-        }
-    }
-
     createSongItem(song) {
         const { currentSongId, gameStarted } = this.getPlaybackState();
         const state = { isCurrent: currentSongId === song.id, gameStarted };
@@ -60,7 +51,7 @@ export class SongListView {
 
         li.append(
             this._createIconButton(song, state),
-            this._createInfo(song, state),
+            this._createInfo(song),
             this._createDeleteButton(song)
         );
         return li;
@@ -77,7 +68,7 @@ export class SongListView {
         return button;
     }
 
-    _createIconButton(song, { isCurrent, gameStarted }) {
+    _createIconButton(song, { gameStarted }) {
         const locked = song.played || gameStarted;
 
         const button = this._createButton('song-item-icon', () => this.handlers.onIconClick(song));
@@ -88,14 +79,10 @@ export class SongListView {
         button.disabled = locked;
         button.innerHTML = this.ui.getSongIconHtml(song);
 
-        if (isCurrent && gameStarted && song.hideIcon) {
-            button.style.opacity = '0';
-        }
-
         return button;
     }
 
-    _createInfo(song, { isCurrent, gameStarted }) {
+    _createInfo(song) {
         const info = document.createElement('div');
         info.className = 'song-item-info';
 
@@ -103,10 +90,6 @@ export class SongListView {
         title.className = 'song-item-title';
         title.dataset.songId = song.id;
         title.textContent = song.title;
-
-        if (isCurrent && gameStarted && song.hideTitle) {
-            title.style.opacity = '0';
-        }
 
         const status = document.createElement('div');
         status.className = 'song-item-status';
