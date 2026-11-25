@@ -1,4 +1,3 @@
-// Bingo Musical Application
 import {BingoCartonGenerator} from "./bingoCartonGenerator.js";
 import {DOMElements} from "./modules/DOMElements.js";
 import {AudioManager} from "./modules/AudioManager.js";
@@ -42,9 +41,11 @@ import {MSG, SHORTCUTS, TEXT} from "./messages.js";
 
 class BingoMusical {
     constructor() {
+        // Estado de la aplicación
         this.songs = [];
         this.listRevealTimers = [];
 
+        // Audio y elementos del DOM
         this.cartonGenerator = new BingoCartonGenerator();
         this.songsFolder = DEFAULT_SONGS_FOLDER;
         this.dom = new DOMElements();
@@ -68,13 +69,16 @@ class BingoMusical {
                 onEffectsVolume: (volume) => this.sounds.setVolume(volume)
             }
         });
+        // Lista, modales e iconos
         this.playlistFile = new PlaylistFile();
         this.modal = new ModalManager(this.sounds);
         this.dialogs = new Dialogs(this.dom.dialogs, this.modal, this.sounds);
         this.icons = new IconManager(this.dom.iconPicker, this.sounds, () => this.songs, this.modal);
+        // Lógica de juego e interfaz
         this.songManager = new SongManager();
         this.game = new GameManager();
         this.ui = new UIManager(this.dom.ui, MIN_SONGS_REQUIRED);
+        // Tema, pantalla completa y arrastrar archivos
         this.theme = new ThemeManager({
             preferences: new PreferencesStore(),
             toggleButton: this.dom.toolbar.themeToggleBtn,
@@ -90,6 +94,7 @@ class BingoMusical {
             fileInput: this.dom.songs.addSongsInput,
             isEnabled: () => !this.game.isGameStarted()
         });
+        // Cartones y sus modales
         this.carton = new CartonManager(this.dom.cartones.printCartonPreview, this.sounds, this.cartonGenerator,
             new CartonExporter(new CartonHtmlRenderer())
         );
@@ -111,6 +116,7 @@ class BingoMusical {
             getSongs: () => this.songs,
             onCartonesChanged: () => this.updateUIState()
         });
+        // Importación y lista de canciones
         this.importer = new PlaylistImporter({
             songsFolder: this.songsFolder,
             songManager: this.songManager,
@@ -136,6 +142,7 @@ class BingoMusical {
             }
         });
 
+        // Arranque
         this.init();
     }
 
@@ -153,18 +160,12 @@ class BingoMusical {
         this.updateControls(false);
     }
 
-    /**
-     * Escribe en los controles los valores de constants.js que index.html también trae escritos,
-     * para que haya una sola fuente de verdad. Si coinciden (lo normal) no se nota nada.
-     */
     _applyConfigToDom() {
         const dom = this.dom;
 
-        // Nombre del juego
         dom.game.gameNameInput.maxLength = MAX_GAME_NAME_LENGTH;
         dom.game.gameNameInput.title = TEXT.gameName.editHint(MAX_GAME_NAME_LENGTH);
 
-        // Volúmenes iniciales (los sliders van de 0 a 100)
         for (const [slider, label, volume] of [
             [dom.volume.musicVolumeSlider, dom.volume.musicVolumeValueSpan, DEFAULT_MUSIC_VOLUME],
             [dom.volume.effectsVolumeSlider, dom.volume.effectsVolumeValueSpan, DEFAULT_EFFECTS_VOLUME]
@@ -181,15 +182,12 @@ class BingoMusical {
         this.dom.player.pauseBtn.addEventListener('click', () => this.pauseSong());
         this.dom.player.stopBtn.addEventListener('click', () => this.restartSong());
 
-        // Evento cuando termina una canción
         this.dom.player.audioPlayer.addEventListener('ended', () => this.onSongEnded());
 
-        // Si el navegador rechaza la reproducción, reflejar en los controles que no suena
         this.dom.player.audioPlayer.addEventListener('playbackfailed', () => this.updateControls(false));
     }
 
     _setupSongManagementEventListeners() {
-        // Interceptar click en el label para verificar cartones antes de abrir selector
         this.dom.songs.addSongsLabel.addEventListener('click', async (e) => {
             if (this.game.getCartonesCount() > 0) {
                 e.preventDefault();
@@ -203,10 +201,8 @@ class BingoMusical {
         this.dom.history.clearHistoryBtn.addEventListener('click', () => this.reiniciarJuego());
         this.dom.game.shuffleAllBtn.addEventListener('click', () => this.toggleContinuousMode());
 
-        // Búsqueda, filtro y orden de la lista
         this.songList.bindFilterControls();
 
-        // Event listener para eliminar todas las canciones
         this.dom.songs.deleteAllBtn.addEventListener('click', () => this.deleteAllSongs());
     }
 
@@ -230,12 +226,10 @@ class BingoMusical {
     }
 
     _setupGameNameEventListeners() {
-        // Actualizar el nombre del juego cuando cambia el input
         this.dom.game.gameNameInput.addEventListener('input', (e) => {
             this.game.setGameName(e.target.value.trim());
         });
 
-        // Validar al hacer blur
         this.dom.game.gameNameInput.addEventListener('blur', (e) => {
             const name = e.target.value.trim();
             if (name.length > MAX_GAME_NAME_LENGTH) {
@@ -259,7 +253,7 @@ class BingoMusical {
 
     playPauseOnSpace() {
         if (this.audio.isPlaying || this.game.getCurrentSong() !== null) {
-            this.pauseSong(); // Pausa, o reanuda si estaba en pausa
+            this.pauseSong();
         } else if (this.songs.length >= MIN_SONGS_REQUIRED) {
             this.playRandomSong();
         }
@@ -330,11 +324,6 @@ class BingoMusical {
     // VALIDACIONES Y UTILIDADES
     // ============================================================
 
-    /**
-     * Verifica si el juego ha iniciado y muestra alerta si es así
-     * @returns {boolean} - true si el juego NO ha iniciado (se puede continuar), false si ha iniciado
-     * @param gameStartedMessage
-     */
     checkGameNotStarted(gameStartedMessage) {
         if (this.game.isGameStarted()) {
             this.dialogs.showAlert(gameStartedMessage);
@@ -343,18 +332,10 @@ class BingoMusical {
         return true;
     }
 
-    /**
-     * Limpia el valor de un input file para permitir seleccionar el mismo archivo de nuevo
-     * Esto es necesario porque el evento 'change' solo se dispara si el valor cambia
-     * @param {Event} event - Evento del input file
-     */
     clearFileInput(event) {
         event.target.value = '';
     }
 
-    /**
-     * Actualiza toda la UI: lista de canciones, contadores y estado
-     */
     refreshUI() {
         this.songList.render();
         this.updateCounters();
@@ -383,9 +364,6 @@ class BingoMusical {
         });
     }
 
-    /**
-     * Canta LÍNEA o BINGO: valida, lo marca como cantado, suena y enseña la celebración
-     */
     _callGame({canCall, complete, sound, overlay}) {
         if (!this._ensureEnoughSongs()) return;
 
@@ -400,10 +378,6 @@ class BingoMusical {
         setTimeout(() => overlay.classList.remove('hidden'), CELEBRATION_DELAY_MS);
     }
 
-    /**
-     * Comprueba que hay canciones suficientes para jugar y, si no, avisa
-     * @returns {boolean} true si se puede continuar
-     */
     _ensureEnoughSongs() {
         const validation = this.songManager.validateMinSongs(this.songs, MIN_SONGS_REQUIRED);
         if (!validation.valid) {
@@ -438,7 +412,7 @@ class BingoMusical {
             return;
         }
 
-        // Leer y validar el archivo JSON
+        // Lee y valida el archivo
         const result = await this.playlistFile.read(file);
 
         if (!result.success) {
@@ -449,19 +423,18 @@ class BingoMusical {
 
         const playlist = result.playlist;
 
-        // La importación reemplaza la lista actual
+        // Sustituye la lista actual por la importada
         this.game.clearHistory();
         const {songs, duplicates} = await this.importer.loadSongs(playlist.songs);
         this.songs = songs;
 
-        // Cargar el nombre del juego desde el playlist
+        // Carga el nombre del juego
         const gameName = playlist.name || '';
         this.game.setGameName(gameName);
         this.dom.game.gameNameInput.value = gameName;
 
-        // Cargar cartones del playlist (o limpiar los anteriores, que apuntan a canciones ya descartadas)
+        // Carga los cartones, o limpia los anteriores
         if (Array.isArray(playlist.cartones) && playlist.cartones.length > 0) {
-            // Pasar de la forma guardada a la de memoria, enlazando con las canciones actuales
             this.game.setCartones(deserializeCartones(playlist.cartones, this.songs));
         } else {
             this.game.clearCartones();
@@ -469,13 +442,13 @@ class BingoMusical {
 
         this.refreshUI();
 
-        // Show duplicate warning first, if any
+        // Avisa primero de los duplicados omitidos
         if (duplicates.length > 0) {
             this.sounds.play(SOUND.ERROR);
             this.dialogs.showAlert(MSG.playlist.importDuplicates(duplicates));
         }
 
-        // Then, show the main success/error message
+        // Después, el resultado de la importación
         setTimeout(() => {
             if (this.songs.length === 0) {
                 this.sounds.play(SOUND.ERROR);
@@ -502,7 +475,6 @@ class BingoMusical {
             return;
         }
 
-
         const result = this.icons.openIconPicker(songId, this.songs, () => {
             this.songList.render();
         });
@@ -525,13 +497,11 @@ class BingoMusical {
             return;
         }
 
-        // Verificar si existen cartones (para drag & drop)
         if (!await this.cartonModals.confirmAndClear(TEXT.cartonActions.addSongs)) {
             this.clearFileInput(event);
             return;
         }
 
-        // Usar SongManager para procesar las canciones
         const result = this.songManager.addSongsFromFiles(
             files,
             this.songs,
@@ -576,7 +546,6 @@ class BingoMusical {
             () => this.toggleContinuousMode()
         );
 
-        // Deshabilitar el input del nombre si el juego ha iniciado o se generaron cartones
         const shouldDisableGameName = this.game.isGameStarted() || this.game.hasCartonesGenerated();
         this.dom.game.gameNameInput.disabled = shouldDisableGameName;
 
@@ -587,8 +556,6 @@ class BingoMusical {
         }
     }
 
-
-    // Qué ocurre al interactuar con una canción de la lista (SongListView solo avisa)
     onSongIconClick(song) {
         if (song.played) {
             this.dialogs.showAlert(MSG.songs.iconLocked);
@@ -598,7 +565,6 @@ class BingoMusical {
     }
 
     onSongClick(song) {
-        // Fuera de partida, pulsar una canción la escucha
         if (song.file && !this.game.isGameStarted()) {
             this.sounds.play(SOUND.CLICK);
             this.playSong(song.id);
@@ -630,7 +596,6 @@ class BingoMusical {
             this.songs = [];
             this.sounds.play(SOUND.CLICK);
 
-            // Resetear el flag de cartones generados, el nombre del juego y los cartones
             this.game.clearCartones();
             this.game.setGameName('');
             this.dom.game.gameNameInput.value = '';
@@ -667,13 +632,11 @@ class BingoMusical {
     playRandomSong() {
         if (!this._ensureEnoughSongs()) return;
 
-        // Iniciar juego si no ha comenzado
         if (!this.game.isGameStarted()) {
             this.game.startGame();
             this.updateUIState();
         }
 
-        // Obtener canción aleatoria no reproducida
         const randomSong = this.game.getRandomUnplayedSong(this.songs);
 
         if (!randomSong) {
@@ -691,36 +654,33 @@ class BingoMusical {
             return;
         }
 
-        // Cancelar revelados pendientes de la canción anterior y mostrarla del todo
+        // Cancela los revelados pendientes y muestra la canción anterior
         this._clearListRevealTimers();
         const previousSong = this.songManager.findSongById(this.songs, this.game.getCurrentSong());
         if (previousSong) this._revealSongInList(previousSong);
 
-        // Ocultar título e icono de la canción en la lista hasta que se revelen
+        // Oculta título e icono en la lista hasta revelarlos
         song.hideTitle = true;
         song.hideIcon = true;
 
-        // Usar AudioManager para reproducir
+        // Reproduce y, al empezar, actualiza la interfaz
         this.audio.play(song.file, () => {
             this.game.setCurrentSong(songId);
             this.updatePlayerUI(song);
             this.updateControls(true);
 
-            // Marcar como reproducida usando GameManager
+            // Marca la canción como reproducida y la añade al historial
             if (this.game.markSongAsPlayed(song)) {
                 this.addToHistory(song);
                 this.updateCounters();
                 this.sounds.play(SOUND.WIN);
             }
 
-            // Always re-render the list to show the current playing song
+            // Repinta la lista para mostrar la canción actual
             this.songList.render();
 
-            // Programar la revelación del título e icono en la lista después del tiempo configurado
-            // Solo si el juego ha iniciado
+            // Programa el revelado de título e icono (solo en partida)
             if (this.game.isGameStarted()) {
-                // Los elementos se buscan al dispararse el temporizador porque la lista
-                // puede haberse vuelto a pintar entretanto (filtros, cierre de alertas...)
                 this.listRevealTimers.push(
                     setTimeout(() => {
                         song.hideTitle = false;
@@ -732,7 +692,7 @@ class BingoMusical {
                     }, this.game.getIconRevealTime() * MS_PER_SECOND)
                 );
             } else {
-                // Si el juego no ha iniciado, mostrar todo inmediatamente
+                // Fuera de partida se muestra todo al instante
                 this._revealSongInList(song);
             }
         });
@@ -753,9 +713,6 @@ class BingoMusical {
         this.updateControls(isNowPlaying);
     }
 
-    /**
-     * Cancela los revelados pendientes y muestra la canción actual sin ocultar
-     */
     _revealCurrentSong() {
         this._clearListRevealTimers();
         const currentSong = this.songManager.findSongById(this.songs, this.game.getCurrentSong());
@@ -795,19 +752,15 @@ class BingoMusical {
     onSongEnded() {
         this.dom.player.songIconContainer.classList.remove('playing');
 
-        // La canción que terminó ya no debe ocultarse en la lista
         this._revealCurrentSong();
 
-        // Handle continuous PREVIEW mode
         if (this.game.isContinuousMode() && !this.game.isGameStarted()) {
             this.playRandomContinuousSong();
-            return; // End execution here for this case
+            return;
         }
 
-        // Handle song ending during the game
         if (this.game.isGameStarted()) {
             if (this.game.allSongsPlayed(this.songs) && !this.game.isBingoCompleted()) {
-                // All songs have been played, trigger BINGO automatically
                 this.game.completeBingo();
                 setTimeout(() => {
                     this.sounds.play(SOUND.COMPLETE);
@@ -816,7 +769,6 @@ class BingoMusical {
             }
         }
 
-        // Default behavior: update controls to show song has stopped
         this.updateControls(false);
     }
 
@@ -826,7 +778,6 @@ class BingoMusical {
             if (randomSong) {
                 this.playSong(randomSong.id);
             } else {
-                // No songs to play, turn off the mode
                 this.toggleContinuousMode();
             }
         }, CONTINUOUS_NEXT_SONG_DELAY_MS);
@@ -837,7 +788,6 @@ class BingoMusical {
         const gameStarted = this.game.isGameStarted();
         const historyItem = this.ui.addToHistory(song, iconRevealTime, gameStarted);
 
-        // Agregar evento click para reproducir
         historyItem.addEventListener('click', () => {
             this.sounds.play(SOUND.CLICK);
             this.playSong(song.id);
@@ -853,7 +803,6 @@ class BingoMusical {
             this.game.resetGame();
             this.songs = this.songManager.resetPlayedStatus(this.songs);
 
-            // Ninguna canción debe quedar oculta tras el reinicio
             this._clearListRevealTimers();
             this.songs.forEach(song => this._revealSongInList(song));
 
@@ -861,13 +810,11 @@ class BingoMusical {
             this.refreshUI();
             this.stopSong();
 
-            // resetGame ya desactiva el modo continuo: reflejarlo en el botón
             this._renderContinuousModeButton(this.game.isContinuousMode());
 
             this.dom.player.currentIconImg.alt = TEXT.player.currentSongAlt;
             this.dom.player.currentIconImg.src = LOGO_PATH;
 
-            // Restaurar opacidad de título e icono del reproductor
             this.ui.clearPlayerRevealTimers();
             this.dom.player.songTitleElement.style.opacity = '1';
             this.dom.player.currentIconImg.style.opacity = '1';
@@ -875,7 +822,6 @@ class BingoMusical {
     }
 }
 
-// Inicializar la aplicación cuando el DOM esté listo
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => new BingoMusical());
 } else {

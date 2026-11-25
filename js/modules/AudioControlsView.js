@@ -1,31 +1,11 @@
-/**
- * AudioControlsView Module
- * Pinta y escucha los controles del reproductor: barra de progreso, tiempos y
- * volúmenes de música y efectos. Lo que hay que hacer con cada cambio lo
- * deciden los callbacks que recibe.
- */
 export class AudioControlsView {
-    /**
-     * @param {Object} deps
-     * @param {HTMLAudioElement} deps.audioElement - Del que se leen tiempo y duración
-     * @param {Object} deps.elements - progressBar, progressFill, currentTimeSpan, durationSpan,
-     *   musicVolumeSlider, musicVolumeValueSpan, effectsVolumeSlider, effectsVolumeValueSpan
-     * @param {Object} deps.handlers
-     * @param {Function} deps.handlers.onSeek - (fracción de 0 a 1)
-     * @param {Function} deps.handlers.onMusicVolume - (volumen de 0 a 1)
-     * @param {Function} deps.handlers.onEffectsVolume - (volumen de 0 a 1)
-     */
     constructor({audioElement, elements, handlers}) {
         this.audioElement = audioElement;
         this.el = elements;
         this.handlers = handlers;
     }
 
-    /**
-     * Empieza a escuchar el reproductor y los controles
-     */
     bind() {
-        // timeupdate también se dispara al cambiar currentTime (parar, reiniciar, saltar)
         this.audioElement.addEventListener('timeupdate', () => this.updateProgress());
         this.audioElement.addEventListener('loadedmetadata', () => this.updateDuration());
 
@@ -47,9 +27,6 @@ export class AudioControlsView {
         });
     }
 
-    /**
-     * Actualiza la barra de progreso y el tiempo actual
-     */
     updateProgress() {
         const {currentTime, duration} = this.audioElement;
         const progress = (currentTime / duration) * 100;
@@ -62,9 +39,6 @@ export class AudioControlsView {
         this.el.currentTimeSpan.setAttribute('datetime', `PT${Math.floor(currentTime)}S`);
     }
 
-    /**
-     * Actualiza la duración total
-     */
     updateDuration() {
         const duration = this.audioElement.duration;
         this.el.durationSpan.textContent = formatTime(duration);
@@ -72,11 +46,7 @@ export class AudioControlsView {
     }
 }
 
-/**
- * Formatea segundos a M:SS
- */
 export function formatTime(seconds) {
-    // NaN (sin metadatos) o Infinity (streams) no tienen duración representable
     if (!Number.isFinite(seconds)) return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);

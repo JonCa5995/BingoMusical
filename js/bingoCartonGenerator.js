@@ -9,11 +9,6 @@ import {
 } from "./constants.js";
 import {TEXT} from "./messages.js";
 
-/**
- * BingoCartonGenerator
- * Genera cartones únicos (solo datos). El HTML lo produce CartonHtmlRenderer
- * y la descarga/impresión CartonExporter.
- */
 export class BingoCartonGenerator {
     generateCartones(songs, count = 1, existingCartones = []) {
         if (songs.length < MIN_SONGS_REQUIRED) {
@@ -22,13 +17,10 @@ export class BingoCartonGenerator {
 
         const cartones = [];
 
-        // Grupos de canciones ya usados en alguna fila (de los cartones existentes y de los nuevos).
-        // Dos filas con las mismas canciones permitirían cantar LÍNEA a dos cartones a la vez.
         const usedRows = new Set(
             existingCartones.flatMap(carton => carton.rows.map(row => this.rowSongsKey(row)))
         );
 
-        // Calcular el número de inicio para los nuevos cartones
         const startNumber = existingCartones.length + 1;
 
         for (let i = 0; i < count; i++) {
@@ -55,7 +47,6 @@ export class BingoCartonGenerator {
     }
 
     generateSingleCarton(songs, cartonNumber) {
-        // Las 12 canciones son distintas, así que las filas de un mismo cartón nunca se repiten
         const selectedSongs = this.selectRandomSongs(songs, SONGS_PER_CARTON);
         const rows = [];
 
@@ -73,7 +64,6 @@ export class BingoCartonGenerator {
     }
 
     selectRandomSongs(songs, count) {
-        // Fisher-Yates parcial: uniforme (sort con random no lo es) y solo baraja lo necesario
         const pool = [...songs];
         const n = Math.min(count, pool.length);
         for (let i = 0; i < n; i++) {
@@ -97,7 +87,6 @@ export class BingoCartonGenerator {
                 });
             } else {
                 cells.push({
-                    // El icono decorativo es presentación: lo pone CartonHtmlRenderer
                     type: CELL_TYPE.DECORATIVE,
                     position: i
                 });
@@ -120,9 +109,6 @@ export class BingoCartonGenerator {
         return carton.rows.some(row => usedRows.has(this.rowSongsKey(row)));
     }
 
-    /**
-     * Clave de una fila: los IDs de sus canciones ordenados (la posición no importa para cantar LÍNEA)
-     */
     rowSongsKey(row) {
         return row.cells
             .filter(cell => cell.type === CELL_TYPE.SONG)

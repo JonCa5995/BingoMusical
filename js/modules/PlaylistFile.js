@@ -1,26 +1,14 @@
-/**
- * PlaylistFile Module
- * Archivo JSON de la playlist: crearlo y descargarlo (exportar) y leerlo (importar).
- */
 import {downloadFile, slugify} from '../utils.js';
 import {serializeCartones} from './CartonSerializer.js';
 import {DEFAULT_GAME_NAME, DEFAULT_PLAYLIST_NAME, ICON_TYPE} from '../constants.js';
 import {TEXT} from '../messages.js';
 
 export class PlaylistFile {
-    /**
-     * @param {Object} [options]
-     * @param {Function} [options.download] - (contenido, nombre, mime, ariaLabel); inyectable para pruebas
-     * @param {Function} [options.now] - Devuelve la fecha actual; inyectable para pruebas
-     */
     constructor({download = downloadFile, now = () => new Date()} = {}) {
         this.download = download;
         this.now = now;
     }
 
-    /**
-     * Construye el contenido del JSON de la playlist
-     */
     build(songs, gameName = '', cartones = []) {
         return {
             version: '1.1',
@@ -36,9 +24,6 @@ export class PlaylistFile {
         };
     }
 
-    /**
-     * Exporta la lista de canciones (y sus cartones) a un archivo JSON
-     */
     export(songs, songsFolder, gameName = '', cartones = []) {
         if (!songs || songs.length === 0) {
             return {success: false, error: TEXT.playlist.noSongsToExport};
@@ -70,10 +55,6 @@ export class PlaylistFile {
         }
     }
 
-    /**
-     * Lee un archivo JSON de playlist
-     * @param {File} file
-     */
     async read(file) {
         if (!file) {
             return {success: false, error: TEXT.playlist.noFileSelected};

@@ -1,20 +1,7 @@
-/**
- * ConfigModal Module
- * Modal de configuración: tiempos de revelado del título y del icono.
- */
 import {DEFAULT_ICON_REVEAL_TIME, DEFAULT_TITLE_REVEAL_TIME, MAX_REVEAL_TIME_SECONDS, SOUND} from '../constants.js';
 import {MSG, TEXT} from '../messages.js';
 
 export class ConfigModal {
-    /**
-     * @param {Object} deps
-     * @param {Object} deps.elements - Los elementos del modal (el.config)
-     * @param {GameManager} deps.game - Donde se guardan los tiempos de revelado
-     * @param {ModalManager} deps.modals
-     * @param {Dialogs} deps.dialogs
-     * @param {SoundEffects} deps.sounds
-     * @param {Function} deps.canOpen - Devuelve false (y avisa) si ahora no se puede cambiar la configuración
-     */
     constructor({elements, game, modals, dialogs, sounds, canOpen}) {
         this.el = elements;
         this.game = game;
@@ -24,9 +11,6 @@ export class ConfigModal {
         this.canOpen = canOpen;
     }
 
-    /**
-     * Deja los sliders con sus valores iniciales y conecta los botones del modal
-     */
     init() {
         const el = this.el;
 
@@ -38,7 +22,6 @@ export class ConfigModal {
             slider.value = seconds;
             label.textContent = TEXT.seconds(seconds);
 
-            // La etiqueta sigue al slider mientras se mueve
             slider.addEventListener('input', (e) => {
                 label.textContent = TEXT.seconds(e.target.value);
             });

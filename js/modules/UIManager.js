@@ -1,28 +1,14 @@
-/**
- * UIManager Module
- * Gestiona el renderizado y actualización de la interfaz de usuario
- */
 import { escapeHTML } from '../utils.js';
 import { ICON_TYPE, MS_PER_SECOND, PLAYER_ICON_SIZE, HISTORY_ICON_SIZE } from '../constants.js';
 import { TEXT } from '../messages.js';
 
 export class UIManager {
-    /**
-     * @param {Object} elements - Los elementos que gestiona (dom.ui): lista, reproductor, historial y botones que se bloquean
-     * @param {number} minSongsRequired - Canciones mínimas para jugar (para los avisos de la lista)
-     */
     constructor(elements, minSongsRequired) {
         this.el = elements;
         this.MIN_SONGS_REQUIRED = minSongsRequired;
         this.playerRevealTimers = [];
     }
 
-    /**
-     * Convierte un emoji a una imagen Data URL
-     * @param {string} emoji - El emoji a convertir
-     * @param {number} size - Tamaño del canvas (ancho y alto)
-     * @returns {string} - Data URL de la imagen
-     */
     emojiToDataURL(emoji, size) {
         const canvas = document.createElement('canvas');
         canvas.width = size;
@@ -36,13 +22,6 @@ export class UIManager {
         return canvas.toDataURL();
     }
 
-    /**
-     * Renderiza una lista de canciones (o el mensaje que corresponda si no hay ninguna)
-     * @param {Array} songs - Canciones a mostrar
-     * @param {number} totalSongsWithFiles - Para avisar de que faltan canciones para jugar
-     * @param {Function} createSongItem - (canción) => <li>
-     * @param {'empty'|'noResults'} [emptyKind] - Mensaje si `songs` está vacío: no hay canciones, o ninguna coincide
-     */
     renderSongs(songs, totalSongsWithFiles, createSongItem, emptyKind = 'empty') {
         const fragment = document.createDocumentFragment();
 
@@ -60,9 +39,6 @@ export class UIManager {
         this.el.songsListElement.replaceChildren(fragment);
     }
 
-    /**
-     * Crea el mensaje que se muestra cuando la lista no tiene canciones
-     */
     _createEmptyMessage(kind) {
         const { title, text, minSongsWarning: warning } = TEXT.list[kind];
         const minSongsWarning = warning
@@ -79,9 +55,6 @@ export class UIManager {
         return emptyLi;
     }
 
-    /**
-     * Crea el mensaje de advertencia de canciones insuficientes
-     */
     createWarningMessage(totalSongs) {
         const warning = document.createElement('li');
         warning.setAttribute('role', 'alert');
@@ -90,14 +63,11 @@ export class UIManager {
         return warning;
     }
 
-    /**
-     * Actualiza la UI del reproductor con información de la canción
-     */
     updatePlayerUI(song, titleRevealTime = 0, iconRevealTime = 0, gameStarted = false) {
-        // Cancelar revelados pendientes de la canción anterior para que no destapen la nueva antes de tiempo
+        // Cancela los revelados de la canción anterior
         this.clearPlayerRevealTimers();
 
-        // Si el juego no ha iniciado, mostrar todo inmediatamente
+        // Fuera de partida se muestra todo al instante
         if (!gameStarted) {
             this.el.songTitleElement.textContent = song.title;
             this.el.songTitleElement.style.opacity = '1';
@@ -105,33 +75,31 @@ export class UIManager {
             this.el.currentIconImg.style.opacity = '1';
             this.el.currentIconImg.style.transition = '';
         } else {
-            // Si el juego ha iniciado, ocultar y revelar progresivamente
-            // Establecer el título inmediatamente pero oculto
+            // En partida el título empieza oculto
             this.el.songTitleElement.textContent = song.title;
             this.el.songTitleElement.style.transition = '';
             this.el.songTitleElement.style.opacity = '0';
             
-            // Revelar título después del tiempo configurado
+            // Revela el título tras el tiempo configurado
             this.playerRevealTimers.push(setTimeout(() => {
                 this.el.songTitleElement.style.transition = 'opacity 1s ease-in';
                 this.el.songTitleElement.style.opacity = '1';
             }, titleRevealTime * MS_PER_SECOND));
             
-            // Icono se maneja más abajo
             this.el.currentIconImg.style.transition = '';
             this.el.currentIconImg.style.opacity = '0';
         }
 
         this.el.currentIconImg.alt = song.title;
 
-        // Preparar icono
+        // Muestra el icono
         if (song.iconType === ICON_TYPE.IMAGE && song.icon) {
             this.el.currentIconImg.src = song.icon;
         } else {
             this.el.currentIconImg.src = this.emojiToDataURL(song.icon, PLAYER_ICON_SIZE);
         }
 
-        // Revelar icono después del tiempo configurado (solo si el juego ha iniciado)
+        // Revela el icono tras el tiempo configurado (solo en partida)
         if (gameStarted) {
             this.playerRevealTimers.push(setTimeout(() => {
                 this.el.currentIconImg.style.transition = 'opacity 1s ease-in';
@@ -140,17 +108,11 @@ export class UIManager {
         }
     }
 
-    /**
-     * Cancela los revelados pendientes del reproductor
-     */
     clearPlayerRevealTimers() {
         for (const timer of this.playerRevealTimers) clearTimeout(timer);
         this.playerRevealTimers = [];
     }
 
-    /**
-     * Actualiza los controles del reproductor
-     */
     updateControls(playing, gameStarted, hasSongLoaded = true, noSongsLeft = false) {
         if (playing) {
             this.el.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span>';
@@ -166,31 +128,20 @@ export class UIManager {
             this.el.songIconContainer.classList.remove('playing');
         }
 
-        // En partida: desactivado mientras suena o cuando ya no quedan canciones por sacar
         this.el.playBtn.disabled = gameStarted && (playing || noSongsLeft);
     }
 
-    /**
-     * Actualiza los contadores de canciones
-     */
     updateCounters(playedCount, totalSongs) {
         this.el.playedCounterSpan.textContent = playedCount.toString();
         this.el.totalCounterSpan.textContent = totalSongs.toString();
     }
 
-    /**
-     * Atenúa y bloquea (o restaura) un control mientras dura la partida.
-     * Los elementos que no son botones ni inputs (p. ej. un <label>) no tienen `disabled`: solo cambian de aspecto.
-     */
     _setLocked(element, locked) {
         if ('disabled' in element) element.disabled = locked;
         element.style.opacity = locked ? '0.5' : '1';
         element.style.cursor = locked ? 'not-allowed' : 'pointer';
     }
 
-    /**
-     * Actualiza el estado de la UI según si el juego ha iniciado
-     */
     updateUIState(gameStarted, continuousMode, toggleContinuousModeCallback) {
         const isDisabled = gameStarted;
 
@@ -210,7 +161,6 @@ export class UIManager {
             toggleContinuousModeCallback();
         }
 
-        // Deshabilitar botón de configuración cuando el juego está iniciado
         this._setLocked(this.el.configBtn, isDisabled);
 
         if (gameStarted) {
@@ -222,9 +172,6 @@ export class UIManager {
         }
     }
 
-    /**
-     * Agrega una canción al historial visual
-     */
     addToHistory(song, iconRevealTime = 0, gameStarted = false) {
         const historyItem = document.createElement('div');
         historyItem.className = 'history-item';
@@ -234,7 +181,6 @@ export class UIManager {
 
         const img = document.createElement('img');
         
-        // Solo ocultar si el juego ha iniciado
         if (gameStarted) {
             img.style.opacity = '0';
         }
@@ -249,11 +195,9 @@ export class UIManager {
         historyItem.appendChild(img);
         this.el.historyGrid.appendChild(historyItem);
 
-        // Scroll suave al final del contenedor
         const container = this.el.historyGrid.parentElement;
         container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
 
-        // Revelar icono después del tiempo configurado (solo si el juego ha iniciado)
         if (gameStarted) {
             setTimeout(() => {
                 img.style.transition = 'opacity 1s ease-in';
@@ -264,17 +208,11 @@ export class UIManager {
         return historyItem;
     }
 
-    /**
-     * Obtiene el título del icono de una canción
-     */
     getSongIconTitle(song, gameStarted) {
         if (song.played) return TEXT.list.iconTitle.lockedPlayed;
         return gameStarted ? TEXT.list.iconTitle.lockedStarted : TEXT.list.iconTitle.change;
     }
 
-    /**
-     * Obtiene el HTML del icono de una canción
-     */
     getSongIconHtml(song) {
         const title = escapeHTML(song.title);
         if (song.iconType === ICON_TYPE.IMAGE) {
@@ -283,9 +221,6 @@ export class UIManager {
         return `<span role="img" aria-label="${title}">${escapeHTML(song.icon)}</span>`;
     }
 
-    /**
-     * Obtiene la etiqueta de estado de una canción
-     */
     getSongStateLabel(song) {
         if (song.played) {
             return TEXT.list.songState.played;

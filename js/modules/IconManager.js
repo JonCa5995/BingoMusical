@@ -1,18 +1,8 @@
-/**
- * IconManager Module
- * Gestiona la selección y personalización de iconos para las canciones
- */
 import {availableIcons, iconKeywords} from './IconDictionary.js';
 import {CUSTOM_ICON_SIZE, ICON_MODAL_CLOSE_DELAY_MS, ICON_TYPE, SOUND} from '../constants.js';
 import {MSG, TEXT} from '../messages.js';
 
 export class IconManager {
-    /**
-     * @param {Object} elements - Los elementos del modal de iconos (dom.iconPicker)
-     * @param {SoundEffects} sounds
-     * @param {Function} getSongs - Devuelve las canciones actuales
-     * @param {ModalManager} modals - Donde se registra el modal de iconos (Escape y clic fuera)
-     */
     constructor(elements, sounds, getSongs, modals) {
         this.el = elements;
         this.sounds = sounds;
@@ -23,10 +13,6 @@ export class IconManager {
         this.setupEventListeners();
     }
 
-
-    /**
-     * Configura event listeners para el modal de iconos
-     */
     setupEventListeners() {
         this.el.closeIconModalBtn.addEventListener('click', () => this.closeIconModal());
         this.modals.registerModal(this.el.iconModal, () => this.closeIconModal());
@@ -39,15 +25,11 @@ export class IconManager {
             this.uploadCustomIcon(e, songs);
         });
 
-        // Event listener para búsqueda de iconos
         this.el.iconSearchInput.addEventListener('input', (e) => {
             this.filterIcons(e.target.value);
         });
     }
 
-    /**
-     * Obtiene los iconos disponibles (no usados)
-     */
     getAvailableIcons(songs) {
         const usedIcons = new Set(
             songs
@@ -57,9 +39,6 @@ export class IconManager {
         return availableIcons.filter(icon => !usedIcons.has(icon));
     }
 
-    /**
-     * Verifica si un icono está en uso
-     */
     isIconUsed(icon, songs) {
         return songs.some(s =>
             s.icon === icon &&
@@ -68,10 +47,8 @@ export class IconManager {
         );
     }
 
-    /**
-     * Abre el modal de selección de iconos
-     */
     openIconPicker(songId, songs, onIconSelected) {
+        // Comprueba que la canción existe y se puede cambiar
         const song = songs.find(s => s.id === songId);
         if (!song) return {success: false, alert: MSG.icons.songNotFound};
 
@@ -79,11 +56,12 @@ export class IconManager {
             return {success: false, alert: MSG.songs.iconLocked};
         }
 
+        // Prepara el modal para esa canción
         this.currentEditingSongId = songId;
         this.onIconSelected = onIconSelected;
         this.el.modalSongTitle.textContent = song.title;
 
-        // Renderizar iconos usando DocumentFragment
+        // Crea los botones de los iconos
         const fragment = document.createDocumentFragment();
 
         for (const icon of availableIcons) {
@@ -118,7 +96,7 @@ export class IconManager {
         this.el.iconPickerContainer.innerHTML = '';
         this.el.iconPickerContainer.appendChild(fragment);
 
-        // Abrir modal
+        // Abre el modal
         this.el.iconModal.classList.remove('hidden');
         if (this.el.iconModal.showModal) {
             this.el.iconModal.showModal();
@@ -129,11 +107,7 @@ export class IconManager {
         return {success: true};
     }
 
-    /**
-     * Cierra el modal de iconos
-     */
     closeIconModal() {
-        // Cerrar modal
         if (this.el.iconModal.close) {
             this.el.iconModal.close();
         }
@@ -142,29 +116,19 @@ export class IconManager {
         this.currentEditingSongId = null;
         this.onIconSelected = null;
 
-        // Limpiar búsqueda al cerrar
         this.el.iconSearchInput.value = '';
     }
 
-    /**
-     * Elimina los acentos de un texto
-     * @param {string} text - Texto a normalizar
-     * @returns {string} - Texto sin acentos
-     */
     removeAccents(text) {
         return text.normalize('NFD').replaceAll(/[\u0300-\u036f]/g, '');
     }
 
-    /**
-     * Filtra los iconos según el texto de búsqueda
-     */
     filterIcons(searchText) {
         const query = this.removeAccents(searchText.toLowerCase().trim());
 
         const iconOptions = this.el.iconPickerContainer.querySelectorAll('.icon-option');
         let visibleCount = 0;
 
-        // Eliminar mensaje de "sin resultados" si existe
         const noResults = this.el.iconPickerContainer.querySelector('.icon-picker-no-results');
         if (noResults) noResults.remove();
 
@@ -172,7 +136,6 @@ export class IconManager {
             const icon = option.textContent;
             const keywords = iconKeywords[icon] || [];
 
-            // Buscar en las palabras clave (sin acentos)
             const matches = query === '' || keywords.some(keyword =>
                 this.removeAccents(keyword).includes(query)
             ) || icon.includes(query);
@@ -181,7 +144,6 @@ export class IconManager {
             if (matches) visibleCount++;
         }
 
-        // Mostrar mensaje si no hay resultados
         if (visibleCount === 0 && query !== '') {
             const noResultsMsg = document.createElement('div');
             noResultsMsg.className = 'icon-picker-no-results';
@@ -190,9 +152,6 @@ export class IconManager {
         }
     }
 
-    /**
-     * Selecciona un icono para la canción actual
-     */
     selectIcon(icon, songs) {
         if (this.currentEditingSongId === null) return;
 
@@ -204,14 +163,12 @@ export class IconManager {
 
         this.sounds.play(SOUND.CLICK);
 
-        // Actualizar visualización de iconos seleccionados
         for (const opt of document.querySelectorAll('.icon-option')) {
             const isSelected = opt.textContent === icon;
             opt.classList.toggle('selected', isSelected);
             opt.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
         }
 
-        // Llamar callback para actualizar UI
         if (this.onIconSelected) {
             this.onIconSelected();
         }
@@ -219,9 +176,6 @@ export class IconManager {
         setTimeout(() => this.closeIconModal(), ICON_MODAL_CLOSE_DELAY_MS);
     }
 
-    /**
-     * Carga un icono personalizado desde archivo
-     */
     uploadCustomIcon(e, songs) {
         const file = e.target.files[0];
         if (!file) return;
@@ -231,7 +185,7 @@ export class IconManager {
 
         const reader = new FileReader();
 
-        // Guardar referencia al callback antes de cerrar el modal
+        // Guarda el callback antes de cerrar el modal
         const callback = this.onIconSelected;
 
         const handleUpdate = () => {
@@ -239,12 +193,12 @@ export class IconManager {
             this.sounds.play(SOUND.CLICK);
             this.closeIconModal();
 
-            // Usar la referencia guardada del callback
             if (callback) {
                 callback();
             }
         };
 
+        // Los PNG se reescalan; el resto se guarda tal cual
         reader.onload = (event) => {
             if (file.type === 'image/png') {
                 const img = new Image();
@@ -267,9 +221,6 @@ export class IconManager {
         reader.readAsDataURL(file);
     }
 
-    /**
-     * Obtiene un icono aleatorio disponible
-     */
     getRandomAvailableIcon(songs) {
         const availableIconsList = this.getAvailableIcons(songs);
         if (availableIconsList.length > 0) {

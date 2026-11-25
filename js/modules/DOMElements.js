@@ -1,11 +1,3 @@
-/**
- * DOMElements Module
- * Busca una sola vez los elementos del DOM y los reparte en grupos por zona.
- * Cada módulo recibe solo el grupo que necesita (dom.dialogs, dom.config...), no todos los elementos.
- * Un mismo elemento puede estar en varios grupos: es la misma referencia.
- */
-
-/** Grupos de elementos por zona de la interfaz */
 const GROUPS = {
     player: [
         'audioPlayer', 'playBtn', 'pauseBtn', 'stopBtn', 'progressBar', 'progressFill', 'currentTimeSpan',
@@ -57,7 +49,6 @@ const GROUPS = {
     ]
 };
 
-/** Toma de `all` los elementos indicados; falla en voz alta si un nombre no existe (evita errores de tipeo en los grupos) */
 const pick = (all, names) => Object.fromEntries(names.map(name => {
     if (!(name in all)) throw new Error(`DOMElements: el elemento "${name}" no está definido`);
     return [name, all[name]];
@@ -72,7 +63,6 @@ export class DOMElements {
         }
     }
 
-    /** Busca cada elemento una sola vez */
     _lookupAll() {
         const byId = (id) => document.getElementById(id);
         const query = (selector) => document.querySelector(selector);
@@ -134,14 +124,14 @@ export class DOMElements {
             uploadCustomIconBtn: byId('upload-custom-icon-btn'),
             customIconUploadInput: byId('custom-icon-upload'),
 
-            // Modal de cartones (generación simplificada)
+            // Modal de generación
             cartonModal: byId('carton-modal'),
             closeCartonModalBtn: byId('close-carton-modal'),
             generateCartonesBtn: byId('generate-cartones'),
             cartonCountInput: byId('carton-count'),
             generateSaveCartonesBtn: byId('generate-save-cartones-btn'),
 
-            // Modal de impresión (con personalización)
+            // Modal de impresión
             printModal: byId('print-modal'),
             closePrintModalBtn: byId('close-print-modal'),
             printCartonesInfo: byId('print-cartones-info'),

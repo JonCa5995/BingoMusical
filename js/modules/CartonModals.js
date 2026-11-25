@@ -1,9 +1,3 @@
-/**
- * CartonModals Module
- * Los tres modales de cartones, que forman un solo flujo:
- *   opciones -> generación (crear o añadir) o impresión, con borrado desde las opciones.
- * La lógica de generar, imprimir y la vista previa está en CartonManager.
- */
 import {
     CARTON_MODE,
     DEFAULT_CARTON_COUNT,
@@ -18,17 +12,6 @@ import {
 import {MSG, TEXT} from '../messages.js';
 
 export class CartonModals {
-    /**
-     * @param {Object} deps
-     * @param {Object} deps.elements - Los elementos de los tres modales (el.cartones)
-     * @param {GameManager} deps.game - Cartones guardados y nombre del juego
-     * @param {CartonManager} deps.cartonManager - Generar, imprimir y vista previa
-     * @param {ModalManager} deps.modals
-     * @param {Dialogs} deps.dialogs
-     * @param {SoundEffects} deps.sounds
-     * @param {Function} deps.getSongs - Devuelve las canciones actuales
-     * @param {Function} deps.onCartonesChanged - Se llama tras crear, añadir o borrar cartones (refresca la interfaz)
-     */
     constructor({elements, game, cartonManager, modals, dialogs, sounds, getSongs, onCartonesChanged}) {
         this.el = elements;
         this.game = game;
@@ -38,16 +21,13 @@ export class CartonModals {
         this.sounds = sounds;
         this.getSongs = getSongs;
         this.onCartonesChanged = onCartonesChanged;
-        this.mode = null;   // CARTON_MODE.NEW o ADD mientras está abierto el modal de generación
+        this.mode = null;
     }
 
-    /**
-     * Deja los controles con sus valores iniciales y conecta los botones de los tres modales
-     */
     init() {
         const el = this.el;
 
-        // Valores iniciales: cantidad de cartones que propone la generación y colores de impresión
+        // Valores iniciales de la cantidad y de los colores
         el.cartonCountInput.max = MAX_CARTONS_GENERATED;
         el.cartonCountInput.value = DEFAULT_CARTON_COUNT;
         el.printPrimaryColorInput.value = DEFAULT_PRINT_PRIMARY_COLOR;
@@ -64,17 +44,17 @@ export class CartonModals {
         el.printExistingCartonesBtn.addEventListener('click', () => this.printExisting());
         el.deleteAllCartonesBtn.addEventListener('click', () => this.deleteAll());
 
-        // Modal de generación (solo pide la cantidad)
+        // Modal de generación
         this.modals.registerWithCloseButton(el.cartonModal, el.closeCartonModalBtn);
         el.generateSaveCartonesBtn.addEventListener('click', () => this.generate());
 
-        // Modal de impresión (con personalización)
+        // Modal de impresión
         this.modals.registerWithCloseButton(el.printModal, el.closePrintModalBtn);
         el.printHtmlBtn.addEventListener('click', () => this.print(PRINT_FORMAT.HTML));
         el.printPdfBtn.addEventListener('click', () => this.print(PRINT_FORMAT.PDF));
         el.previewPrintBtn.addEventListener('click', () => this.updatePreview());
 
-        // Selector de rango: los campos Desde/Hasta solo se ven con "rango"
+        // Desde/Hasta solo se ven con "rango"
         el.printRangeRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
                 const showRange = e.target.value === 'range';
@@ -82,7 +62,7 @@ export class CartonModals {
             });
         });
 
-        // La vista previa sigue a los colores elegidos
+        // La vista previa sigue a los colores
         el.printPrimaryColorInput.addEventListener('input', (e) => {
             document.querySelector('.color-preview-print').style.backgroundColor = e.target.value;
             this.updatePreview();
@@ -93,12 +73,6 @@ export class CartonModals {
         });
     }
 
-    /**
-     * Verifica si hay cartones existentes, pide confirmación y los borra si el usuario acepta.
-     * La usan las operaciones de canciones e iconos, que dejarían los cartones desfasados.
-     * @param {string} action - Qué se va a hacer (encaja en "Al ..., se borrarán TODOS los cartones")
-     * @returns {Promise<boolean>} true si no hay cartones o el usuario confirmó, false si canceló
-     */
     async confirmAndClear(action) {
         const cartonesCount = this.game.getCartonesCount();
         if (cartonesCount > 0) {
@@ -121,7 +95,6 @@ export class CartonModals {
     openOptions() {
         const existingCount = this.game.getCartonesCount();
 
-        // Mostrar información de cartones existentes
         if (existingCount > 0) {
             this.el.existingCartonesInfo.textContent = TEXT.cartones.optionsInfo(existingCount);
             this.el.printExistingCartonesBtn.disabled = false;
@@ -135,10 +108,6 @@ export class CartonModals {
         this.modals.openWithClick(this.el.cartonOptionsModal);
     }
 
-    /**
-     * Pasa del modal de opciones al de generación (solo pide la cantidad)
-     * @param {'new'|'add'} mode - Crear cartones nuevos o añadir a los existentes
-     */
     startGeneration(mode) {
         this.mode = mode;
         this.modals.closeWithClick(this.el.cartonOptionsModal);
@@ -153,7 +122,6 @@ export class CartonModals {
 
         this.modals.closeWithClick(this.el.cartonOptionsModal);
 
-        // Abrir modal de impresión con personalización
         this.openPrint();
     }
 
@@ -196,7 +164,6 @@ export class CartonModals {
         if (result.success) {
             const count = result.cartones.length;
 
-            // Guardar o añadir cartones según el modo
             if (mode === CARTON_MODE.NEW) {
                 this.game.setCartones(result.cartones);
                 this.dialogs.showAlert(MSG.cartones.generated(count));
@@ -218,19 +185,15 @@ export class CartonModals {
     openPrint() {
         const count = this.game.getCartonesCount();
 
-        // Actualizar información
         this.el.printCartonesInfo.textContent = TEXT.cartones.printInfo(count);
 
-        // Configurar valores de rango
         this.el.rangeFromInput.max = count;
         this.el.rangeToInput.max = count;
         this.el.rangeToInput.value = count;
 
-        // Resetear a "todos"
         this.el.printRangeRadios[0].checked = true;
         this.el.rangeInputsContainer.style.display = 'none';
 
-        // Generar vista previa inicial
         this.updatePreview();
 
         this.modals.openWithClick(this.el.printModal);
@@ -257,7 +220,6 @@ export class CartonModals {
         this.cartonManager.updatePrintPreview(this.getSongs(), gameName, this._printColors());
     }
 
-    /** Colores elegidos en el modal de impresión */
     _printColors() {
         return {
             primaryColor: this.el.printPrimaryColorInput.value,
@@ -265,7 +227,6 @@ export class CartonModals {
         };
     }
 
-    /** Rango y colores elegidos en el modal de impresión */
     _printOptions() {
         return {
             printAll: this.el.printRangeRadios[0].checked,

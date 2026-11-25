@@ -1,24 +1,5 @@
-/**
- * CartonSerializer Module
- * Única puerta entre las dos formas de un cartón:
- *
- * - En memoria (la que usa toda la aplicación):
- *     { id, songs: [canción], generatedAt,
- *       rows: [{ cells: [{ type: 'song', position, song, marked } | { type: 'decorative', position }] }] }
- *
- * - Guardado en el JSON de la playlist:
- *     { id, songs: [idCanción], generatedAt,
- *       rows: [{ cells: [{ position, songId | null }] }] }
- *
- * Fuera de este módulo nadie debe conocer la forma guardada.
- */
 import {CELL_TYPE} from '../constants.js';
 
-/**
- * Convierte cartones en memoria a su forma guardada
- * @param {Array} cartones
- * @returns {Array}
- */
 export function serializeCartones(cartones) {
     return cartones.map(carton => ({
         id: carton.id,
@@ -33,13 +14,6 @@ export function serializeCartones(cartones) {
     }));
 }
 
-/**
- * Convierte cartones guardados a su forma en memoria, enlazándolos con las canciones actuales.
- * Una celda cuya canción ya no existe pasa a ser decorativa.
- * @param {Array} cartonesData - Cartones tal como vienen en el JSON
- * @param {Array} songs - Canciones cargadas
- * @returns {Array}
- */
 export function deserializeCartones(cartonesData, songs) {
     const songMap = new Map(songs.map(song => [song.id, song]));
 
@@ -54,14 +28,12 @@ export function deserializeCartones(cartonesData, songs) {
             return {type: CELL_TYPE.DECORATIVE, position};
         }
 
-        // `marked` no se guarda: siempre empieza sin marcar
         return {type: CELL_TYPE.SONG, position, song, marked: false};
     };
 
     return cartonesData.map(cartonData => ({
         id: cartonData.id,
         rows: cartonData.rows.map(rowData => ({cells: rowData.cells.map(toCell)})),
-        // Canciones que ya no existan se descartan
         songs: cartonData.songs.map(songId => songMap.get(songId)).filter(Boolean),
         generatedAt: cartonData.generatedAt
     }));

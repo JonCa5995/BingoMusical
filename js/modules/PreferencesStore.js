@@ -1,7 +1,3 @@
-/**
- * PreferencesStore Module
- * Preferencias del usuario que se recuerdan entre visitas (por ahora, el tema).
- */
 import { STORAGE_PREFIX, THEME } from '../constants.js';
 
 const KEYS = {
@@ -9,9 +5,6 @@ const KEYS = {
 };
 
 export class PreferencesStore {
-    /**
-     * @param {Storage} [storage] - Almacén clave/valor (localStorage por defecto; inyectable para pruebas)
-     */
     constructor(storage = globalThis.localStorage) {
         this.storage = storage;
     }

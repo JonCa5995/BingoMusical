@@ -1,19 +1,7 @@
-/**
- * ThemeManager Module
- * Tema claro/oscuro: aplicarlo, alternarlo y recordarlo entre visitas.
- */
 import { THEME } from '../constants.js';
 import { TEXT } from '../messages.js';
 
 export class ThemeManager {
-    /**
-     * @param {Object} deps
-     * @param {PreferencesStore} deps.preferences - Dónde se guarda el tema elegido
-     * @param {HTMLElement} deps.toggleButton - Botón que alterna el tema
-     * @param {HTMLElement} deps.icon - Icono dentro del botón
-     * @param {HTMLElement} [deps.root] - Elemento que recibe data-theme (inyectable para pruebas)
-     * @param {Function} [deps.onToggle] - Se llama al alternar (p. ej. para sonar un clic)
-     */
     constructor({ preferences, toggleButton, icon, root = document.documentElement, onToggle = () => {} }) {
         this.preferences = preferences;
         this.toggleButton = toggleButton;
@@ -22,9 +10,6 @@ export class ThemeManager {
         this.onToggle = onToggle;
     }
 
-    /**
-     * Aplica el tema guardado y escucha el botón
-     */
     init() {
         this.apply(this.preferences.loadTheme(THEME.DARK));
         this.toggleButton.addEventListener('click', () => this.toggle());

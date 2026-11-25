@@ -1,7 +1,3 @@
-/**
- * CartonHtmlRenderer Module
- * Convierte cartones (datos) en HTML imprimible. No genera cartones ni descarga nada.
- */
 import {
     CARTONS_PER_PRINT_PAGE,
     CELL_TYPE,
@@ -16,7 +12,6 @@ import {
 import {escapeHTML} from '../utils.js';
 import {TEXT} from '../messages.js';
 
-/** Icono que se dibuja en las celdas decorativas (sin canción). Es presentación, no dato del cartón */
 export const DECORATIVE_ICON_HTML = `<img class="image-icon" src="${DECORATIVE_ICON_PATH}" alt="${TEXT.document.decorativeAlt}">`;
 
 export class CartonHtmlRenderer {

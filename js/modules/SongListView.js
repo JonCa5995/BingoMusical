@@ -1,22 +1,7 @@
-/**
- * SongListView Module
- * Pinta la lista de canciones (búsqueda, filtro y orden incluidos) y avisa de lo
- * que hace el usuario sobre cada canción. No decide qué ocurre al pulsar: eso lo
- * deciden los handlers que recibe.
- */
 import { SEARCH_DEBOUNCE_MS } from '../constants.js';
 import { TEXT } from '../messages.js';
 
 export class SongListView {
-    /**
-     * @param {Object} deps
-     * @param {UIManager} deps.ui - Para los mensajes de lista vacía y el pintado final
-     * @param {SongManager} deps.songManager - Para filtrar, ordenar y contar canciones
-     * @param {{searchInput: HTMLInputElement, filterStatus: HTMLSelectElement, sortOrder: HTMLSelectElement}} deps.filterControls
-     * @param {Function} deps.getSongs - Devuelve la lista actual de canciones
-     * @param {Function} deps.getPlaybackState - Devuelve { currentSongId, gameStarted }
-     * @param {{onIconClick: Function, onSongClick: Function, onDelete: Function}} deps.handlers - Reciben la canción
-     */
     constructor({ ui, songManager, filterControls, getSongs, getPlaybackState, handlers }) {
         this.ui = ui;
         this.songManager = songManager;
@@ -27,13 +12,9 @@ export class SongListView {
         this.searchDebounceTimer = null;
     }
 
-    /**
-     * Escucha los controles de búsqueda, filtro y orden
-     */
     bindFilterControls() {
         const { searchInput, filterStatus, sortOrder } = this.filterControls;
 
-        // La búsqueda espera a que el usuario deje de escribir
         searchInput.addEventListener('input', () => {
             clearTimeout(this.searchDebounceTimer);
             this.searchDebounceTimer = setTimeout(() => this.render(), SEARCH_DEBOUNCE_MS);
@@ -42,9 +23,6 @@ export class SongListView {
         sortOrder.addEventListener('change', () => this.render());
     }
 
-    /**
-     * Pinta la lista aplicando la búsqueda, el filtro y el orden actuales
-     */
     render() {
         const songs = this.getSongs();
         const { searchInput, filterStatus, sortOrder } = this.filterControls;
@@ -54,7 +32,6 @@ export class SongListView {
             sortOrder: sortOrder.value
         });
 
-        // Sin canciones cargadas: "No hay canciones". Con canciones pero ninguna visible: "Sin resultados"
         this.ui.renderSongs(
             visibleSongs,
             this.songManager.getTotalSongsWithFiles(songs),
@@ -63,11 +40,6 @@ export class SongListView {
         );
     }
 
-    /**
-     * Muestra con un fundido el título o el icono de una canción de la lista
-     * @param {number} songId
-     * @param {'title'|'icon'} part
-     */
     reveal(songId, part) {
         const selector = part === 'title' ? '.song-item-title' : '.song-item-icon';
         const element = document.querySelector(`${selector}[data-song-id="${songId}"]`);
@@ -77,18 +49,17 @@ export class SongListView {
         }
     }
 
-    /**
-     * Crea el <li> de una canción
-     */
     createSongItem(song) {
         const { currentSongId, gameStarted } = this.getPlaybackState();
         const isCurrent = currentSongId === song.id;
         const iconLocked = song.played || gameStarted;
 
+        // Fila de la canción
         const li = document.createElement('li');
         li.className = `song-item ${song.played ? 'played' : ''} ${isCurrent ? 'playing' : ''}`;
         li.setAttribute('role', 'listitem');
 
+        // Botón del icono
         const iconBtn = document.createElement('button');
         iconBtn.type = 'button';
         iconBtn.className = 'song-item-icon';
@@ -99,11 +70,12 @@ export class SongListView {
         iconBtn.disabled = iconLocked;
         iconBtn.innerHTML = this.ui.getSongIconHtml(song);
 
-        // La canción en juego se oculta hasta que se revela
+        // La canción en juego se oculta hasta revelarla
         if (isCurrent && gameStarted && song.hideIcon) {
             iconBtn.style.opacity = '0';
         }
 
+        // Título y estado
         const infoDiv = document.createElement('div');
         infoDiv.className = 'song-item-info';
 
@@ -124,6 +96,7 @@ export class SongListView {
 
         infoDiv.append(titleStrong, statusDiv);
 
+        // Botón de borrar
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.className = 'song-item-delete';
@@ -131,6 +104,7 @@ export class SongListView {
         deleteBtn.setAttribute('aria-label', TEXT.list.deleteLabel(song.title));
         deleteBtn.innerHTML = '<span aria-hidden="true">❌</span>';
 
+        // Eventos y montaje de la fila
         iconBtn.onclick = (e) => {
             e.stopPropagation();
             this.handlers.onIconClick(song);

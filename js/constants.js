@@ -1,13 +1,3 @@
-/**
- * Constants Module
- * Centraliza las constantes de la aplicación: reglas del juego, tiempos, tamaños,
- * rutas y los nombres de tipos y estados que se comparan en varios módulos.
- * Los textos de la interfaz están en messages.js.
- *
- * Criterio: aquí va lo que alguien querría cambiar o lo que se repite. Los detalles
- * internos de una sola clase se quedan como constante local en su propio archivo.
- */
-
 // ============================================================
 // REGLAS DEL JUEGO
 // ============================================================

@@ -1,15 +1,5 @@
-/**
- * SoundEffects Module
- * Sintetiza los efectos de sonido (clic, victoria, error...) con Web Audio.
- * No sabe nada de la música ni de la interfaz.
- */
 import { SOUND, DEFAULT_EFFECTS_VOLUME } from '../constants.js';
 
-/**
- * Definición de los efectos de sonido (datos, no código).
- * - sweep: un tono que va de startFreq a endFreq
- * - melody: una secuencia de notas separadas por `interval` segundos
- */
 export const SOUND_EFFECTS = {
     [SOUND.START]: { type: 'sweep', startFreq: 400, endFreq: 800, duration: 0.3, volume: 1, waveType: 'sine' },
     [SOUND.CLICK]: { type: 'sweep', startFreq: 800, endFreq: 800, duration: 0.05, volume: 0.2, waveType: 'sine' },
@@ -24,35 +14,24 @@ export const SOUND_EFFECTS = {
     }
 };
 
-/** Crea el AudioContext del navegador */
 const createBrowserAudioContext = () => {
     const AudioContextClass = globalThis.AudioContext || globalThis.webkitAudioContext;
     return new AudioContextClass();
 };
 
 export class SoundEffects {
-    /**
-     * @param {Object} [options]
-     * @param {Object} [options.effects=SOUND_EFFECTS] - Tabla de efectos disponibles
-     * @param {Function} [options.createAudioContext] - Fábrica del AudioContext (inyectable para pruebas)
-     * @param {number} [options.volume=0.7] - Volumen inicial (0 a 1)
-     */
     constructor({ effects = SOUND_EFFECTS, createAudioContext = createBrowserAudioContext, volume = DEFAULT_EFFECTS_VOLUME } = {}) {
         this.effects = effects;
         this.createAudioContext = createAudioContext;
         this.volume = volume;
         this.audioContext = null;
 
-        // Cada tipo de efecto sabe cómo sintetizarse; añadir un efecto es añadir datos en SOUND_EFFECTS
         this.synthesizers = {
             sweep: (effect) => this._playSweep(effect),
             melody: (effect) => this._playMelody(effect)
         };
     }
 
-    /**
-     * Reproduce un efecto por nombre. Un nombre desconocido o el volumen a 0 no hacen nada.
-     */
     play(effectName) {
         const effect = this.effects[effectName];
         if (!effect || this.volume <= 0) return;
@@ -64,30 +43,20 @@ export class SoundEffects {
         }
     }
 
-    /**
-     * @param {number} volume - De 0 a 1
-     */
     setVolume(volume) {
         this.volume = volume;
     }
 
-    /**
-     * Obtiene o crea el AudioContext (se crea en el primer sonido)
-     */
     _getAudioContext() {
         if (!this.audioContext || this.audioContext.state === 'closed') {
             this.audioContext = this.createAudioContext();
         }
-        // Reanudar si está suspendido (política de autoplay de navegadores)
         if (this.audioContext.state === 'suspended') {
             this.audioContext.resume();
         }
         return this.audioContext;
     }
 
-    /**
-     * Un tono que va de startFreq a endFreq
-     */
     _playSweep({ startFreq, endFreq, duration, volume = 1, waveType = 'sine' }) {
         const audioCtx = this._getAudioContext();
         const oscillator = audioCtx.createOscillator();
@@ -110,9 +79,6 @@ export class SoundEffects {
         oscillator.stop(audioCtx.currentTime + duration);
     }
 
-    /**
-     * Una secuencia de notas
-     */
     _playMelody({ notes, interval, noteDuration = 0.15, volume = 1, waveType = 'sine' }) {
         const audioCtx = this._getAudioContext();
 

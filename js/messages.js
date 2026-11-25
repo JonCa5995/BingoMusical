@@ -1,18 +1,3 @@
-/**
- * Messages Module
- * Centraliza los textos de la interfaz. Solo contiene texto: sin imports ni lógica.
- *
- * - MSG: alertas y confirmaciones. Cada una es { title, message } (o una función que lo devuelve
- *   cuando lleva datos). Se muestran con ModalManager.showAlert / showConfirm.
- * - TEXT: el resto de textos (etiquetas, tooltips, mensajes de error que se devuelven, textos
- *   del documento imprimible...), agrupados por zona.
- * - SHORTCUTS: filas de la ayuda de atajos de teclado.
- *
- * No entran aquí: el texto fijo de index.html, los mensajes de consola (son para quien programa)
- * ni el HTML/CSS del documento imprimible, solo sus textos.
- */
-
-// Títulos que se repiten en varias alertas
 const T = {
     insufficientSongs: 'Canciones Insuficientes',
     emptyList: 'Lista Vacía',
@@ -24,7 +9,6 @@ const T = {
 
 const msg = (title, message) => ({title, message});
 
-/** Títulos por defecto de los modales cuando no se indica otro */
 export const DEFAULT_TITLES = {
     alert: 'Información',
     confirm: 'Confirmar'
@@ -34,7 +18,6 @@ export const DEFAULT_TITLES = {
 // ALERTAS Y CONFIRMACIONES
 // ============================================================
 export const MSG = {
-    // Acciones bloqueadas porque la partida ya ha empezado
     gameStarted: {
         changeConfig: msg(T.gameStarted, 'No puedes cambiar la configuración una vez que el juego ha iniciado.'),
         importList: msg(T.gameStarted, 'No puedes importar una lista una vez que el juego ha iniciado. Debes reiniciar el juego primero.'),
@@ -44,7 +27,6 @@ export const MSG = {
         deleteAllSongs: msg(T.gameStarted, 'No puedes eliminar canciones una vez iniciado el juego.')
     },
 
-    // Partida: LÍNEA, BINGO, reinicio y nombre
     game: {
         nameTooLong: (max) => msg('Nombre muy largo', `El nombre del juego no puede tener más de ${max} caracteres.`),
         lineaAlreadyCalled: msg('Línea Ya Cantada', 'La línea ya fue cantada. Solo puedes cantar línea una vez por juego.'),
@@ -54,7 +36,6 @@ export const MSG = {
         confirmRestart: msg('Confirmar Reinicio', '¿Estás seguro de que quieres reiniciar el juego? Esto limpiará el historial y el progreso actual.')
     },
 
-    // Configuración
     config: {
         saved: (titleSeconds, iconSeconds) => msg(
             'Configuración Guardada',
@@ -64,7 +45,6 @@ export const MSG = {
         )
     },
 
-    // Canciones
     songs: {
         iconLocked: msg(T.songPlayed, 'No puedes cambiar el icono de una canción que ya fue reproducida.'),
         noAudioFile: msg('Sin Archivo', 'Esta canción no tiene archivo de audio.'),
@@ -76,12 +56,10 @@ export const MSG = {
         allDeleted: msg(T.emptyList, 'Todas las canciones han sido eliminadas.')
     },
 
-    // Selector de iconos
     icons: {
         songNotFound: msg(T.error, 'Canción no encontrada')
     },
 
-    // Exportar e importar la lista
     playlist: {
         exportOk: (message) => msg('Exportación Exitosa', message),
         exportFailed: (error) => msg('Error al Exportar', error),
@@ -91,7 +69,6 @@ export const MSG = {
         importOk: (count, folder) => msg('Importación Exitosa', `Lista importada con ${count} canciones.\n\nLos archivos de audio deben estar en: ${folder}`)
     },
 
-    // Cartones
     cartones: {
         existing: (count, action) => msg('Cartones Existentes', `Tienes ${count} cartón(es) generado(s). Al ${action}, se borrarán TODOS los cartones.\n\n¿Deseas continuar?`),
         noneToPrint: msg(T.noCartones, 'No hay cartones guardados para imprimir.'),
@@ -112,23 +89,19 @@ export const MSG = {
 // TEXTOS DE LA INTERFAZ
 // ============================================================
 export const TEXT = {
-    // Qué se iba a hacer cuando se avisa de que hay cartones (encaja en "Al ..., se borrarán TODOS los cartones")
     cartonActions: {
         addSongs: 'añadir canciones',
         changeIcon: 'cambiar el icono',
         deleteSong: 'eliminar esta canción'
     },
 
-    // Tiempos de revelado
     seconds: (count) => `${count} segundos`,
 
-    // Nombre del juego
     gameName: {
         locked: 'Nombre del juego bloqueado (juego iniciado o cartones generados)',
         editHint: (max) => `Edita el nombre del juego (máx. ${max} caracteres)`
     },
 
-    // Reproductor
     player: {
         currentSongAlt: 'Canción actual',
         pauseLabel: 'Pausar canción actual',
@@ -140,7 +113,6 @@ export const TEXT = {
         playedHistoryLabel: (title) => `Canción reproducida: ${title}`
     },
 
-    // Lista de canciones
     list: {
         empty: {
             title: 'No hay canciones cargadas',
@@ -170,14 +142,12 @@ export const TEXT = {
         deleteLabel: (title) => `Eliminar ${title}`
     },
 
-    // Selector de iconos
     icons: {
         selectLabel: (icon) => `Seleccionar icono ${icon}`,
         inUse: 'Este icono ya está en uso',
         noResults: (query) => `No se encontraron iconos para "${query}"`
     },
 
-    // Tema y pantalla completa
     theme: {
         toLight: 'Cambiar a tema claro',
         toDark: 'Cambiar a tema oscuro'
@@ -187,7 +157,6 @@ export const TEXT = {
         enter: 'Activar pantalla completa'
     },
 
-    // Cartones (modales y errores)
     cartones: {
         optionsInfo: (count) => `Tienes ${count} cartón(es) guardado(s). ¿Qué deseas hacer?`,
         noneInfo: 'No tienes cartones guardados. Selecciona "Crear Nuevos" para generar.',
@@ -202,7 +171,6 @@ export const TEXT = {
         downloadLabel: (count) => `Descargar ${count} cartones de bingo`
     },
 
-    // Archivo de la lista (exportar e importar)
     playlist: {
         noSongsToExport: 'No hay canciones para exportar',
         downloadLabel: 'Descargar lista de canciones en formato JSON',
@@ -215,13 +183,11 @@ export const TEXT = {
         invalidFormat: 'Formato de archivo inválido'
     },
 
-    // Ayuda de atajos de teclado
     shortcuts: {
         helpTitle: '⌨️ Atajos de Teclado',
         helpHeader: 'ATAJOS DE TECLADO DISPONIBLES:'
     },
 
-    // Documento imprimible de cartones (solo sus textos; el HTML y el CSS están en CartonHtmlRenderer)
     document: {
         metaDescription: (gameName, count) => `Cartones de ${gameName} generados - ${count} cartones únicos`,
         title: (gameName) => `Cartones de ${gameName}`,
