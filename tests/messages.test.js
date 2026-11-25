@@ -4,7 +4,7 @@ import {MSG} from '../js/messages.js';
 import {ALERT_KIND} from '../js/constants.js';
 
 const REGLA_ANTIGUA = /error|inválido|insuficientes/i;
-const ARGUMENTOS = [['texto', 'pdf'], [['a', 'b'], 'pdf'], [3, 'pdf'], [['theme'], ['otro']], [[], ['otro']]];
+const ARGUMENTOS = [['texto', 'pdf'], [['a', 'b'], 'pdf'], [3, 'pdf'], [['theme'], ['otro']], [[], ['otro']], [{linked: [{title: 'a'}], missing: [{title: 'b'}], pendingCount: 2}]];
 
 const collectAlerts = () => {
     const alerts = [];
@@ -49,7 +49,7 @@ test('los 11 avisos que sonaban como error siguen siéndolo', () => {
 
     for (const trail of ['MSG.game.lineaNeedsSongs()', 'MSG.game.bingoNeedsSongs()', 'MSG.songs.notEnoughToPlay()', 'MSG.cartones.notEnoughSongs()',
         'MSG.icons.songNotFound', 'MSG.cartones.printFailed()', 'MSG.cartones.generateFailed()', 'MSG.playlist.exportFailed()',
-        'MSG.playlist.importFailed()', 'MSG.playlist.importNoSongs()', 'MSG.cartones.invalidCount()']) {
+        'MSG.playlist.importFailed()', 'MSG.playlist.importNoSongs', 'MSG.cartones.invalidCount()']) {
         assert.ok(errors.includes(trail), `falta ${trail}`);
     }
 });

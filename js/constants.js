@@ -67,6 +67,7 @@ export const DEFAULT_EFFECTS_VOLUME = 0.7;
 
 export const DEFAULT_SONGS_FOLDER = 'canciones/';
 export const AUDIO_FILE_EXTENSION = '.mp3';
+export const AUDIO_EXTENSIONS = /\.(mp3|wav|ogg|oga|m4a|aac|flac|opus|weba)$/i;
 export const LOGO_PATH = 'icon.png';
 export const DECORATIVE_ICON_PATH = 'img/icon-decorative.svg';
 export const STORAGE_PREFIX = 'bingoMusical_';

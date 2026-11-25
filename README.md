@@ -43,7 +43,8 @@ Al acabar el fragmento la canción se da por terminada, igual que si hubiera aca
 ### Listas
 
 - **Exportar lista** descarga un JSON con las canciones (título e icono), el nombre del juego y los cartones generados.
-- **Importar lista** lee ese JSON y busca los audios en la carpeta `canciones/` (convención: `canciones/<título>.mp3`). Los JSON no contienen el audio.
+- **Importar lista** lee ese JSON y busca los audios en la carpeta `canciones/` (convención: `canciones/<título>.mp3`). Los JSON no contienen el audio. Las canciones cuyo audio no se encuentra **se conservan como «Sin archivo»**, con su icono y sus cartones, en lugar de descartarse.
+- **Vincular audio** (🔗) abre un selector de carpeta y asigna a cada canción sin archivo el audio cuyo nombre, sin extensión, es igual a su título (sin distinguir mayúsculas, espacios sobrantes ni acentos descompuestos). Solo lee archivos de audio, no toca las canciones que ya tienen archivo y avisa de cuántas ha vinculado y cuáles quedan sin coincidencia. Se puede usar tantas veces como haga falta, también con la partida empezada. Sirve para recuperar el audio tras importar una lista en otro navegador o equipo, sin necesidad de un servidor con la carpeta `canciones/`.
 
 ### Ajustes
 

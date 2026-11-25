@@ -99,3 +99,20 @@ test('añadir canciones sin archivos, exportar sin canciones y borrar todo no fa
         click('#alert-ok');
     });
 });
+
+test('el botón de vincular audio abre el selector de carpeta', () => {
+    let clicked = 0;
+    get('#link-audio-input').click = () => { clicked++; };
+
+    click('#link-audio-btn');
+
+    assert.equal(clicked, 1);
+});
+
+test('vincular audio sin canciones avisa de que no hay a qué vincular', () => {
+    get('#link-audio-input').fire('change', {target: {files: [{name: 'Uno.mp3', type: 'audio/mpeg'}], value: 'ruta'}});
+
+    assert.equal(isOpen('#alert-modal'), true);
+    assert.ok(get('#alert-message').textContent.includes('No hay canciones'));
+    click('#alert-ok');
+});

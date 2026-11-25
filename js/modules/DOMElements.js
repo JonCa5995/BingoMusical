@@ -8,7 +8,7 @@ const GROUPS = {
     ],
     songs: [
         'addSongsInput', 'addSongsLabel', 'songsListElement', 'songsSection', 'deleteAllBtn', 'searchInput',
-        'filterStatus', 'sortOrder', 'exportListBtn', 'importListBtn', 'importFileInput'
+        'filterStatus', 'sortOrder', 'exportListBtn', 'importListBtn', 'importFileInput', 'linkAudioBtn', 'linkAudioInput'
     ],
     history: [
         'historyGrid', 'playedCounterSpan', 'totalCounterSpan', 'clearHistoryBtn'
@@ -153,6 +153,8 @@ const IDS = {
     restartBtn: 'restart-btn',
 
     exportListBtn: 'export-list',
+    linkAudioBtn: 'link-audio-btn',
+    linkAudioInput: 'link-audio-input',
     importListBtn: 'import-list',
     importFileInput: 'import-file',
 

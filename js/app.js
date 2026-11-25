@@ -22,6 +22,7 @@ import {CartonHtmlRenderer} from "./modules/CartonHtmlRenderer.js";
 import {CartonExporter} from "./modules/CartonExporter.js";
 import {SongListView} from "./modules/SongListView.js";
 import {PlaylistImporter} from "./modules/PlaylistImporter.js";
+import {linkAudioFiles} from "./modules/AudioLinker.js";
 import {deserializeCartones} from "./modules/CartonSerializer.js";
 import {
     CELEBRATION_DELAY_MS,
@@ -302,6 +303,8 @@ class BingoMusical {
         this._setupGameNameEventListeners();
 
         this.dom.songs.exportListBtn.addEventListener('click', () => this.exportPlaylist());
+        this.dom.songs.linkAudioBtn.addEventListener('click', () => this.dom.songs.linkAudioInput.click());
+        this.dom.songs.linkAudioInput.addEventListener('change', (e) => this.linkAudio(e));
         this.dom.songs.importListBtn.addEventListener('click', () => this.dom.songs.importFileInput.click());
         this.dom.songs.importFileInput.addEventListener('change', (e) => this.importPlaylist(e));
         this.dom.game.lineaBtn.addEventListener('click', () => this.triggerLinea());
@@ -503,6 +506,31 @@ class BingoMusical {
         }
     }
 
+    linkAudio(event) {
+        const files = Array.from(event.target.files);
+        this.clearFileInput(event);
+
+        if (files.length === 0) return;
+
+        if (this.songs.length === 0) {
+            this.dialogs.showAlert(MSG.audio.noSongsToLink);
+            return;
+        }
+
+        const result = linkAudioFiles(this.songs, files);
+
+        if (result.pendingCount === 0) {
+            this.dialogs.showAlert(MSG.audio.allLinked);
+        } else if (result.linked.length === 0) {
+            this.dialogs.showAlert(MSG.audio.noMatches(result.pendingCount, result.audioFiles));
+        } else {
+            this.sounds.play(SOUND.WIN);
+            this.refreshUI();
+            this.updateControls(this.audio.isPlaying);
+            this.dialogs.showAlert(MSG.audio.linked(result));
+        }
+    }
+
     async importPlaylist(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -520,14 +548,14 @@ class BingoMusical {
             return;
         }
 
-        const duplicates = await this._applyImportedPlaylist(result.playlist);
-        this._announceImportResult(duplicates);
+        const {duplicates, missing} = await this._applyImportedPlaylist(result.playlist);
+        this._announceImportResult(duplicates, missing);
         this.clearFileInput(event);
     }
 
     async _applyImportedPlaylist(playlist) {
         this.game.clearHistory();
-        const {songs, duplicates} = await this.importer.loadSongs(playlist.songs);
+        const {songs, duplicates, missing} = await this.importer.loadSongs(playlist.songs);
         this.songs = songs;
 
         this._setGameName(playlist.name || '');
@@ -535,7 +563,7 @@ class BingoMusical {
         this._loadImportedCartones(playlist.cartones);
         this.refreshUI();
 
-        return duplicates;
+        return {duplicates, missing};
     }
 
     _loadImportedCartones(cartones) {
@@ -546,7 +574,7 @@ class BingoMusical {
         }
     }
 
-    _announceImportResult(duplicates) {
+    _announceImportResult(duplicates, missing) {
         if (duplicates.length > 0) {
             this.sounds.play(SOUND.ERROR);
             this.dialogs.showAlert(MSG.playlist.importDuplicates(duplicates));
@@ -555,10 +583,10 @@ class BingoMusical {
         setTimeout(() => {
             if (this.songs.length === 0) {
                 this.sounds.play(SOUND.ERROR);
-                this.dialogs.showAlert(MSG.playlist.importNoSongs(this.songsFolder));
+                this.dialogs.showAlert(MSG.playlist.importNoSongs);
             } else {
                 this.sounds.play(SOUND.WIN);
-                this.dialogs.showAlert(MSG.playlist.importOk(this.songs.length, this.songsFolder));
+                this.dialogs.showAlert(MSG.playlist.importOk(this.songs.length, this.songsFolder, missing.length));
             }
         }, duplicates.length > 0 ? IMPORT_MESSAGE_DELAY_MS : 0);
     }

@@ -74,13 +74,25 @@ export const MSG = {
         songNotFound: errorMsg(T.error, 'Canción no encontrada')
     },
 
+    audio: {
+        noSongsToLink: msg(T.emptyList, 'No hay canciones a las que vincular audio. Importa una lista o agrega canciones primero.'),
+        allLinked: msg('Audio Completo', 'Todas las canciones de la lista ya tienen su archivo de audio.'),
+        noMatches: (pending, audioFiles) => errorMsg('Sin Coincidencias',
+            `Ningún archivo de la carpeta coincide con las ${pending} canciones sin audio (se han leído ${audioFiles} archivos de audio).\n\nEl nombre de cada archivo, sin la extensión, debe ser igual al título de la canción.`),
+        linked: ({linked, missing, pendingCount}) => msg('Audio Vinculado',
+            `Se han vinculado ${linked.length} de ${pendingCount} canciones sin audio.` +
+            (missing.length > 0 ? `\n\nSin coincidencia (${missing.length}):\n- ${missing.slice(0, 10).map(song => song.title).join('\n- ')}${missing.length > 10 ? '\n- ...' : ''}` : ''))
+    },
+
     playlist: {
         exportOk: (message) => msg('Exportación Exitosa', message),
         exportFailed: (error) => errorMsg('Error al Exportar', error),
         importFailed: (error) => errorMsg('Error de Importación', `Error al importar la lista: ${error}`),
         importDuplicates: (titles) => msg('Canciones Duplicadas Omitidas', `Se omitieron las siguientes canciones duplicadas:\n\n- ${titles.join('\n- ')}`),
-        importNoSongs: (folder) => errorMsg('Error al Importar', `Se han importado 0 canciones.\n\nRevisa que los archivos de audio estén en: ${folder}\ny que los nombres coincidan con los títulos.`),
-        importOk: (count, folder) => msg('Importación Exitosa', `Lista importada con ${count} canciones.\n\nLos archivos de audio deben estar en: ${folder}`)
+        importNoSongs: errorMsg('Error al Importar', 'La lista no contiene ninguna canción.'),
+        importOk: (count, folder, missing = 0) => msg('Importación Exitosa', missing > 0
+            ? `Lista importada con ${count} canciones, ${missing} de ellas sin archivo de audio: no estaban en ${folder}\n\nUsa el botón «Vincular audio» (🔗) y elige la carpeta donde están los audios; el nombre de cada archivo debe coincidir con el título de la canción.`
+            : `Lista importada con ${count} canciones.\n\nLos archivos de audio deben estar en: ${folder}`)
     },
 
     cartones: {
