@@ -48,7 +48,6 @@ export class IconManager {
     }
 
     openIconPicker(songId, songs, onIconSelected) {
-        // Comprueba que la canción existe y se puede cambiar
         const song = songs.find(s => s.id === songId);
         if (!song) return {success: false, alert: MSG.icons.songNotFound};
 
@@ -56,55 +55,59 @@ export class IconManager {
             return {success: false, alert: MSG.songs.iconLocked};
         }
 
-        // Prepara el modal para esa canción
         this.currentEditingSongId = songId;
         this.onIconSelected = onIconSelected;
         this.el.modalSongTitle.textContent = song.title;
 
-        // Crea los botones de los iconos
         const fragment = document.createDocumentFragment();
 
         for (const icon of availableIcons) {
-            const iconOption = document.createElement('button');
-            iconOption.type = 'button';
-            iconOption.className = 'icon-option';
-            iconOption.setAttribute('aria-label', TEXT.icons.selectLabel(icon));
-
-            const isUsed = this.isIconUsed(icon, songs);
-            const isCurrentSongIcon = icon === song.icon;
-
-            if (isCurrentSongIcon) {
-                iconOption.classList.add('selected');
-                iconOption.setAttribute('aria-pressed', 'true');
-            } else {
-                iconOption.setAttribute('aria-pressed', 'false');
-            }
-
-            if (isUsed && !isCurrentSongIcon) {
-                iconOption.style.opacity = '0.3';
-                iconOption.style.cursor = 'not-allowed';
-                iconOption.title = TEXT.icons.inUse;
-                iconOption.disabled = true;
-            } else {
-                iconOption.onclick = () => this.selectIcon(icon, songs);
-            }
-
-            iconOption.textContent = icon;
-            fragment.appendChild(iconOption);
+            fragment.appendChild(this._createIconOption(icon, song, songs));
         }
 
         this.el.iconPickerContainer.innerHTML = '';
         this.el.iconPickerContainer.appendChild(fragment);
 
-        // Abre el modal
+        this._showIconModal();
+        this.sounds.play(SOUND.CLICK);
+
+        return {success: true};
+    }
+
+    _createIconOption(icon, song, songs) {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'icon-option';
+        option.setAttribute('aria-label', TEXT.icons.selectLabel(icon));
+
+        const isUsed = this.isIconUsed(icon, songs);
+        const isCurrentSongIcon = icon === song.icon;
+
+        if (isCurrentSongIcon) {
+            option.classList.add('selected');
+            option.setAttribute('aria-pressed', 'true');
+        } else {
+            option.setAttribute('aria-pressed', 'false');
+        }
+
+        if (isUsed && !isCurrentSongIcon) {
+            option.style.opacity = '0.3';
+            option.style.cursor = 'not-allowed';
+            option.title = TEXT.icons.inUse;
+            option.disabled = true;
+        } else {
+            option.onclick = () => this.selectIcon(icon, songs);
+        }
+
+        option.textContent = icon;
+        return option;
+    }
+
+    _showIconModal() {
         this.el.iconModal.classList.remove('hidden');
         if (this.el.iconModal.showModal) {
             this.el.iconModal.showModal();
         }
-
-        this.sounds.play(SOUND.CLICK);
-
-        return {success: true};
     }
 
     closeIconModal() {
@@ -183,12 +186,10 @@ export class IconManager {
         const song = songs.find(s => s.id === this.currentEditingSongId);
         if (!song) return;
 
-        const reader = new FileReader();
-
-        // Guarda el callback antes de cerrar el modal
         const callback = this.onIconSelected;
 
-        const handleUpdate = () => {
+        this._readIconFile(file, (icon) => {
+            song.icon = icon;
             song.iconType = ICON_TYPE.IMAGE;
             this.sounds.play(SOUND.CLICK);
             this.closeIconModal();
@@ -196,29 +197,34 @@ export class IconManager {
             if (callback) {
                 callback();
             }
-        };
+        });
+    }
 
-        // Los PNG se reescalan; el resto se guarda tal cual
+    _readIconFile(file, onReady) {
+        const reader = new FileReader();
+
         reader.onload = (event) => {
             if (file.type === 'image/png') {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = CUSTOM_ICON_SIZE;
-                    canvas.height = CUSTOM_ICON_SIZE;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, CUSTOM_ICON_SIZE, CUSTOM_ICON_SIZE);
-                    song.icon = canvas.toDataURL('image/png');
-                    handleUpdate();
-                };
-                img.src = event.target.result;
+                this._resizeToIconSize(event.target.result, onReady);
             } else {
-                song.icon = event.target.result;
-                handleUpdate();
+                onReady(event.target.result);
             }
         };
 
         reader.readAsDataURL(file);
+    }
+
+    _resizeToIconSize(dataUrl, onReady) {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = CUSTOM_ICON_SIZE;
+            canvas.height = CUSTOM_ICON_SIZE;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, CUSTOM_ICON_SIZE, CUSTOM_ICON_SIZE);
+            onReady(canvas.toDataURL('image/png'));
+        };
+        img.src = dataUrl;
     }
 
     getRandomAvailableIcon(songs) {

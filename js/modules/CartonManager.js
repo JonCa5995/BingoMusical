@@ -41,17 +41,7 @@ export class CartonManager {
         const cellsHTML = carton.rows.flatMap(row =>
             row.cells.map(cell => {
                 const cellClass = cell.type === CELL_TYPE.SONG ? 'song' : 'decorative';
-                let icon;
-
-                if (cell.type === CELL_TYPE.SONG && cell.song) {
-                    if (cell.song.iconType === ICON_TYPE.IMAGE) {
-                        icon = `<img src="${escapeHTML(cell.song.icon)}" alt="${escapeHTML(cell.song.title)}" style="max-width: 90%; max-height: 90%;">`;
-                    } else {
-                        icon = escapeHTML(cell.song.icon);
-                    }
-                } else {
-                    icon = `<span class="decorative-icon">${DECORATIVE_ICON_HTML}</span>`;
-                }
+                const icon = this._previewCellIcon(cell);
 
                 return `<div class="preview-cell ${cellClass}">
                     ${icon}
@@ -72,51 +62,51 @@ export class CartonManager {
         `;
     }
 
+    _previewCellIcon(cell) {
+        if (cell.type === CELL_TYPE.SONG && cell.song) {
+            if (cell.song.iconType === ICON_TYPE.IMAGE) {
+                return `<img src="${escapeHTML(cell.song.icon)}" alt="${escapeHTML(cell.song.title)}" style="max-width: 90%; max-height: 90%;">`;
+            }
+            return escapeHTML(cell.song.icon);
+        }
+        return `<span class="decorative-icon">${DECORATIVE_ICON_HTML}</span>`;
+    }
+
     async printCartonesWithConfig(cartones, gameName, format = PRINT_FORMAT.HTML, options = {}) {
-        const {printAll, from: rawFrom, to: rawTo, primaryColor, secondaryColor} = options;
+        const {printAll, from, to, primaryColor, secondaryColor} = options;
 
         if (!cartones || cartones.length === 0) {
             return {success: false, error: TEXT.cartones.noneToPrint};
         }
 
         try {
-            let cartonesToPrint = cartones;
-
-            if (!printAll) {
-                // Filtra por rango
-                const from = rawFrom || 1;
-                const to = rawTo || cartones.length;
-
-                // Valida el rango
-                if (from < 1 || from > cartones.length || to < 1 || to > cartones.length || from > to) {
-                    return {
-                        success: false,
-                        error: TEXT.cartones.invalidRange(cartones.length)
-                    };
-                }
-
-                // Recorta por índice (empieza en 0)
-                cartonesToPrint = cartones.slice(from - 1, to);
+            const cartonesToPrint = printAll ? cartones : this._selectRange(cartones, from, to);
+            if (!cartonesToPrint) {
+                return {success: false, error: TEXT.cartones.invalidRange(cartones.length)};
             }
 
-            // Arma la configuración de impresión
-            const config = {
-                primaryColor,
-                secondaryColor,
-                gameName: gameName || DEFAULT_GAME_NAME
-            };
-
-            // Exporta en el formato elegido
             const exporter = this.exporters.get(format);
             if (!exporter) {
                 return {success: false, error: TEXT.cartones.unsupportedFormat(format)};
             }
-            await exporter(cartonesToPrint, config);
+
+            await exporter(cartonesToPrint, {primaryColor, secondaryColor, gameName: gameName || DEFAULT_GAME_NAME});
 
             return {success: true, count: cartonesToPrint.length};
         } catch (error) {
             return {success: false, error: error.message};
         }
+    }
+
+    _selectRange(cartones, rawFrom, rawTo) {
+        const from = rawFrom || 1;
+        const to = rawTo || cartones.length;
+
+        if (from < 1 || from > cartones.length || to < 1 || to > cartones.length || from > to) {
+            return null;
+        }
+
+        return cartones.slice(from - 1, to);
     }
 
     async generateCartones(songs, count, maxCartones, minRequired, showAlertCallback, existingCartones = []) {

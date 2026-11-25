@@ -25,36 +25,49 @@ export class CartonModals {
     }
 
     init() {
+        this._applyDefaults();
+        this.el.generateCartonesBtn.addEventListener('click', () => this.openOptions());
+        this._bindOptionsModal();
+        this._bindGenerationModal();
+        this._bindPrintModal();
+    }
+
+    _applyDefaults() {
         const el = this.el;
 
-        // Valores iniciales de la cantidad y de los colores
         el.cartonCountInput.max = MAX_CARTONS_GENERATED;
         el.cartonCountInput.value = DEFAULT_CARTON_COUNT;
         el.printPrimaryColorInput.value = DEFAULT_PRINT_PRIMARY_COLOR;
         el.printSecondaryColorInput.value = DEFAULT_PRINT_SECONDARY_COLOR;
         document.querySelector('.color-preview-print')?.style.setProperty('background-color', DEFAULT_PRINT_PRIMARY_COLOR);
         document.querySelector('.color-preview-print-secondary')?.style.setProperty('background-color', DEFAULT_PRINT_SECONDARY_COLOR);
+    }
 
-        el.generateCartonesBtn.addEventListener('click', () => this.openOptions());
+    _bindOptionsModal() {
+        const el = this.el;
 
-        // Modal de opciones
         this.modals.registerWithCloseButton(el.cartonOptionsModal, el.closeCartonOptionsModalBtn);
         el.createNewCartonesBtn.addEventListener('click', () => this.startGeneration(CARTON_MODE.NEW));
         el.addCartonesBtn.addEventListener('click', () => this.startGeneration(CARTON_MODE.ADD));
         el.printExistingCartonesBtn.addEventListener('click', () => this.printExisting());
         el.deleteAllCartonesBtn.addEventListener('click', () => this.deleteAll());
+    }
 
-        // Modal de generación
+    _bindGenerationModal() {
+        const el = this.el;
+
         this.modals.registerWithCloseButton(el.cartonModal, el.closeCartonModalBtn);
         el.generateSaveCartonesBtn.addEventListener('click', () => this.generate());
+    }
 
-        // Modal de impresión
+    _bindPrintModal() {
+        const el = this.el;
+
         this.modals.registerWithCloseButton(el.printModal, el.closePrintModalBtn);
         el.printHtmlBtn.addEventListener('click', () => this.print(PRINT_FORMAT.HTML));
         el.printPdfBtn.addEventListener('click', () => this.print(PRINT_FORMAT.PDF));
         el.previewPrintBtn.addEventListener('click', () => this.updatePreview());
 
-        // Desde/Hasta solo se ven con "rango"
         el.printRangeRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
                 const showRange = e.target.value === 'range';
@@ -62,7 +75,6 @@ export class CartonModals {
             });
         });
 
-        // La vista previa sigue a los colores
         el.printPrimaryColorInput.addEventListener('input', (e) => {
             document.querySelector('.color-preview-print').style.backgroundColor = e.target.value;
             this.updatePreview();
