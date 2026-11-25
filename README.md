@@ -82,7 +82,7 @@ El botón **«Automático»** (modo continuo) sirve para **reproducir las cancio
 
 En la configuración (⚙️), **«Duración del fragmento»** hace que cada canción suene solo unos segundos (de 1 a 120; con 0 suena entera). La casilla **«Empezar en un punto aleatorio»** elige al azar el comienzo, de modo que el fragmento siempre quepa dentro de la canción. Si la canción dura menos que el fragmento, suena entera.
 
-Al acabar el fragmento la canción se da por terminada, igual que si hubiera acabado sola: en el **modo continuo** pasa a la siguiente, y en una partida se queda esperando a «Siguiente». La barra de progreso y el tiempo se miden desde el inicio del fragmento. Los tiempos de revelado de título e icono también cuentan desde ese inicio; si el fragmento no supera el mayor de ellos, la configuración avisa de que se revelarán al terminar.
+Al acabar el fragmento la canción se da por terminada, igual que si hubiera acabado sola: en el **modo continuo** pasa a la siguiente, y en una partida se queda esperando a «Siguiente». La barra de progreso y los tiempos muestran **los valores reales de la canción** (por ejemplo `1:23 / 3:30`, no los del fragmento), y al hacer clic en la barra solo se puede saltar dentro del fragmento. Los tiempos de revelado de título e icono también cuentan desde ese inicio; si el fragmento no supera el mayor de ellos, la configuración avisa de que se revelarán al terminar.
 
 ### Listas
 

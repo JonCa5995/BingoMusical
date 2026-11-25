@@ -44,9 +44,8 @@ export class AudioManager {
 
     getTimeline() {
         const {currentTime, duration} = this.audioElement;
-        if (!this.clip) return {currentTime, duration};
 
-        return {currentTime: Math.max(0, currentTime - this.clip.start), duration: this.clip.end - this.clip.start};
+        return {currentTime, duration};
     }
 
     hasSongLoaded() {
@@ -118,11 +117,8 @@ export class AudioManager {
     seekToFraction(fraction) {
         if (!this.hasSongLoaded() || !Number.isFinite(this.audioElement.duration)) return;
 
-        const clamped = Math.min(Math.max(fraction, 0), 1);
-        const {start, length} = this.clip
-            ? {start: this.clip.start, length: this.clip.end - this.clip.start}
-            : {start: 0, length: this.audioElement.duration};
-        this.audioElement.currentTime = start + clamped * length;
+        const target = Math.min(Math.max(fraction, 0), 1) * this.audioElement.duration;
+        this.audioElement.currentTime = this.clip ? Math.min(Math.max(target, this.clip.start), this.clip.end) : target;
         this.sounds.play(SOUND.CLICK);
     }
 }

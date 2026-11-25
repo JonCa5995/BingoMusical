@@ -149,7 +149,7 @@ test('un fragmento de 0 segundos o ausente no se aplica', () => {
     }
 });
 
-test('la línea de tiempo y el avance se miden desde el inicio del fragmento', () => {
+test('con fragmento, la línea de tiempo marca los tiempos reales de la canción, no los del fragmento', () => {
     const seed = seedRandom(5);
     try {
         const {audio, manager} = build();
@@ -159,7 +159,7 @@ test('la línea de tiempo y el avance se miden desde el inicio del fragmento', (
         const {start} = manager.clip;
         audio.tick(start + 5);
 
-        assert.deepEqual(manager.getTimeline(), {currentTime: 5, duration: 20});
+        assert.deepEqual(manager.getTimeline(), {currentTime: start + 5, duration: 100});
     } finally {
         seed.restore();
     }
@@ -188,20 +188,21 @@ test('reiniciar y parar vuelven al inicio del fragmento, no al de la canción', 
     }
 });
 
-test('saltar en la barra de progreso se mide dentro del fragmento', () => {
+test('con fragmento, la barra representa la canción entera y saltar se queda dentro del fragmento', () => {
     const seed = seedRandom(11);
     try {
         const {audio, manager} = build();
 
         manager.play(song(), null, {seconds: 20, randomStart: true});
         audio.load(100);
-        const {start} = manager.clip;
+        const {start, end} = manager.clip;
 
-        manager.seekToFraction(0.5);
-        assert.ok(Math.abs(audio.currentTime - (start + 10)) < 1e-9);
-        manager.seekToFraction(2);
-        assert.ok(Math.abs(audio.currentTime - (start + 20)) < 1e-9);
-        manager.seekToFraction(-1);
+        manager.seekToFraction((start + 5) / 100);
+        assert.ok(Math.abs(audio.currentTime - (start + 5)) < 1e-9);
+
+        manager.seekToFraction(1);
+        assert.equal(audio.currentTime, end);
+        manager.seekToFraction(0);
         assert.equal(audio.currentTime, start);
     } finally {
         seed.restore();
