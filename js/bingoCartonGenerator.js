@@ -15,35 +15,41 @@ export class BingoCartonGenerator {
             throw new Error(TEXT.cartones.generatorNeedsSongs(MIN_SONGS_REQUIRED));
         }
 
+        const usedRows = new Set(existingCartones.flatMap(carton => this._rowKeys(carton)));
+        const startNumber = existingCartones.length + 1;
         const cartones = [];
 
-        const usedRows = new Set(
-            existingCartones.flatMap(carton => carton.rows.map(row => this.rowSongsKey(row)))
-        );
-
-        const startNumber = existingCartones.length + 1;
-
         for (let i = 0; i < count; i++) {
-            let carton;
-            let attempts = 0;
-
-            do {
-                carton = this.generateSingleCarton(songs, startNumber + i);
-                attempts++;
-
-                if (attempts > MAX_CARTON_GENERATION_ATTEMPTS) {
-                    throw new Error(TEXT.cartones.notUnique);
-                }
-            } while (this.isDuplicateCarton(carton, usedRows));
-
-            for (const row of carton.rows) {
-                usedRows.add(this.rowSongsKey(row));
-            }
-
-            cartones.push(carton);
+            cartones.push(this._generateUniqueCarton(songs, startNumber + i, usedRows));
         }
 
         return cartones;
+    }
+
+    _generateUniqueCarton(songs, number, usedRows) {
+        let carton;
+        let keys;
+        let attempts = 0;
+
+        do {
+            carton = this.generateSingleCarton(songs, number);
+            keys = this._rowKeys(carton);
+            attempts++;
+
+            if (attempts > MAX_CARTON_GENERATION_ATTEMPTS) {
+                throw new Error(TEXT.cartones.notUnique);
+            }
+        } while (keys.some(key => usedRows.has(key)));
+
+        for (const key of keys) {
+            usedRows.add(key);
+        }
+
+        return carton;
+    }
+
+    _rowKeys(carton) {
+        return carton.rows.map(row => this.rowSongsKey(row));
     }
 
     generateSingleCarton(songs, cartonNumber) {
@@ -103,10 +109,6 @@ export class BingoCartonGenerator {
             if (!positions.includes(pos)) positions.push(pos);
         }
         return positions.sort((a, b) => a - b);
-    }
-
-    isDuplicateCarton(carton, usedRows) {
-        return carton.rows.some(row => usedRows.has(this.rowSongsKey(row)));
     }
 
     rowSongsKey(row) {
