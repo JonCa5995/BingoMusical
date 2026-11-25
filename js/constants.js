@@ -19,7 +19,6 @@ export const MIN_SONGS_FOR_BINGO = SONGS_PER_CARTON;
 
 // Límites de generación
 export const MAX_CARTON_GENERATION_ATTEMPTS = 1000;
-export const MAX_ROW_GENERATION_ATTEMPTS = 100;
 
 // Tiempos por defecto (en segundos)
 export const DEFAULT_TITLE_REVEAL_TIME = 5;

@@ -3,6 +3,7 @@
  * Gestiona la persistencia de datos (export/import JSON y localStorage)
  */
 import {downloadFile, slugify} from '../utils.js';
+import {serializeCartones} from './CartonSerializer.js';
 
 export class StorageManager {
     STORAGE_PREFIX = 'bingoMusical_';
@@ -86,17 +87,7 @@ export class StorageManager {
                     icon: song.icon,
                     iconType: song.iconType || 'emoji',
                 })),
-                cartones: cartones.map(carton => ({
-                    id: carton.id,
-                    songs: carton.songs.map(s => s.id),
-                    rows: carton.rows.map(row => ({
-                        cells: row.cells.map(cell => ({
-                            position: cell.position,
-                            songId: cell.type === 'song' ? cell.song.id : null
-                        }))
-                    })),
-                    generatedAt: carton.generatedAt
-                }))
+                cartones: serializeCartones(cartones)
             };
 
             const date = new Date().toISOString().split('T')[0];

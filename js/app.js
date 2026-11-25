@@ -15,6 +15,7 @@ import {CartonHtmlRenderer} from "./modules/CartonHtmlRenderer.js";
 import {CartonExporter} from "./modules/CartonExporter.js";
 import {SongListView} from "./modules/SongListView.js";
 import {PlaylistImporter} from "./modules/PlaylistImporter.js";
+import {deserializeCartones} from "./modules/CartonSerializer.js";
 import {
     DEFAULT_GAME_NAME,
     DEFAULT_SONGS_FOLDER,
@@ -541,7 +542,7 @@ class BingoMusical {
 
         // La importación reemplaza la lista actual
         this.game.clearHistory();
-        const { songs, duplicates } = await this.importer.loadSongs(playlist.songs);
+        const {songs, duplicates} = await this.importer.loadSongs(playlist.songs);
         this.songs = songs;
 
         // Cargar el nombre del juego desde el playlist
@@ -551,9 +552,8 @@ class BingoMusical {
 
         // Cargar cartones del playlist (o limpiar los anteriores, que apuntan a canciones ya descartadas)
         if (Array.isArray(playlist.cartones) && playlist.cartones.length > 0) {
-            // Reconstruir cartones con referencias a las canciones actuales
-            const reconstructedCartones = this.carton.reconstructCartones(playlist.cartones, this.songs);
-            this.game.setCartones(reconstructedCartones);
+            // Pasar de la forma guardada a la de memoria, enlazando con las canciones actuales
+            this.game.setCartones(deserializeCartones(playlist.cartones, this.songs));
         } else {
             this.game.clearCartones();
         }
@@ -1147,12 +1147,7 @@ class BingoMusical {
 
         this.audio.playEffect('start');
 
-        const result = await this.carton.printCartonesWithConfig(
-            existingCartones,
-            this.songs,
-            gameName,
-            format
-        );
+        const result = await this.carton.printCartonesWithConfig(existingCartones, gameName, format);
 
         if (result.success) {
             this.audio.playEffect('win');

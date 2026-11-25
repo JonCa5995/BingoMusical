@@ -2,9 +2,9 @@
  * CartonManager Module
  * Gestiona la generación, vista previa y descarga de cartones de bingo
  */
-import { DEFAULT_GAME_NAME } from '../constants.js';
-import { escapeHTML } from '../utils.js';
-import { DECORATIVE_ICON_HTML } from './CartonHtmlRenderer.js';
+import {DEFAULT_GAME_NAME} from '../constants.js';
+import {escapeHTML} from '../utils.js';
+import {DECORATIVE_ICON_HTML} from './CartonHtmlRenderer.js';
 
 export class CartonManager {
     /**
@@ -31,21 +31,6 @@ export class CartonManager {
      */
     registerExporter(format, exporter) {
         this.exporters.set(format, exporter);
-    }
-
-    /**
-     * Prepara cartones para impresión, reconstruyéndolos si es necesario
-     * @param {Array} cartones - Cartones a preparar
-     * @param {Array} songs - Lista de canciones para reconstrucción
-     * @returns {Array} - Cartones listos para imprimir
-     */
-    prepareCartonesForPrint(cartones, songs) {
-        const firstCell = cartones[0]?.rows?.[0]?.cells?.[0];
-        const needsReconstruction = firstCell?.songId !== undefined && !firstCell?.song;
-
-        return needsReconstruction
-            ? this.reconstructCartones(cartones, songs)
-            : cartones;
     }
 
 
@@ -79,14 +64,14 @@ export class CartonManager {
      * Genera HTML para la vista previa del cartón
      */
     generatePreviewHTML(carton, config, gameName = '') {
-        const { primaryColor, secondaryColor } = config;
+        const {primaryColor, secondaryColor} = config;
         const displayName = escapeHTML(gameName || DEFAULT_GAME_NAME);
 
-        const cellsHTML = carton.rows.flatMap(row => 
+        const cellsHTML = carton.rows.flatMap(row =>
             row.cells.map(cell => {
                 const cellClass = cell.type === 'song' ? 'song' : 'decorative';
                 let icon;
-                
+
                 if (cell.type === 'song' && cell.song) {
                     // Celda con canción
                     if (cell.song.iconType === 'image') {
@@ -98,13 +83,13 @@ export class CartonManager {
                     // Celda decorativa
                     icon = `<span class="decorative-icon">${DECORATIVE_ICON_HTML}</span>`;
                 }
-                    
+
                 return `<div class="preview-cell ${cellClass}">
                     ${icon}
                 </div>`;
             })
         ).join('');
-        
+
         return `
             <div class="preview-carton" style="color: ${primaryColor}; border-color: ${primaryColor};">
                 <div class="preview-carton-header" style="border-color: ${primaryColor};">
@@ -122,9 +107,9 @@ export class CartonManager {
     /**
      * Imprime cartones con configuración personalizada del modal
      */
-    async printCartonesWithConfig(cartones, songs, gameName, format = 'html') {
+    async printCartonesWithConfig(cartones, gameName, format = 'html') {
         if (!cartones || cartones.length === 0) {
-            return { success: false, error: 'No hay cartones para imprimir' };
+            return {success: false, error: 'No hay cartones para imprimir'};
         }
 
         try {
@@ -149,8 +134,6 @@ export class CartonManager {
                 cartonesToPrint = cartones.slice(from - 1, to);
             }
 
-            const cartonesParaImprimir = this.prepareCartonesForPrint(cartonesToPrint, songs);
-
             // Obtener configuración del modal de impresión
             const config = {
                 primaryColor: this.dom.printPrimaryColorInput.value,
@@ -160,13 +143,13 @@ export class CartonManager {
 
             const exporter = this.exporters.get(format);
             if (!exporter) {
-                return { success: false, error: `Formato de impresión no soportado: ${format}` };
+                return {success: false, error: `Formato de impresión no soportado: ${format}`};
             }
-            await exporter(cartonesParaImprimir, config);
+            await exporter(cartonesToPrint, config);
 
-            return { success: true, count: cartonesParaImprimir.length };
+            return {success: true, count: cartonesToPrint.length};
         } catch (error) {
-            return { success: false, error: error.message };
+            return {success: false, error: error.message};
         }
     }
 
@@ -181,7 +164,7 @@ export class CartonManager {
                 `Por favor ingresa un número válido entre 1 y ${maxCartones}.`,
                 'Número Inválido'
             );
-            return { success: false };
+            return {success: false};
         }
 
         const totalSongs = songs.filter(s => s.file).length;
@@ -190,7 +173,7 @@ export class CartonManager {
                 `Necesitas al menos ${minRequired} canciones cargadas para poder generar cartones.`,
                 'Canciones Insuficientes'
             );
-            return { success: false };
+            return {success: false};
         }
 
         this.audio.playEffect('start');
@@ -201,64 +184,11 @@ export class CartonManager {
             const cartones = this.cartonGenerator.generateCartones(songs, count, cartonesToPass);
 
             this.audio.playEffect('win');
-            return { success: true, cartones };
+            return {success: true, cartones};
         } catch (error) {
             showAlertCallback(`Error al generar cartones: ${error.message}`, 'Error');
-            return { success: false };
+            return {success: false};
         }
     }
 
-    /**
-     * Reconstruye cartones desde datos almacenados
-     */
-    reconstructCartones(cartonesData, songs) {
-        // Crear mapa de canciones por ID (una sola vez para todos los cartones)
-        const songMap = new Map(songs.map(s => [s.id, s]));
-
-        return cartonesData.map(cartonData => {
-            // Reconstruir filas con referencias a canciones actuales
-            const rows = cartonData.rows.map(rowData => ({
-                cells: rowData.cells.map(cellData => {
-                    // Inferir tipo desde songId: si es null → decorativa, si tiene valor → song
-                    if (cellData.songId !== null) {
-                        const song = songMap.get(cellData.songId);
-
-                        // Validar que la canción existe
-                        if (!song) {
-                            console.warn(`Canción con ID ${cellData.songId} no encontrada`);
-                            // Convertir a celda decorativa si la canción no existe
-                            return {
-                                type: 'decorative',
-                                position: cellData.position
-                            };
-                        }
-
-                        return {
-                            type: 'song',
-                            position: cellData.position,
-                            song: song, // Esto incluye id, title, icon, iconType, etc.
-                            marked: false // Siempre se inicializa en false (no se persiste)
-                        };
-                    } else {
-                        return {
-                            type: 'decorative',
-                            position: cellData.position
-                        };
-                    }
-                })
-            }));
-
-            // Reconstruir lista de canciones del cartón
-            const cartonSongs = cartonData.songs
-                .map(songId => songMap.get(songId))
-                .filter(Boolean); // Filtrar canciones que ya no existan
-
-            return {
-                id: cartonData.id,
-                rows: rows,
-                songs: cartonSongs,
-                generatedAt: cartonData.generatedAt
-            };
-        });
-    }
 }

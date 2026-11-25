@@ -1,11 +1,10 @@
 import {
-    MIN_SONGS_REQUIRED,
-    SONGS_PER_CARTON,
-    ROWS_PER_CARTON,
     CELLS_PER_ROW,
-    SONGS_IN_ROW,
     MAX_CARTON_GENERATION_ATTEMPTS,
-    MAX_ROW_GENERATION_ATTEMPTS
+    MIN_SONGS_REQUIRED,
+    ROWS_PER_CARTON,
+    SONGS_IN_ROW,
+    SONGS_PER_CARTON
 } from "./constants.js";
 
 /**
@@ -20,22 +19,12 @@ export class BingoCartonGenerator {
         }
 
         const cartones = [];
-        const usedCombinations = new Set();
 
-        // Agregar combinaciones de cartones existentes al set
-        for (const existingCarton of existingCartones) {
-            for (const row of existingCarton.rows) {
-                const songIds = row.cells
-                    .filter(c => c.type === 'song')
-                    .map(c => c.song ? c.song.id : c.songId)
-                    .filter(id => id)
-                    .sort((a, b) => a - b)
-                    .join('-');
-                if (songIds) {
-                    usedCombinations.add(songIds);
-                }
-            }
-        }
+        // Grupos de canciones ya usados en alguna fila (de los cartones existentes y de los nuevos).
+        // Dos filas con las mismas canciones permitirían cantar LÍNEA a dos cartones a la vez.
+        const usedRows = new Set(
+            existingCartones.flatMap(carton => carton.rows.map(row => this.rowSongsKey(row)))
+        );
 
         // Calcular el número de inicio para los nuevos cartones
         const startNumber = existingCartones.length + 1;
@@ -51,11 +40,10 @@ export class BingoCartonGenerator {
                 if (attempts > MAX_CARTON_GENERATION_ATTEMPTS) {
                     throw new Error('No se pudieron generar cartones únicos suficientes. Intenta con menos cartones.');
                 }
-            } while (this.isDuplicateCarton(carton, usedCombinations));
+            } while (this.isDuplicateCarton(carton, usedRows));
 
             for (const row of carton.rows) {
-                const songIds = row.cells.filter(c => c.type === 'song').map(c => c.song.id).sort((a, b) => a - b).join('-');
-                usedCombinations.add(songIds);
+                usedRows.add(this.rowSongsKey(row));
             }
 
             cartones.push(carton);
@@ -65,24 +53,13 @@ export class BingoCartonGenerator {
     }
 
     generateSingleCarton(songs, cartonNumber) {
+        // Las 12 canciones son distintas, así que las filas de un mismo cartón nunca se repiten
         const selectedSongs = this.selectRandomSongs(songs, SONGS_PER_CARTON);
         const rows = [];
-        const usedRowCombinations = new Set();
 
         for (let rowIndex = 0; rowIndex < ROWS_PER_CARTON; rowIndex++) {
-            let row;
-            let attempts = 0;
-
-            do {
-                const rowSongs = selectedSongs.slice(rowIndex * SONGS_IN_ROW, (rowIndex + 1) * SONGS_IN_ROW);
-                row = this.generateRow(rowSongs);
-                attempts++;
-
-                if (attempts > MAX_ROW_GENERATION_ATTEMPTS) break;
-            } while (this.isDuplicateRow(row, usedRowCombinations));
-
-            usedRowCombinations.add(this.getRowKey(row));
-            rows.push(row);
+            const rowSongs = selectedSongs.slice(rowIndex * SONGS_IN_ROW, (rowIndex + 1) * SONGS_IN_ROW);
+            rows.push(this.generateRow(rowSongs));
         }
 
         return {
@@ -137,15 +114,18 @@ export class BingoCartonGenerator {
         return positions.sort((a, b) => a - b);
     }
 
-    isDuplicateCarton(carton, usedCombinations) {
-        return carton.rows.some(row => usedCombinations.has(this.getRowKey(row)));
+    isDuplicateCarton(carton, usedRows) {
+        return carton.rows.some(row => usedRows.has(this.rowSongsKey(row)));
     }
 
-    isDuplicateRow(row, usedRows) {
-        return usedRows.has(this.getRowKey(row));
-    }
-
-    getRowKey(row) {
-        return row.cells.filter(c => c.type === 'song').map(c => `${c.song.id}-${c.position}`).join('|');
+    /**
+     * Clave de una fila: los IDs de sus canciones ordenados (la posición no importa para cantar LÍNEA)
+     */
+    rowSongsKey(row) {
+        return row.cells
+            .filter(cell => cell.type === 'song')
+            .map(cell => cell.song.id)
+            .sort((a, b) => a - b)
+            .join('-');
     }
 }
