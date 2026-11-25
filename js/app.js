@@ -13,6 +13,8 @@ import {CartonManager} from "./modules/CartonManager.js";
 import {KeyboardShortcuts} from "./modules/KeyboardShortcuts.js";
 import {CartonHtmlRenderer} from "./modules/CartonHtmlRenderer.js";
 import {CartonExporter} from "./modules/CartonExporter.js";
+import {SongListView} from "./modules/SongListView.js";
+import {PlaylistImporter} from "./modules/PlaylistImporter.js";
 import {
     DEFAULT_GAME_NAME,
     DEFAULT_SONGS_FOLDER,
@@ -24,7 +26,6 @@ import {
 class BingoMusical {
     constructor() {
         this.songs = [];
-        this.continuousMode = false;
         this.listRevealTimers = [];
 
         this.cartonGenerator = new BingoCartonGenerator();
@@ -41,6 +42,30 @@ class BingoMusical {
         this.carton = new CartonManager(this.dom, this.audio, this.cartonGenerator,
             new CartonExporter(new CartonHtmlRenderer())
         );
+        this.importer = new PlaylistImporter({
+            songsFolder: this.songsFolder,
+            songManager: this.songManager,
+            getRandomIcon: (songs) => this.icons.getRandomAvailableIcon(songs)
+        });
+        this.songList = new SongListView({
+            ui: this.ui,
+            songManager: this.songManager,
+            filterControls: {
+                searchInput: this.dom.searchInput,
+                filterStatus: this.dom.filterStatus,
+                sortOrder: this.dom.sortOrder
+            },
+            getSongs: () => this.songs,
+            getPlaybackState: () => ({
+                currentSongId: this.game.getCurrentSong(),
+                gameStarted: this.game.isGameStarted()
+            }),
+            handlers: {
+                onIconClick: (song) => this.onSongIconClick(song),
+                onSongClick: (song) => this.onSongClick(song),
+                onDelete: (song) => this.deleteSong(song.id)
+            }
+        });
 
         this.init();
     }
@@ -49,18 +74,9 @@ class BingoMusical {
         this.setupEventListeners();
         this.setupDragAndDrop();
         this.settings.loadThemePreference();
-        this.setupDebouncing();
         this.renderSongsList();
         this.updateCounters();
         this.updateControls(false);
-    }
-
-    setupDebouncing() {
-        let debounceTimer;
-        this.debouncedFilterAndSort = () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => this.filterAndSortSongs(), 300);
-        };
     }
 
     _setupPlayerEventListeners() {
@@ -93,10 +109,8 @@ class BingoMusical {
         this.dom.clearHistoryBtn.addEventListener('click', () => this.reiniciarJuego());
         this.dom.shuffleAllBtn.addEventListener('click', () => this.toggleContinuousMode());
 
-        // Event listeners para búsqueda y filtrado con debouncing
-        this.dom.searchInput.addEventListener('input', () => this.debouncedFilterAndSort());
-        this.dom.filterStatus.addEventListener('change', () => this.filterAndSortSongs());
-        this.dom.sortOrder.addEventListener('change', () => this.filterAndSortSongs());
+        // Búsqueda, filtro y orden de la lista
+        this.songList.bindFilterControls();
 
         // Event listener para eliminar todas las canciones
         this.dom.deleteAllBtn.addEventListener('click', () => this.deleteAllSongs());
@@ -244,7 +258,7 @@ class BingoMusical {
     playPauseOnSpace() {
         if (this.audio.isPlaying) {
             this.pauseSong();
-        } else if (this.game.currentSongIndex !== null) {
+        } else if (this.game.getCurrentSong() !== null) {
             this.pauseSong(); // Esto actúa como resume
         } else if (this.songs.length >= MIN_SONGS_REQUIRED) {
             this.playRandomSong();
@@ -253,7 +267,7 @@ class BingoMusical {
 
     nextSongOnN() {
         if (this.game.isGameStarted()) {
-            if (!this.game.bingoCompleted) {
+            if (!this.game.isBingoCompleted()) {
                 this.playRandomSong();
             }
         } else {
@@ -525,64 +539,10 @@ class BingoMusical {
 
         const playlist = result.playlist;
 
-        // Reset lists for replacement behavior
-        this.songs = [];
-        this.game.playedSongs = [];
-        this.songManager.resetIdCounter();
-
-        const duplicates = [];
-        const candidates = [];
-        const titlesAdded = new Set();
-        const usedIcons = new Set();
-        const usedIds = new Set();
-
-        // 1) Preparar los datos de cada canción (síncrono)
-        for (const songData of playlist.songs) {
-            const title = songData.title;
-
-            if (titlesAdded.has(title)) {
-                duplicates.push(title);
-                continue;
-            }
-
-            let {icon, iconType = 'emoji'} = songData;
-
-            if (!icon || usedIcons.has(icon)) {
-                // this.songs está vacío durante la importación: excluir los iconos ya asignados
-                const assigned = [...usedIcons].map(usedIcon => ({icon: usedIcon, iconType: 'emoji'}));
-                icon = this.icons.getRandomAvailableIcon(assigned);
-                iconType = 'emoji';
-            }
-
-            usedIcons.add(icon);
-            titlesAdded.add(title);
-
-            // Conservar el ID original para que los cartones importados
-            // sigan apuntando a la misma canción
-            const hasValidId = Number.isInteger(songData.id) && !usedIds.has(songData.id);
-            const id = hasValidId ? songData.id : null;
-            if (hasValidId) usedIds.add(id);
-
-            candidates.push({id, title, icon, iconType, audioPath: this.songsFolder + title + '.mp3'});
-        }
-
-        // 2) Descargar todos los audios en paralelo, con una sola petición por canción
-        const loaded = await Promise.all(candidates.map(async candidate => {
-            try {
-                const url = this.songsFolder + encodeURIComponent(candidate.title) + '.mp3';
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return {...candidate, file: await response.blob(), played: false};
-            } catch {
-                console.warn(`Archivo no encontrado: ${candidate.audioPath}`);
-                return null;
-            }
-        }));
-        const newSongs = loaded.filter(Boolean);
-
-        // Asignar IDs nuevos solo a las canciones sin ID válido, sin colisionar con los conservados
-        this.songManager.assignMissingIds(newSongs);
-        this.songs = newSongs;
+        // La importación reemplaza la lista actual
+        this.game.clearHistory();
+        const { songs, duplicates } = await this.importer.loadSongs(playlist.songs);
+        this.songs = songs;
 
         // Cargar el nombre del juego desde el playlist
         const gameName = playlist.name || '';
@@ -710,7 +670,7 @@ class BingoMusical {
     updateUIState() {
         this.ui.updateUIState(
             this.game.isGameStarted(),
-            this.continuousMode,
+            this.game.isContinuousMode(),
             () => this.toggleContinuousMode()
         );
 
@@ -726,136 +686,25 @@ class BingoMusical {
     }
 
 
-    setRenderSongIconTitle(song) {
-        return this.ui.getSongIconTitle(song, this.game.isGameStarted());
+    // Qué ocurre al interactuar con una canción de la lista (SongListView solo avisa)
+    onSongIconClick(song) {
+        if (song.played) {
+            this.showAlert('No puedes cambiar el icono de una canción que ya fue reproducida.', 'Canción Ya Reproducida');
+        } else {
+            this.openIconPicker(song.id);
+        }
     }
 
-    setRenderSongIconHtml(song) {
-        return this.ui.getSongIconHtml(song);
-    }
-
-    createSongItemElement(song) {
-        const li = document.createElement('li');
-        li.className = `song-item ${song.played ? 'played' : ''} ${this.game.getCurrentSong() === song.id ? 'playing' : ''}`;
-        li.setAttribute('role', 'listitem');
-
-        const iconTitle = this.setRenderSongIconTitle(song);
-        const iconCursor = (song.played || this.game.isGameStarted()) ? 'not-allowed' : 'pointer';
-        const iconHtml = this.setRenderSongIconHtml(song);
-        const iconDisabled = (song.played || this.game.isGameStarted()) ? 'disabled' : '';
-
-        let songStateLabel = this.ui.getSongStateLabel(song);
-
-        const iconBtn = document.createElement('button');
-        iconBtn.type = 'button';
-        iconBtn.className = 'song-item-icon';
-        iconBtn.dataset.songId = song.id;
-        iconBtn.title = iconTitle;
-        iconBtn.style.cursor = iconCursor;
-        iconBtn.setAttribute('aria-label', `Cambiar icono de ${song.title}`);
-        if (iconDisabled) iconBtn.disabled = true;
-        iconBtn.innerHTML = iconHtml;
-
-        // Si es la canción actualmente reproduciéndose y el juego ha iniciado, ocultar el icono hasta revelarlo
-        if (this.game.getCurrentSong() === song.id && this.game.isGameStarted() && song.hideIcon) {
-            iconBtn.style.opacity = '0';
+    onSongClick(song) {
+        // Fuera de partida, pulsar una canción la escucha
+        if (song.file && !this.game.isGameStarted()) {
+            this.audio.playEffect('click');
+            this.playSong(song.id);
         }
-
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'song-item-info';
-
-        const titleStrong = document.createElement('strong');
-        titleStrong.className = 'song-item-title';
-        titleStrong.dataset.songId = song.id;
-        titleStrong.textContent = song.title;
-
-        // Si es la canción actualmente reproduciéndose y el juego ha iniciado, ocultar el título hasta revelarlo
-        if (this.game.getCurrentSong() === song.id && this.game.isGameStarted() && song.hideTitle) {
-            titleStrong.style.opacity = '0';
-        }
-
-        const statusDiv = document.createElement('div');
-        statusDiv.className = 'song-item-status';
-        statusDiv.setAttribute('role', 'status');
-        statusDiv.setAttribute('aria-live', 'polite');
-        statusDiv.textContent = songStateLabel;
-
-        infoDiv.appendChild(titleStrong);
-        infoDiv.appendChild(statusDiv);
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.type = 'button';
-        deleteBtn.className = 'song-item-delete';
-        deleteBtn.title = 'Eliminar canción';
-        deleteBtn.setAttribute('aria-label', `Eliminar ${song.title}`);
-        deleteBtn.innerHTML = '<span aria-hidden="true">❌</span>';
-
-        // Delegación de eventos optimizada
-        iconBtn.onclick = (e) => {
-            e.stopPropagation();
-            if (song.played) {
-                this.showAlert('No puedes cambiar el icono de una canción que ya fue reproducida.', 'Canción Ya Reproducida');
-            } else {
-                this.openIconPicker(song.id);
-            }
-        };
-
-        li.onclick = () => {
-            if (song.file && !this.game.isGameStarted()) {
-                this.audio.playEffect('click');
-                this.playSong(song.id);
-            }
-        };
-
-        deleteBtn.onclick = (e) => {
-            e.stopPropagation();
-            this.deleteSong(song.id);
-        };
-
-        li.appendChild(iconBtn);
-        li.appendChild(infoDiv);
-        li.appendChild(deleteBtn);
-
-        return li;
     }
 
     renderSongsList() {
-        // Verificar si hay filtros activos
-        const hasSearchTerm = this.dom.searchInput.value.trim() !== '';
-        const hasFilterStatus = this.dom.filterStatus.value !== 'all';
-        const hasSortOrder = this.dom.sortOrder.value !== 'default';
-
-        // Si hay filtros activos, usar filterAndSortSongs en lugar de renderizar todo
-        if (hasSearchTerm || hasFilterStatus || hasSortOrder) {
-            this.filterAndSortSongs();
-        } else {
-            // Si no hay filtros, renderizar toda la lista
-            this.ui.renderSongsList(
-                this.songs,
-                this.getTotalSongsWithFiles(),
-                (song) => this.createSongItemElement(song)
-            );
-        }
-    }
-
-    filterAndSortSongs() {
-        // Usar SongManager para filtrar y ordenar
-        const filters = {
-            searchTerm: this.dom.searchInput.value,
-            filterStatus: this.dom.filterStatus.value,
-            sortOrder: this.dom.sortOrder.value
-        };
-
-        const filteredSongs = this.songManager.filterAndSort(this.songs, filters);
-        this.renderFilteredSongsList(filteredSongs);
-    }
-
-    renderFilteredSongsList(songsToShow) {
-        this.ui.renderFilteredSongsList(
-            songsToShow,
-            this.getTotalSongsWithFiles(),
-            (song) => this.createSongItemElement(song)
-        );
+        this.songList.render();
     }
 
     updateCounters() {
@@ -892,22 +741,24 @@ class BingoMusical {
             this.game.setGameName('');
             this.dom.gameNameInput.value = '';
 
-            this.filterAndSortSongs();
-            this.updateCounters();
-            this.updateUIState();
+            this.refreshUI();
             this.showAlert('Todas las canciones han sido eliminadas.', 'Lista Vacía');
         }
     }
 
     toggleContinuousMode() {
-        this.continuousMode = this.game.toggleContinuousMode();
+        const continuousMode = this.game.toggleContinuousMode();
+        if (continuousMode) this.audio.playEffect('start');
+        this._renderContinuousModeButton(continuousMode);
+    }
+
+    _renderContinuousModeButton(continuousMode) {
         const btn = this.dom.shuffleAllBtn;
 
-        if (this.continuousMode) {
+        if (continuousMode) {
             btn.innerHTML = '<span aria-hidden="true">⏸</span> Manual';
             btn.style.background = 'var(--danger-color)';
             btn.setAttribute('aria-pressed', 'true');
-            this.audio.playEffect('start');
         } else {
             btn.innerHTML = '<span aria-hidden="true">🔄</span> Automático';
             btn.style.background = 'var(--text-muted)';
@@ -984,11 +835,11 @@ class BingoMusical {
                 this.listRevealTimers.push(
                     setTimeout(() => {
                         song.hideTitle = false;
-                        this._fadeIn(`.song-item-title[data-song-id="${songId}"]`);
+                        this.songList.reveal(songId, 'title');
                     }, this.game.getTitleRevealTime() * 1000),
                     setTimeout(() => {
                         song.hideIcon = false;
-                        this._fadeIn(`.song-item-icon[data-song-id="${songId}"]`);
+                        this.songList.reveal(songId, 'icon');
                     }, this.game.getIconRevealTime() * 1000)
                 );
             } else {
@@ -996,14 +847,6 @@ class BingoMusical {
                 this._revealSongInList(song);
             }
         });
-    }
-
-    _fadeIn(selector) {
-        const element = document.querySelector(selector);
-        if (element) {
-            element.style.transition = 'opacity 1s ease-in';
-            element.style.opacity = '1';
-        }
     }
 
     _revealSongInList(song) {
@@ -1061,21 +904,20 @@ class BingoMusical {
     }
 
     onSongEnded() {
-        this.audio.isPlaying = false;
         this.dom.songIconContainer.classList.remove('playing');
 
         // La canción que terminó ya no debe ocultarse en la lista
         this._revealCurrentSong();
 
         // Handle continuous PREVIEW mode
-        if (this.continuousMode && !this.game.isGameStarted()) {
+        if (this.game.isContinuousMode() && !this.game.isGameStarted()) {
             this.playRandomContinuousSong();
             return; // End execution here for this case
         }
 
         // Handle song ending during the game
         if (this.game.isGameStarted()) {
-            if (this.game.allSongsPlayed(this.songs) && !this.game.bingoCompleted) {
+            if (this.game.allSongsPlayed(this.songs) && !this.game.isBingoCompleted()) {
                 // All songs have been played, trigger BINGO automatically
                 this.game.completeBingo();
                 setTimeout(() => {
@@ -1133,9 +975,8 @@ class BingoMusical {
             this.refreshUI();
             this.stopSong();
 
-            if (this.continuousMode) {
-                this.toggleContinuousMode();
-            }
+            // resetGame ya desactiva el modo continuo: reflejarlo en el botón
+            this._renderContinuousModeButton(this.game.isContinuousMode());
 
             this.dom.currentIconImg.alt = 'Canción actual';
             this.dom.currentIconImg.src = LOGO_PATH;

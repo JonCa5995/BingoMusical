@@ -106,6 +106,13 @@ export class GameManager {
     }
 
     /**
+     * Indica si el modo continuo (escucha previa automática) está activo
+     */
+    isContinuousMode() {
+        return this.continuousMode;
+    }
+
+    /**
      * Obtiene una canción aleatoria no reproducida
      */
     getRandomUnplayedSong(songs) {
@@ -205,6 +212,13 @@ export class GameManager {
     }
 
     /**
+     * Indica si ya se cantó BINGO
+     */
+    isBingoCompleted() {
+        return this.bingoCompleted;
+    }
+
+    /**
      * Verifica si todas las canciones han sido reproducidas
      */
     allSongsPlayed(songs) {
@@ -244,6 +258,13 @@ export class GameManager {
      */
     getHistory() {
         return this.playedSongs;
+    }
+
+    /**
+     * Vacía el historial de canciones reproducidas
+     */
+    clearHistory() {
+        this.playedSongs = [];
     }
 
     /**

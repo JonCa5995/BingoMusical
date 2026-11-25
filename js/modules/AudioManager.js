@@ -62,6 +62,10 @@ export class AudioManager {
     setupAudioEventListeners() {
         this.dom.audioPlayer.addEventListener('timeupdate', () => this.updateProgress());
         this.dom.audioPlayer.addEventListener('loadedmetadata', () => this.updateDuration());
+        // El propio AudioManager lleva su estado: nadie más debe escribir isPlaying
+        this.dom.audioPlayer.addEventListener('ended', () => {
+            this.isPlaying = false;
+        });
     }
 
     /**
