@@ -109,6 +109,20 @@ test('cantar sin cartón envía la pantalla genérica, sin filas', () => {
     assert.deepEqual(app.celebration, {kind: 'linea', ok: true, cartonId: null, rows: []});
 });
 
+test('mostrar un fallo con toda la tabla enseña también los iconos que faltan, y con solo lo acertado los sustituye por huecos', () => {
+    const pendiente = {rows: [{songs: [{song: carton.rows[0].cells[0].song, played: true}, {song: {id: 2, title: 'Dos', icon: '🥁', iconType: 'emoji'}, played: false}], missing: 1, complete: false}], linea: false, bingo: false};
+    const {app} = build();
+
+    app._showFailureFromModal({kind: CELEBRATION.BINGO, carton, result: pendiente, view: 'table'});
+    assert.equal(app.celebration.rows[0].songs.length, 2);
+
+    app._showFailureFromModal({kind: CELEBRATION.BINGO, carton, result: pendiente, view: 'played'});
+    assert.equal(app.celebration.rows[0].songs.length, 2);
+    assert.equal(app.celebration.rows[0].songs[0].icon, '🎵');
+    assert.equal(app.celebration.rows[0].songs[1].icon, '');
+    assert.equal(app.celebration.rows[0].songs[1].played, false);
+});
+
 test('mostrar un fallo no cambia la partida: suena el error y publica la pantalla de fallo', () => {
     const {app, log} = build();
 
@@ -141,4 +155,29 @@ test('al acabar la última canción sin cantar BINGO se canta solo y se abre la 
     assert.deepEqual(log.at(-1), ['abre modal', CHECK_MODE.ENDED]);
     assert.equal(app.celebration.kind, 'bingo');
     assert.equal(app.celebration.cartonId, null);
+});
+
+test('cantar la línea con la vista «solo la línea» envía únicamente las filas completas', () => {
+    const {app} = build();
+    const parcial = {rows: [
+        {songs: [{song: carton.rows[0].cells[0].song, played: true}], missing: 0, complete: true},
+        {songs: [{song: {id: 2, title: 'Dos', icon: '🥁', iconType: 'emoji'}, played: false}], missing: 1, complete: false}
+    ], linea: true, bingo: false};
+
+    app._singFromModal({kind: CELEBRATION.LINEA, carton, result: parcial, view: 'line'});
+    assert.equal(app.celebration.rows.length, 1);
+
+    app._singFromModal({kind: CELEBRATION.LINEA, carton, result: parcial, view: 'carton'});
+    assert.equal(app.celebration.rows.length, 2);
+    assert.equal(app.celebration.rows[1].songs[0].icon, '');
+});
+
+test('mostrar el fallo de línea solo con texto envía la pantalla sin filas', () => {
+    const {app, log} = build();
+
+    app._showFailureFromModal({kind: CELEBRATION.LINEA, carton, result, view: 'text'});
+
+    assert.equal(app.celebration.ok, false);
+    assert.deepEqual(app.celebration.rows, []);
+    assert.deepEqual(log.at(-1), ['publica', 'linea', false]);
 });

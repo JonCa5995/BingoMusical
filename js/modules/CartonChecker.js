@@ -1,4 +1,4 @@
-import {CELEBRATION, CELL_TYPE} from '../constants.js';
+import {CELEBRATION, CELL_TYPE, FAILURE_VIEW, ICON_TYPE, LINE_VIEW} from '../constants.js';
 
 export function evaluateCarton(carton, playedIds) {
     const rows = carton.rows.map(row => {
@@ -26,15 +26,20 @@ export function evaluateCarton(carton, playedIds) {
     };
 }
 
-export function buildCelebration({kind, ok, carton = null, result = null}) {
-    if (!carton || !result) return {kind, ok, cartonId: null, rows: []};
+const HIDDEN_SONG = Object.freeze({icon: '', iconType: ICON_TYPE.EMOJI, played: false});
 
-    const onlyComplete = ok && kind === CELEBRATION.LINEA;
+export function buildCelebration({kind, ok, carton = null, result = null, view}) {
+    if (!carton || !result) return {kind, ok, cartonId: null, rows: []};
+    if (!ok && view === FAILURE_VIEW.ONLY_TEXT) return {kind, ok, cartonId: carton.id, rows: []};
+
+    const isLinea = kind === CELEBRATION.LINEA;
+    const onlyLine = ok && isLinea && view === LINE_VIEW.LINE;
+    const hideMissing = ok ? isLinea && !onlyLine : (view ?? FAILURE_VIEW.PLAYED) === FAILURE_VIEW.PLAYED;
     const rows = result.rows
-        .filter(row => !onlyComplete || row.complete)
+        .filter(row => !onlyLine || row.complete)
         .map(row => ({
             complete: row.complete,
-            songs: row.songs.map(({song, played}) => ({icon: song.icon, iconType: song.iconType, played}))
+            songs: row.songs.map(({song, played}) => (hideMissing && !played ? HIDDEN_SONG : {icon: song.icon, iconType: song.iconType, played}))
         }));
 
     return {kind, ok, cartonId: carton.id, rows};

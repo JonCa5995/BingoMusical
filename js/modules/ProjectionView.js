@@ -146,6 +146,7 @@ export class ProjectionView {
     _celebrationText({kind, ok, cartonId, rows}) {
         const texts = TEXT.projection.celebration;
         if (cartonId !== null && rows.length > 0) return texts.carton(cartonId);
+        if (cartonId !== null && !ok) return texts.failWithCarton[kind](cartonId);
 
         return ok ? texts[kind].text : texts.fail[kind].text;
     }
@@ -155,6 +156,11 @@ export class ProjectionView {
         element.className = 'celebration-row';
 
         for (const song of row.songs) {
+            if (!song.played && song.icon === '') {
+                element.append(this._hiddenSong());
+                continue;
+            }
+
             const item = document.createElement('div');
             item.className = `celebration-song ${song.played ? 'celebration-song-ok' : 'celebration-song-missing'}`;
 
@@ -247,6 +253,20 @@ export class ProjectionView {
     _renderIcon(song) {
         const icon = this._iconNode(song);
         this.el.icon.replaceChildren(icon);
+    }
+
+    _hiddenSong() {
+        const item = document.createElement('div');
+        item.className = 'celebration-song celebration-song-missing celebration-song-hidden';
+
+        const cross = document.createElement('span');
+        cross.className = 'celebration-cross';
+        cross.textContent = '✗';
+        cross.setAttribute('role', 'img');
+        cross.setAttribute('aria-label', TEXT.projection.celebration.pending);
+
+        item.append(cross);
+        return item;
     }
 
     _iconNode(song) {

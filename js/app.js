@@ -440,7 +440,7 @@ export class BingoMusical {
         });
     }
 
-    _singFromModal({kind, carton, result}) {
+    _singFromModal({kind, carton, result, view}) {
         const isLinea = kind === CELEBRATION.LINEA;
 
         if (isLinea) {
@@ -450,13 +450,13 @@ export class BingoMusical {
         }
 
         this.sounds.play(isLinea ? SOUND.WIN : SOUND.COMPLETE);
-        this.celebration = buildCelebration({kind, ok: true, carton, result});
+        this.celebration = buildCelebration({kind, ok: true, carton, result, view});
         this._onGameChanged();
     }
 
-    _showFailureFromModal({kind, carton, result}) {
+    _showFailureFromModal({kind, carton, result, view}) {
         this.sounds.play(SOUND.ERROR);
-        this.celebration = buildCelebration({kind, ok: false, carton, result});
+        this.celebration = buildCelebration({kind, ok: false, carton, result, view});
         this.projection.schedulePublish();
     }
 

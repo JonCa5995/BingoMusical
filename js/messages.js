@@ -151,9 +151,18 @@ export const TEXT = {
             : `🎉 BINGO: no, ${missingForBingo === 1 ? 'falta 1 canción' : `faltan ${missingForBingo} de ${total}`}`,
         row: (number, row) => `Fila ${number}: ${row.songs.length - row.missing} de ${row.songs.length}${row.complete ? ' ✓ completa' : ''}`,
         modeTitle: {check: '🔍 Comprobar cartón', linea: '📏 Cantar LÍNEA', bingo: '🎉 Cantar BINGO', ended: '🎉 ¡BINGO!'},
+        singLinea: {
+            carton: '📏 Cantar LÍNEA mostrando todo el cartón',
+            line: '📏 Cantar LÍNEA mostrando solo la línea'
+        },
         sing: {linea: '📏 Cantar LÍNEA', bingo: '🎉 Cantar BINGO'},
         singWithoutCarton: {linea: '📏 Cantar LÍNEA sin cartón', bingo: '🎉 Cantar BINGO sin cartón'},
-        showFailure: '❌ Mostrar el fallo en la proyección',
+        showFailure: {
+            lineaCarton: '❌ Mostrar el fallo con el cartón (solo los iconos que tiene)',
+            lineaText: '❌ Mostrar el fallo solo con texto',
+            bingoTable: '❌ Mostrar el fallo con toda la tabla',
+            bingoPlayed: '❌ Mostrar el fallo solo con los iconos acertados'
+        },
         continuePlaying: '▶️ Continuar jugando',
         restart: '🔄 Comenzar de nuevo',
         onProjector: 'Se está mostrando en la proyección. Al cerrar esta ventana se quita.',
@@ -264,6 +273,10 @@ export const TEXT = {
                 bingo: {title: '❌ BINGO INCORRECTO', text: 'Este cartón todavía no tiene todas las canciones'}
             },
             carton: (id) => `Cartón n.º ${id}`,
+            failWithCarton: {
+                linea: (id) => `Cartón n.º ${id}: todavía no tiene ninguna línea completa`,
+                bingo: (id) => `Cartón n.º ${id}: todavía no tiene todas las canciones`
+            },
             played: 'Ha salido',
             pending: 'Aún no ha salido'
         }

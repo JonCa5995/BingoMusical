@@ -821,3 +821,84 @@ test('syncHistory antes de recibir ningún estado no hace nada', () => {
 
     view.syncHistory();
 });
+
+test('un hueco sin icono y sin acertar se dibuja como una cruz grande, sin imagen ni emoji', () => {
+    const {view, el} = buildView();
+    view.start();
+    const rows = [{complete: false, songs: [
+        {icon: '🎵', iconType: 'emoji', played: true},
+        {icon: '', iconType: 'emoji', played: false},
+        {icon: '', iconType: 'emoji', played: false},
+        {icon: '🥁', iconType: 'emoji', played: true}
+    ]}];
+
+    send(view, stateFor({celebration: celebrationOf({kind: 'linea', ok: false, rows})}));
+
+    const songs = el.celebrationRows.children[0].children;
+    assert.equal(songs.length, 4);
+    assert.ok(songs[1].className.includes('celebration-song-hidden'));
+    assert.equal(songs[1].children.length, 1);
+    assert.equal(songs[1].children[0].className, 'celebration-cross');
+    assert.equal(songs[1].children[0].textContent, '✗');
+    assert.equal(songs[1].children[0].attrs['aria-label'], TEXT.projection.celebration.pending);
+    assert.ok(songs[0].className.includes('celebration-song-ok'));
+    assert.equal(songs[0].children[1].textContent, '✓');
+    assert.equal(songs[0].children[0].textContent, '🎵');
+});
+
+test('con toda la tabla, los iconos que faltan se siguen dibujando con su cruz roja pequeña (no es un hueco)', () => {
+    const {view, el} = buildView();
+    view.start();
+    const rows = [{complete: false, songs: [{icon: '🎵', iconType: 'emoji', played: true}, {icon: '🥁', iconType: 'emoji', played: false}]}];
+
+    send(view, stateFor({celebration: celebrationOf({kind: 'bingo', ok: false, rows})}));
+
+    const missing = el.celebrationRows.children[0].children[1];
+    assert.equal(missing.className.includes('celebration-song-hidden'), false);
+    assert.equal(missing.children[0].textContent, '🥁');
+    assert.equal(missing.children[1].textContent, '✗');
+});
+
+test('un cartón con todos los huecos en cruz se dibuja entero: tres filas', () => {
+    const {view, el} = buildView();
+    view.start();
+    const hidden = () => ({complete: false, songs: Array.from({length: 4}, () => ({icon: '', iconType: 'emoji', played: false}))});
+
+    send(view, stateFor({celebration: celebrationOf({kind: 'bingo', ok: false, rows: [hidden(), hidden(), hidden()], cartonId: 4})}));
+
+    assert.equal(el.celebrationRows.children.length, 3);
+    assert.ok(el.celebrationRows.children.every(row => row.children.every(song => song.className.includes('celebration-song-hidden'))));
+    assert.equal(el.celebrationText.textContent, TEXT.projection.celebration.carton(4));
+});
+
+test('un fallo sin filas muestra el título de incorrecto y un texto con el número de cartón, sin dibujar el cartón', () => {
+    const {view, el} = buildView();
+    view.start();
+
+    send(view, stateFor({celebration: {kind: 'linea', ok: false, cartonId: 6, rows: []}}));
+
+    assert.equal(el.celebration.classList.contains('hidden'), false);
+    assert.equal(el.celebrationTitle.textContent, TEXT.projection.celebration.fail.linea.title);
+    assert.equal(el.celebrationText.textContent, TEXT.projection.celebration.failWithCarton.linea(6));
+    assert.ok(el.celebrationText.textContent.includes('6'));
+    assert.equal(el.celebrationRows.children.length, 0);
+    assert.equal(el.celebration.classList.contains('has-rows'), false);
+});
+
+test('un fallo de bingo solo con texto también indica el número de cartón', () => {
+    const {view, el} = buildView();
+    view.start();
+
+    send(view, stateFor({celebration: {kind: 'bingo', ok: false, cartonId: 31, rows: []}}));
+
+    assert.equal(el.celebrationText.textContent, TEXT.projection.celebration.failWithCarton.bingo(31));
+});
+
+test('un fallo sin número de cartón (sin cartón asociado) usa el texto genérico de fallo', () => {
+    const {view, el} = buildView();
+    view.start();
+
+    send(view, stateFor({celebration: {kind: 'linea', ok: false, cartonId: null, rows: []}}));
+
+    assert.equal(el.celebrationText.textContent, TEXT.projection.celebration.fail.linea.text);
+});

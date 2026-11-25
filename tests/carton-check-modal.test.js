@@ -35,8 +35,8 @@ const build = ({played = 0, cartones = 3} = {}) => {
         dialogs: {showAlert: (alert) => log.push(['aviso', alert])},
         sounds: {play: (name) => log.push(['sonido', name])},
         callbacks: {
-            onSing: ({kind, carton, result}) => calls.push(['canta', kind, carton?.id ?? null, result === null ? null : result.linea]),
-            onShowFailure: ({kind, carton}) => calls.push(['fallo', kind, carton.id]),
+            onSing: ({kind, carton, result, view}) => calls.push(['canta', kind, carton?.id ?? null, result === null ? null : result.linea, view ?? null]),
+            onShowFailure: ({kind, carton, view}) => calls.push(['fallo', kind, carton.id, view]),
             onDismiss: () => calls.push(['quita']),
             onRestart: async () => { calls.push(['reinicia']); }
         }
@@ -229,10 +229,10 @@ test('comprobar con una primera línea ofrece cantarla; al pulsarlo canta con es
     type(elements, 1);
     modal.check();
 
-    assert.deepEqual(labels(elements), [TEXT.checkCarton.sing.linea]);
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.singLinea.carton, TEXT.checkCarton.singLinea.line]);
     click(elements, 0);
 
-    assert.deepEqual(calls, [['canta', 'linea', 1, true]]);
+    assert.deepEqual(calls, [['canta', 'linea', 1, true, 'carton']]);
     assert.deepEqual(labels(elements), [TEXT.checkCarton.continuePlaying]);
     assert.equal(elements.checkCartonActions.children[0].textContent, TEXT.checkCarton.onProjector);
     assert.equal(elements.checkCartonResult.children.at(-1).textContent.includes(TEXT.checkCarton.onProjector), false);
@@ -246,10 +246,10 @@ test('con línea y bingo a la vez se ofrecen las dos, y cantar bingo deja contin
     type(elements, 1);
     modal.check();
 
-    assert.deepEqual(labels(elements), [TEXT.checkCarton.sing.linea, TEXT.checkCarton.sing.bingo]);
-    click(elements, 1);
+    assert.deepEqual(labels(elements), [...[TEXT.checkCarton.singLinea.carton, TEXT.checkCarton.singLinea.line], TEXT.checkCarton.sing.bingo]);
+    click(elements, 2);
 
-    assert.deepEqual(calls, [['canta', 'bingo', 1, true]]);
+    assert.deepEqual(calls, [['canta', 'bingo', 1, true, null]]);
     assert.deepEqual(labels(elements), [TEXT.checkCarton.continuePlaying, TEXT.checkCarton.restart]);
 });
 
@@ -307,10 +307,10 @@ test('en modo línea, un cartón sin línea ofrece mostrar el fallo; al pulsarlo
     type(elements, 2);
     modal.check();
 
-    assert.deepEqual(labels(elements), [TEXT.checkCarton.showFailure]);
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.showFailure.lineaCarton, TEXT.checkCarton.showFailure.lineaText]);
     click(elements, 0);
 
-    assert.deepEqual(calls, [['fallo', 'linea', 2]]);
+    assert.deepEqual(calls, [['fallo', 'linea', 2, 'played']]);
     assert.deepEqual(labels(elements), [TEXT.checkCarton.continuePlaying]);
     assert.equal(elements.checkCartonActions.children[0].textContent, TEXT.checkCarton.failureOnProjector);
 });
@@ -323,7 +323,7 @@ test('en modo línea, un cartón con línea ofrece solo cantar la línea aunque 
     type(elements, 1);
     modal.check();
 
-    assert.deepEqual(labels(elements), [TEXT.checkCarton.sing.linea]);
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.singLinea.carton, TEXT.checkCarton.singLinea.line]);
 });
 
 test('en modo bingo, con línea pero sin bingo ofrece el fallo; con bingo ofrece cantarlo', () => {
@@ -335,9 +335,9 @@ test('en modo bingo, con línea pero sin bingo ofrece el fallo; con bingo ofrece
     modal.open('bingo');
     type(elements, 2);
     modal.check();
-    assert.deepEqual(labels(elements), [TEXT.checkCarton.showFailure]);
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.showFailure.bingoTable, TEXT.checkCarton.showFailure.bingoPlayed]);
     click(elements, 0);
-    assert.deepEqual(calls, [['fallo', 'bingo', 2]]);
+    assert.deepEqual(calls, [['fallo', 'bingo', 2, 'table']]);
 
     modal.open('bingo');
     type(elements, 1);
@@ -425,7 +425,7 @@ test('sin cartones, cantar LÍNEA abre la ventana con un único botón para cant
     assert.deepEqual(labels(elements), [TEXT.checkCarton.singWithoutCarton.linea]);
 
     click(elements, 0);
-    assert.deepEqual(calls, [['canta', 'linea', null, null]]);
+    assert.deepEqual(calls, [['canta', 'linea', null, null, null]]);
 });
 
 test('sin cartones, cantar BINGO ofrece cantar sin cartón y comprobar sigue avisando', () => {
@@ -491,4 +491,63 @@ test('el botón X de la ventana la cierra y quita la pantalla', () => {
     elements.closeCheckCartonModalBtn.fire('click');
 
     assert.deepEqual(calls.at(-1), ['quita']);
+});
+
+test('en modo bingo, el fallo se puede mostrar con solo los iconos acertados', () => {
+    const {modal, elements, calls} = build({played: 3});
+
+    modal.open('bingo');
+    type(elements, 1);
+    modal.check();
+    click(elements, 1);
+
+    assert.deepEqual(calls, [['fallo', 'bingo', 1, 'played']]);
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.continuePlaying]);
+});
+
+test('el fallo de línea ofrece mostrar el cartón o solo texto, y nunca la tabla entera', () => {
+    const {modal, elements} = build({played: 3});
+
+    modal.open('linea');
+    type(elements, 1);
+    modal.check();
+
+    assert.equal(labels(elements).length, 2);
+    assert.ok(labels(elements).every(label => !label.includes('tabla')));
+});
+
+test('el fallo de línea solo con texto se envía con la vista de texto', () => {
+    const {modal, elements, calls} = build({played: 3});
+
+    modal.open('linea');
+    type(elements, 1);
+    modal.check();
+    click(elements, 1);
+
+    assert.deepEqual(calls, [['fallo', 'linea', 1, 'text']]);
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.continuePlaying]);
+});
+
+test('cantar la línea ofrece dos formas de mostrarla: todo el cartón o solo la línea acertada', () => {
+    const {modal, elements, calls, game, songs, generated} = build();
+    playRow(game, songs, generated[0], 0);
+    modal.open('linea');
+    type(elements, 1);
+    modal.check();
+
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.singLinea.carton, TEXT.checkCarton.singLinea.line]);
+    click(elements, 1);
+
+    assert.deepEqual(calls, [['canta', 'linea', 1, true, 'line']]);
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.continuePlaying]);
+});
+
+test('el bingo se canta con un único botón: no hay elección de vista', () => {
+    const {modal, elements, game, songs, generated} = build();
+    playAllOf(game, songs, generated[0]);
+    modal.open('bingo');
+    type(elements, 1);
+    modal.check();
+
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.sing.bingo]);
 });

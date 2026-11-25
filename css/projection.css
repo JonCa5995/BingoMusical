@@ -264,6 +264,13 @@ body.projection {
     line-height: 1;
 }
 
+.celebration-cross {
+    color: var(--danger-color);
+    font-size: 12vmin;
+    font-weight: 700;
+    line-height: 1;
+}
+
 .celebration-song-missing .celebration-mark {
     background: var(--danger-color);
 }

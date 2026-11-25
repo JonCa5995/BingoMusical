@@ -117,28 +117,75 @@ const richCarton = () => ({
     ]
 });
 
-test('buildCelebration de una línea correcta incluye solo las filas completas, con los iconos y su estado', () => {
+test('buildCelebration de una línea correcta dibuja el cartón entero: la fila completa con sus iconos y huecos en el resto', () => {
     const cartonWithLine = richCarton();
     const result = evaluateCarton(cartonWithLine, new Set([1, 2, 3, 4, 9]));
 
-    const celebration = buildCelebration({kind: 'linea', ok: true, carton: cartonWithLine, result});
+    const celebration = buildCelebration({kind: 'linea', ok: true, carton: cartonWithLine, result, view: 'carton'});
 
     assert.equal(celebration.kind, 'linea');
     assert.equal(celebration.ok, true);
     assert.equal(celebration.cartonId, 7);
-    assert.equal(celebration.rows.length, 1);
+    assert.equal(celebration.rows.length, 3);
     assert.deepEqual(celebration.rows[0].songs, [0, 1, 2, 3].map(i => ({icon: '🎵' + i, iconType: 'emoji', played: true})));
     assert.equal(celebration.rows[0].complete, true);
+    assert.deepEqual(celebration.rows[1].songs.map(song => song.played), [false, false, false, false]);
+    assert.ok(celebration.rows[1].songs.every(song => song.icon === ''));
+    assert.deepEqual(celebration.rows[2].songs.map(song => [song.played, song.icon]), [[true, '🎸'], [false, ''], [false, '']]);
 });
 
-test('buildCelebration de una línea correcta con varias filas completas las incluye todas', () => {
+test('buildCelebration de una línea correcta con la vista «solo la línea» incluye únicamente las filas completas, con tick en todo', () => {
+    const cartonWithLine = richCarton();
+    const result = evaluateCarton(cartonWithLine, new Set([1, 2, 3, 4, 9]));
+
+    const celebration = buildCelebration({kind: 'linea', ok: true, carton: cartonWithLine, result, view: 'line'});
+
+    assert.equal(celebration.rows.length, 1);
+    assert.equal(celebration.rows[0].complete, true);
+    assert.deepEqual(celebration.rows[0].songs, [0, 1, 2, 3].map(i => ({icon: '🎵' + i, iconType: 'emoji', played: true})));
+    assert.equal(JSON.stringify(celebration).includes('🎸'), false);
+});
+
+test('buildCelebration de una línea correcta con la vista «solo la línea» y varias filas completas las incluye todas', () => {
+    const cartonWithLines = richCarton();
+    const result = evaluateCarton(cartonWithLines, new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]));
+
+    const celebration = buildCelebration({kind: 'linea', ok: true, carton: cartonWithLines, result, view: 'line'});
+
+    assert.equal(celebration.rows.length, 2);
+    assert.ok(celebration.rows.every(row => row.complete && row.songs.every(song => song.played)));
+});
+
+test('buildCelebration de una línea correcta sin indicar vista dibuja el cartón entero, que es lo más prudente', () => {
+    const cartonWithLine = richCarton();
+    const result = evaluateCarton(cartonWithLine, new Set([1, 2, 3, 4]));
+
+    const celebration = buildCelebration({kind: 'linea', ok: true, carton: cartonWithLine, result});
+
+    assert.equal(celebration.rows.length, 3);
+});
+
+test('buildCelebration de una línea correcta no envía el icono de ninguna casilla que no haya salido', () => {
+    const cartonWithLine = richCarton();
+    const result = evaluateCarton(cartonWithLine, new Set([1, 2, 3, 4]));
+
+    const celebration = buildCelebration({kind: 'linea', ok: true, carton: cartonWithLine, result, view: 'carton'});
+
+    const sent = JSON.stringify(celebration);
+    assert.equal(sent.includes('data:image'), false);
+    assert.equal(sent.includes('🎸'), false);
+    assert.equal(celebration.rows.flatMap(row => row.songs).filter(song => song.icon !== '').length, 4);
+});
+
+test('buildCelebration de una línea correcta con varias filas completas las marca todas como completas, con huecos solo donde falta', () => {
     const cartonWithLines = richCarton();
     const result = evaluateCarton(cartonWithLines, new Set([1, 2, 3, 4, 5, 6, 7, 8]));
 
     const celebration = buildCelebration({kind: 'linea', ok: true, carton: cartonWithLines, result});
 
-    assert.equal(celebration.rows.length, 2);
-    assert.ok(celebration.rows.every(row => row.complete));
+    assert.equal(celebration.rows.length, 3);
+    assert.deepEqual(celebration.rows.map(row => row.complete), [true, true, false]);
+    assert.ok(celebration.rows[2].songs.every(song => song.icon === '' && !song.played));
 });
 
 test('buildCelebration de un bingo correcto incluye las tres filas, todas con sus iconos como salidos', () => {
@@ -153,17 +200,66 @@ test('buildCelebration de un bingo correcto incluye las tres filas, todas con su
     assert.equal(celebration.rows[2].songs.length, 3);
 });
 
-test('buildCelebration de un fallo incluye las tres filas con lo que ha salido y lo que no', () => {
+test('buildCelebration de un fallo con toda la tabla incluye las tres filas con lo que ha salido y lo que no', () => {
     const partial = richCarton();
     const result = evaluateCarton(partial, new Set([1, 2, 5]));
 
-    const celebration = buildCelebration({kind: 'linea', ok: false, carton: partial, result});
+    const celebration = buildCelebration({kind: 'bingo', ok: false, carton: partial, result, view: 'table'});
 
     assert.equal(celebration.ok, false);
     assert.equal(celebration.rows.length, 3);
     assert.deepEqual(celebration.rows[0].songs.map(song => song.played), [true, true, false, false]);
     assert.deepEqual(celebration.rows[1].songs.map(song => song.played), [true, false, false, false]);
     assert.equal(celebration.rows.some(row => row.complete), false);
+});
+
+test('buildCelebration de un fallo con solo lo acertado dibuja el cartón entero pero sin el icono de lo que no ha salido', () => {
+    const partial = richCarton();
+    const result = evaluateCarton(partial, new Set([1, 2, 5]));
+
+    const celebration = buildCelebration({kind: 'linea', ok: false, carton: partial, result, view: 'played'});
+
+    assert.equal(celebration.rows.length, 3);
+    assert.deepEqual(celebration.rows.map(row => row.songs.length), [4, 4, 3]);
+    assert.deepEqual(celebration.rows[0].songs.map(song => song.played), [true, true, false, false]);
+    assert.deepEqual(celebration.rows[0].songs.slice(0, 2).map(song => song.icon), ['🎵0', '🎵1']);
+    assert.deepEqual(celebration.rows[0].songs.slice(2).map(song => song.icon), ['', '']);
+    assert.ok(celebration.rows.flatMap(row => row.songs).filter(song => !song.played).every(song => song.icon === ''));
+    assert.equal(JSON.stringify(celebration).includes('🎵2'), false);
+    assert.equal(JSON.stringify(celebration).includes('🎵3'), false);
+    assert.equal(JSON.stringify(celebration).includes('🎸'), false);
+});
+
+test('buildCelebration de un fallo, por defecto, no descubre lo que falta', () => {
+    const partial = richCarton();
+    const result = evaluateCarton(partial, new Set([1]));
+
+    const celebration = buildCelebration({kind: 'bingo', ok: false, carton: partial, result});
+
+    assert.equal(celebration.rows.length, 3);
+    assert.equal(celebration.rows.flatMap(row => row.songs).filter(song => song.icon !== '').length, 1);
+});
+
+test('buildCelebration de un fallo sin ningún icono acertado dibuja el cartón entero todo con cruces', () => {
+    const partial = richCarton();
+    const result = evaluateCarton(partial, new Set());
+
+    const celebration = buildCelebration({kind: 'linea', ok: false, carton: partial, result, view: 'played'});
+
+    assert.equal(celebration.rows.length, 3);
+    assert.ok(celebration.rows.flatMap(row => row.songs).every(song => song.played === false && song.icon === ''));
+    assert.equal(celebration.rows.flatMap(row => row.songs).length, 11);
+});
+
+test('buildCelebration de un acierto de bingo no se ve afectado por la vista de fallo elegida', () => {
+    const full = richCarton();
+    const result = evaluateCarton(full, new Set([1, 2, 3, 4]));
+
+    const withPlayed = buildCelebration({kind: 'bingo', ok: true, carton: full, result, view: 'played'});
+    const withTable = buildCelebration({kind: 'bingo', ok: true, carton: full, result, view: 'table'});
+
+    assert.deepEqual(withPlayed, withTable);
+    assert.equal(withPlayed.rows.length, 3);
 });
 
 test('buildCelebration sin cartón devuelve la pantalla genérica, sin filas', () => {
@@ -179,4 +275,23 @@ test('buildCelebration solo lleva datos simples: sin títulos ni objetos de canc
 
     assert.deepEqual(Object.keys(celebration.rows[0].songs[0]).sort(), ['icon', 'iconType', 'played']);
     assert.doesNotThrow(() => structuredClone(celebration));
+});
+
+test('buildCelebration de un fallo con vista de solo texto no lleva ninguna fila ni ningún icono', () => {
+    const partial = richCarton();
+    const result = evaluateCarton(partial, new Set([1, 2, 5]));
+
+    const celebration = buildCelebration({kind: 'linea', ok: false, carton: partial, result, view: 'text'});
+
+    assert.deepEqual(celebration, {kind: 'linea', ok: false, cartonId: 7, rows: []});
+    assert.equal(JSON.stringify(celebration).includes('🎵'), false);
+});
+
+test('la vista de solo texto no cambia los aciertos', () => {
+    const full = richCarton();
+    const result = evaluateCarton(full, new Set([1, 2, 3, 4]));
+
+    const celebration = buildCelebration({kind: 'linea', ok: true, carton: full, result, view: 'text'});
+
+    assert.equal(celebration.rows.length, 3);
 });

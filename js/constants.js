@@ -161,6 +161,19 @@ export const CELEBRATION = Object.freeze({
     BINGO: 'bingo'
 });
 
+/** Qué se enseña al cantar una LÍNEA: solo la línea acertada o el cartón entero (con una X en lo que no ha salido) */
+export const LINE_VIEW = Object.freeze({
+    LINE: 'line',
+    CARTON: 'carton'
+});
+
+/** Qué se enseña en una pantalla de fallo: solo texto, el cartón con lo acertado o la tabla entera */
+export const FAILURE_VIEW = Object.freeze({
+    PLAYED: 'played',
+    TABLE: 'table',
+    ONLY_TEXT: 'text'
+});
+
 /** Para qué se abre la ventana de cartón: comprobar, cantar LÍNEA, cantar BINGO o avisar de que se acabaron las canciones */
 export const CHECK_MODE = Object.freeze({
     CHECK: 'check',

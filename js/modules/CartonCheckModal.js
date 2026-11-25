@@ -1,4 +1,4 @@
-import {CELEBRATION, CHECK_MODE, ICON_TYPE, SOUND} from '../constants.js';
+import {CELEBRATION, CHECK_MODE, FAILURE_VIEW, ICON_TYPE, LINE_VIEW, SOUND} from '../constants.js';
 import {MSG, TEXT} from '../messages.js';
 import {evaluateCarton} from './CartonChecker.js';
 
@@ -119,27 +119,39 @@ export class CartonCheckModal {
         const checking = mode === CHECK_MODE.CHECK;
 
         if ((checking || mode === CHECK_MODE.LINEA) && result.linea && this.game.canCallLinea().valid) {
-            actions.push(this._singAction(CELEBRATION.LINEA, true));
+            actions.push(...this._lineaSingActions());
         }
 
         if ((checking || mode === CHECK_MODE.BINGO) && result.bingo && this.game.canCallBingo().valid) {
             actions.push(this._singAction(CELEBRATION.BINGO, true));
         }
 
-        if (mode === CHECK_MODE.LINEA && !result.linea) actions.push(this._failureAction(CELEBRATION.LINEA));
-        if (mode === CHECK_MODE.BINGO && !result.bingo) actions.push(this._failureAction(CELEBRATION.BINGO));
+        if (mode === CHECK_MODE.LINEA && !result.linea) actions.push(...this._failureActions(CELEBRATION.LINEA));
+        if (mode === CHECK_MODE.BINGO && !result.bingo) actions.push(...this._failureActions(CELEBRATION.BINGO));
 
         return actions;
     }
 
-    _singAction(kind, withCarton) {
+    _singAction(kind, withCarton, view = null) {
         const label = withCarton ? TEXT.checkCarton.sing[kind] : TEXT.checkCarton.singWithoutCarton[kind];
 
-        return {label, className: CLASS_PRIMARY, handler: () => this._sing(kind, withCarton)};
+        return {label, className: CLASS_PRIMARY, handler: () => this._sing(kind, withCarton, view)};
     }
 
-    _failureAction(kind) {
-        return {label: TEXT.checkCarton.showFailure, className: CLASS_SECONDARY, handler: () => this._showFailure(kind)};
+    _lineaSingActions() {
+        const labels = TEXT.checkCarton.singLinea;
+        const action = (label, view) => ({label, className: CLASS_PRIMARY, handler: () => this._sing(CELEBRATION.LINEA, true, view)});
+
+        return [action(labels.carton, LINE_VIEW.CARTON), action(labels.line, LINE_VIEW.LINE)];
+    }
+
+    _failureActions(kind) {
+        const labels = TEXT.checkCarton.showFailure;
+        const action = (label, view) => ({label, className: CLASS_SECONDARY, handler: () => this._showFailure(kind, view)});
+
+        if (kind === CELEBRATION.LINEA) return [action(labels.lineaCarton, FAILURE_VIEW.PLAYED), action(labels.lineaText, FAILURE_VIEW.ONLY_TEXT)];
+
+        return [action(labels.bingoTable, FAILURE_VIEW.TABLE), action(labels.bingoPlayed, FAILURE_VIEW.PLAYED)];
     }
 
     _continueActions(withRestart) {
@@ -152,14 +164,14 @@ export class CartonCheckModal {
         return actions;
     }
 
-    _sing(kind, withCarton) {
-        this.callbacks.onSing({kind, carton: withCarton ? this.carton : null, result: withCarton ? this.result : null});
+    _sing(kind, withCarton, view) {
+        this.callbacks.onSing({kind, carton: withCarton ? this.carton : null, result: withCarton ? this.result : null, view});
         this.shown = true;
         this._renderActions(this._continueActions(kind === CELEBRATION.BINGO), {text: TEXT.checkCarton.onProjector, ok: true});
     }
 
-    _showFailure(kind) {
-        this.callbacks.onShowFailure({kind, carton: this.carton, result: this.result});
+    _showFailure(kind, view) {
+        this.callbacks.onShowFailure({kind, carton: this.carton, result: this.result, view});
         this.shown = true;
         this._renderActions(this._continueActions(false), {text: TEXT.checkCarton.failureOnProjector, ok: false});
     }
