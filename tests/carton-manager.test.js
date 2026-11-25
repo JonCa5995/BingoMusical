@@ -7,15 +7,14 @@ import {DEFAULT_GAME_NAME, MAX_CARTONS_GENERATED, MIN_SONGS_REQUIRED} from '../j
 import {MSG, TEXT} from '../js/messages.js';
 import {makeSongs, seedRandom} from './helpers/seed.js';
 
-const build = ({failGenerate = false} = {}) => {
+const build = ({failGenerate = false, missing = 0} = {}) => {
     const log = [];
     const generator = {
-        generateCartones: (songs, count, existing) => {
+        generateAsMany: (songs, count, existing) => {
             log.push(['genera', songs.length, count, existing.length]);
             if (failGenerate) throw new Error('boom <x>');
-            return Array.from({length: count}, (_, index) => ({id: index + 1}));
-        },
-        generateSingleCarton: (songs, number) => new BingoCartonGenerator().generateSingleCarton(songs, number)
+            return {cartones: Array.from({length: count - missing}, (_, index) => ({id: index + 1})), missing};
+        }
     };
     const sounds = {play: (name) => log.push('sonido:' + name)};
     const exporter = {
@@ -33,7 +32,30 @@ test('generate devuelve los cartones y suena START antes y WIN después', () => 
 
     assert.equal(result.success, true);
     assert.equal(result.cartones.length, 5);
+    assert.equal(result.requested, 5);
+    assert.equal(result.missing, 0);
     assert.deepEqual(log, ['sonido:start', ['genera', 30, 5, 0], 'sonido:win']);
+});
+
+test('generate devuelve los cartones posibles y cuántos faltan cuando no caben más', () => {
+    const {manager} = build({missing: 3});
+
+    const result = manager.generate(makeSongs(30), 10);
+
+    assert.equal(result.success, true);
+    assert.equal(result.cartones.length, 7);
+    assert.equal(result.requested, 10);
+    assert.equal(result.missing, 3);
+});
+
+test('generate puede devolver cero cartones cuando ya no cabe ninguno', () => {
+    const {manager} = build({missing: 4});
+
+    const result = manager.generate(makeSongs(30), 4);
+
+    assert.equal(result.success, true);
+    assert.equal(result.cartones.length, 0);
+    assert.equal(result.missing, 4);
 });
 
 test('generate rechaza cantidades inválidas con el aviso, sin sonar ni generar', () => {
@@ -99,16 +121,18 @@ test('un exportador que falla devuelve su mensaje en lugar de lanzar', async () 
     assert.deepEqual(await manager.printCartonesWithConfig([{id: 1}], 'x', 'html', {printAll: true}), {success: false, error: 'sin permiso'});
 });
 
-test('updatePrintPreview escribe la vista previa o el error en el contenedor', () => {
+test('updatePrintPreview pinta el cartón que se le da, con su número, o el error en el contenedor', () => {
     const seed = seedRandom(8);
     const originalError = console.error;
     console.error = () => {};
     try {
         const {manager, container} = build();
+        const carton = new BingoCartonGenerator().generateSingleCarton(makeSongs(30), 17);
 
-        manager.updatePrintPreview(makeSongs(30), 'Fiesta <b>', {primaryColor: '#123456', secondaryColor: '#654321'});
+        manager.updatePrintPreview(carton, 'Fiesta <b>', {primaryColor: '#123456', secondaryColor: '#654321'});
         assert.ok(container.innerHTML.includes('preview-carton'));
         assert.ok(container.innerHTML.includes('#123456'));
+        assert.ok(container.innerHTML.includes('>#17</div>'));
         assert.equal(container.innerHTML.includes('Fiesta <b>'), false);
 
         manager.updatePrintPreview(null, '', {primaryColor: '#000', secondaryColor: '#fff'});

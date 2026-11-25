@@ -118,6 +118,11 @@ export const MSG = {
         noneToDelete: msg(T.noCartones, 'No hay cartones para eliminar.'),
         confirmDelete: (count) => msg('Confirmar Eliminación', `¿Estás seguro de eliminar los ${count} cartón(es) guardado(s)?`),
         deleted: msg('Cartones Eliminados', 'Todos los cartones han sido eliminados.'),
+        generatedPartial: (count, requested) => msg('Cartones Generados',
+            `Se han generado ${count} de ${requested} cartones: no se han encontrado más cartones únicos con las canciones actuales (dos cartones no pueden compartir ninguna fila).\n\nAgrega más canciones si necesitas más cartones.`),
+        addedPartial: (count, requested, total) => msg('Cartones Añadidos',
+            `Se han añadido ${count} de ${requested} cartones: no se han encontrado más cartones únicos con las canciones actuales (dos cartones no pueden compartir ninguna fila).\n\nTotal de cartones: ${total}\n\nAgrega más canciones si necesitas más cartones.`),
+        noMoreUnique: errorMsg('Cartones Agotados', 'No se han encontrado más cartones únicos con las canciones actuales: casi no quedan filas nuevas que no se repitan en otro cartón.\n\nAgrega más canciones o usa los cartones que ya tienes.'),
         generated: (count) => msg('Cartones Generados', `${count} cartón(es) generado(s) y guardado(s) exitosamente.\n\nUsa "Imprimir Existentes" para descargarlos.`),
         added: (count, total) => msg('Cartones Añadidos', `${count} cartón(es) añadido(s) exitosamente.\n\nTotal de cartones: ${total}`),
         printed: (count, format) => msg('Cartones Impresos', `${count} cartón(es) descargado(s) en ${format.toUpperCase()} exitosamente.`),
@@ -247,6 +252,7 @@ export const TEXT = {
     },
 
     cartones: {
+        previewPosition: (number, total) => `Cartón ${number} de ${total}`,
         optionsInfo: (count) => `Tienes ${count} cartón(es) guardado(s). ¿Qué deseas hacer?`,
         noneInfo: 'No tienes cartones guardados. Selecciona "Crear Nuevos" para generar.',
         printInfo: (count) => `Tienes ${count} cartón(es) guardado(s) listo(s) para imprimir.`,

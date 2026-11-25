@@ -94,3 +94,72 @@ test('al agotar las filas posibles lanza el error de unicidad', () => {
         seed.restore();
     }
 });
+
+test('generateAsMany devuelve todos los cartones pedidos cuando caben', () => {
+    const seed = seedRandom(61);
+    try {
+        const {cartones, missing} = new BingoCartonGenerator().generateAsMany(makeSongs(30), 40);
+
+        assert.equal(cartones.length, 40);
+        assert.equal(missing, 0);
+    } finally {
+        seed.restore();
+    }
+});
+
+test('generateAsMany, al saturar, devuelve los cartones posibles y cuántos faltan en lugar de fallar', () => {
+    const seed = seedRandom(62);
+    try {
+        const generator = new BingoCartonGenerator();
+        const songs = makeSongs(24);
+        let all = [];
+        let partial = null;
+
+        for (let round = 0; round < 12 && !partial; round++) {
+            const result = generator.generateAsMany(songs, 500, all);
+            all = all.concat(result.cartones);
+            if (result.missing > 0) partial = result;
+        }
+
+        assert.ok(partial, 'debería saturarse con 24 canciones');
+        assert.equal(partial.cartones.length + partial.missing, 500);
+        assert.ok(partial.cartones.length < 500);
+        const keys = all.flatMap(carton => generator._rowKeys(carton));
+        assert.equal(new Set(keys).size, keys.length);
+
+        let rounds = 0;
+        let last = partial;
+        while (last.cartones.length > 0 && rounds++ < 60) {
+            last = generator.generateAsMany(songs, 50, all);
+            all = all.concat(last.cartones);
+        }
+
+        assert.equal(last.cartones.length, 0, 'tras agotarse, ya no devuelve ninguno');
+        assert.equal(last.missing, 50);
+        const finalKeys = all.flatMap(carton => generator._rowKeys(carton));
+        assert.equal(new Set(finalKeys).size, finalKeys.length);
+    } finally {
+        seed.restore();
+    }
+});
+
+test('generateAsMany numera los cartones posibles a continuación de los existentes', () => {
+    const seed = seedRandom(63);
+    try {
+        const generator = new BingoCartonGenerator();
+        const songs = makeSongs(24);
+        const existing = generator.generateCartones(songs, 2900);
+
+        const {cartones} = generator.generateAsMany(songs, 400, existing);
+
+        assert.equal(cartones[0].id, 2901);
+        assert.ok(cartones.length < 400);
+    } finally {
+        seed.restore();
+    }
+});
+
+test('generateAsMany con pocas canciones sigue lanzando el error de mínimo', () => {
+    assert.throws(() => new BingoCartonGenerator().generateAsMany(makeSongs(MIN_SONGS_REQUIRED - 1), 1),
+        {message: TEXT.cartones.generatorNeedsSongs(MIN_SONGS_REQUIRED)});
+});

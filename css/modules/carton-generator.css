@@ -45,6 +45,26 @@
     padding-bottom: 0.5rem;
 }
 
+.preview-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.preview-nav .btn {
+    min-width: 2.5rem;
+    padding: 0.4rem 0.75rem;
+}
+
+.preview-position {
+    min-width: 8rem;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
 .carton-preview-container {
     background: var(--background-color);
     border: 2px solid var(--border-color);

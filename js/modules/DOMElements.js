@@ -44,7 +44,8 @@ const GROUPS = {
         'createNewCartonesBtn', 'addCartonesBtn', 'printExistingCartonesBtn', 'deleteAllCartonesBtn',
         'cartonModal', 'closeCartonModalBtn', 'cartonCountInput', 'generateSaveCartonesBtn', 'printModal',
         'closePrintModalBtn', 'printCartonesInfo', 'printPrimaryColorInput', 'printSecondaryColorInput',
-        'printCartonPreview', 'previewPrintBtn', 'printPdfBtn', 'printHtmlBtn', 'printRangeRadios',
+        'printCartonPreview', 'previewPrintBtn', 'printPdfBtn', 'printHtmlBtn', 'printRangeRadios', 'printPreviewPrevBtn',
+        'printPreviewNextBtn', 'printPreviewPosition',
         'rangeInputsContainer', 'rangeFromInput', 'rangeToInput'
     ],
     ui: [
@@ -109,6 +110,9 @@ const IDS = {
     printPrimaryColorInput: 'print-primary-color',
     printSecondaryColorInput: 'print-secondary-color',
     printCartonPreview: 'print-carton-preview',
+    printPreviewPrevBtn: 'print-preview-prev',
+    printPreviewNextBtn: 'print-preview-next',
+    printPreviewPosition: 'print-preview-position',
     previewPrintBtn: 'preview-print-btn',
     printPdfBtn: 'print-pdf-btn',
     printHtmlBtn: 'print-html-btn',

@@ -20,6 +20,7 @@ export class CartonModals {
         this.initialSettings = settings;
         this.onSettingsChanged = onSettingsChanged;
         this.mode = null;
+        this.previewIndex = 0;
     }
 
     init() {
@@ -85,6 +86,8 @@ export class CartonModals {
         el.printHtmlBtn.addEventListener('click', () => this.print(PRINT_FORMAT.HTML));
         el.printPdfBtn.addEventListener('click', () => this.print(PRINT_FORMAT.PDF));
         el.previewPrintBtn.addEventListener('click', () => this.updatePreview());
+        el.printPreviewPrevBtn.addEventListener('click', () => this.stepPreview(-1));
+        el.printPreviewNextBtn.addEventListener('click', () => this.stepPreview(1));
 
         el.printRangeRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
@@ -188,14 +191,22 @@ export class CartonModals {
         }
 
         const count = result.cartones.length;
+
+        if (count === 0) {
+            this.dialogs.showAlert(MSG.cartones.noMoreUnique);
+            return;
+        }
+
+        const partial = result.missing > 0;
         this.onSettingsChanged({cartonCount: requestedCount});
 
         if (mode === CARTON_MODE.NEW) {
             this.game.setCartones(result.cartones);
-            this.dialogs.showAlert(MSG.cartones.generated(count));
+            this.dialogs.showAlert(partial ? MSG.cartones.generatedPartial(count, result.requested) : MSG.cartones.generated(count));
         } else if (mode === CARTON_MODE.ADD) {
             this.game.addCartones(result.cartones);
-            this.dialogs.showAlert(MSG.cartones.added(count, this.game.getCartonesCount()));
+            const total = this.game.getCartonesCount();
+            this.dialogs.showAlert(partial ? MSG.cartones.addedPartial(count, result.requested, total) : MSG.cartones.added(count, total));
         }
 
         this.onCartonesChanged();
@@ -219,6 +230,7 @@ export class CartonModals {
         this.el.printRangeRadios[0].checked = true;
         this.el.rangeInputsContainer.style.display = 'none';
 
+        this.previewIndex = 0;
         this.updatePreview();
 
         this.modals.openWithClick(this.el.printModal);
@@ -241,8 +253,20 @@ export class CartonModals {
     }
 
     updatePreview() {
-        const gameName = gameNameOrDefault(this.game.getGameName());
-        this.cartonManager.updatePrintPreview(this.getSongs(), gameName, this._printColors());
+        const cartones = this.game.getCartones();
+        if (cartones.length === 0) return;
+
+        this.previewIndex = Math.min(Math.max(this.previewIndex, 0), cartones.length - 1);
+        this.cartonManager.updatePrintPreview(cartones[this.previewIndex], gameNameOrDefault(this.game.getGameName()), this._printColors());
+
+        this.el.printPreviewPosition.textContent = TEXT.cartones.previewPosition(this.previewIndex + 1, cartones.length);
+        this.el.printPreviewPrevBtn.disabled = this.previewIndex === 0;
+        this.el.printPreviewNextBtn.disabled = this.previewIndex === cartones.length - 1;
+    }
+
+    stepPreview(offset) {
+        this.previewIndex += offset;
+        this.updatePreview();
     }
 
     _printColors() {

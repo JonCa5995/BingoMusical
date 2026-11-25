@@ -124,7 +124,7 @@ ${rowsHTML}
             <div class="preview-carton" style="color: ${primaryColor}; border-color: ${primaryColor};">
                 <div class="preview-carton-header" style="border-color: ${primaryColor};">
                     <div class="preview-carton-title" style="color: ${primaryColor};">${TEXT.document.cartonTitle(displayName)}</div>
-                    <div class="preview-carton-number" style="background-color: ${secondaryColor};">#1</div>
+                    <div class="preview-carton-number" style="background-color: ${secondaryColor};">#${carton.id}</div>
                 </div>
                 <div class="preview-carton-grid">
                     ${cellsHTML}
