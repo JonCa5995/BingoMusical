@@ -245,7 +245,11 @@ export const TEXT = {
     projection: {
         waiting: 'Esperando la primera canción…',
         counter: (played, total) => `${played} de ${total} canciones`,
-        time: (current, total) => `${current} / ${total}`
+        time: (current, total) => `${current} / ${total}`,
+        celebration: {
+            linea: {title: '📏 ¡LÍNEA! 📏', text: '¡Felicidades, has completado una línea!'},
+            bingo: {title: '🎉 ¡BINGO! 🎉', text: '¡Felicidades, has completado el bingo!'}
+        }
     },
     theme: {
         toLight: 'Cambiar a tema claro',

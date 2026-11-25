@@ -161,6 +161,30 @@ body.projection {
     }
 }
 
+.projection-celebration article.celebration-content {
+    max-width: 90vw;
+}
+
+.projection-celebration .celebration-title {
+    font-size: 16vmin;
+    line-height: 1.1;
+    animation: projectionCelebrationPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes projectionCelebrationPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.06);
+    }
+}
+
+.projection-celebration .celebration-text {
+    margin-bottom: 0;
+    font-size: 5vmin;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .projection-logo.animated,
     .projection-logo.animated img {
@@ -170,6 +194,10 @@ body.projection {
     .projection-icon.playing::before {
         animation: none;
         opacity: 0.6;
+    }
+
+    .projection-celebration .celebration-title {
+        animation: none;
     }
 }
 

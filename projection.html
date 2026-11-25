@@ -6,6 +6,8 @@
   <title>Bingo Musical - Proyección</title>
   <link rel="stylesheet" href="css/base/variables.css">
   <link rel="stylesheet" href="css/base/reset.css">
+  <link rel="stylesheet" href="css/utilities/animations.css">
+  <link rel="stylesheet" href="css/modules/celebrations.css">
   <link rel="stylesheet" href="css/projection.css">
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -42,6 +44,13 @@
     <div id="projection-history" class="projection-history" role="group" aria-label="Últimas canciones"></div>
     <p class="projection-hint">Doble clic para pantalla completa</p>
   </footer>
+
+  <aside id="projection-celebration" class="celebration-overlay projection-celebration hidden" role="status" aria-labelledby="projection-celebration-title">
+    <article class="celebration-content">
+      <h1 id="projection-celebration-title" class="celebration-title"></h1>
+      <p id="projection-celebration-text" class="celebration-text"></p>
+    </article>
+  </aside>
 
   <script type="module" src="js/projection.js"></script>
 </body>

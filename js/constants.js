@@ -155,6 +155,12 @@ export const ALERT_KIND = Object.freeze({
     ERROR: 'error'
 });
 
+/** Celebración que se muestra al cantar LÍNEA o BINGO (también viaja a la proyección) */
+export const CELEBRATION = Object.freeze({
+    LINEA: 'linea',
+    BINGO: 'bingo'
+});
+
 export const SOUND = Object.freeze({
     CLICK: 'click',
     START: 'start',

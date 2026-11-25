@@ -1,4 +1,4 @@
-import {DEFAULT_GAME_NAME, ICON_TYPE, PROJECTION_STATE_VERSION, THEME} from '../constants.js';
+import {CELEBRATION, DEFAULT_GAME_NAME, ICON_TYPE, PROJECTION_STATE_VERSION, THEME} from '../constants.js';
 import {TEXT} from '../messages.js';
 import {formatTime} from './AudioControlsView.js';
 import {isImageDataUrl} from '../utils.js';
@@ -7,7 +7,8 @@ const FADE_IN = 'opacity 1s ease-in';
 
 const isValidState = (state) => state?.type === 'state' && state.version === PROJECTION_STATE_VERSION
     && typeof state.gameName === 'string' && Number.isFinite(state.played) && Number.isFinite(state.total)
-    && Array.isArray(state.history) && Number.isFinite(state.titleRevealMs) && Number.isFinite(state.iconRevealMs);
+    && Array.isArray(state.history) && Number.isFinite(state.titleRevealMs) && Number.isFinite(state.iconRevealMs)
+    && (state.celebration == null || Object.values(CELEBRATION).includes(state.celebration));
 
 export class ProjectionView {
     constructor({elements, channel, root = document.documentElement, now = () => Date.now(), timers = {set: (fn, delay) => setTimeout(fn, delay), clear: (id) => clearTimeout(id)}}) {
@@ -20,6 +21,7 @@ export class ProjectionView {
         this.iconVisible = false;
         this.state = null;
         this.docked = false;
+        this.celebration = null;
     }
 
     start() {
@@ -79,6 +81,19 @@ export class ProjectionView {
         this.el.time.textContent = TEXT.projection.time(formatTime(currentTime), formatTime(duration));
     }
 
+    _showCelebration(kind) {
+        if (kind === this.celebration) return;
+
+        this.celebration = kind;
+        this.el.celebration.classList.toggle('hidden', kind === null);
+        if (kind === null) return;
+
+        const texts = TEXT.projection.celebration[kind];
+        this.el.celebrationTitle.textContent = texts.title;
+        this.el.celebrationTitle.classList.toggle('celebration-title-linea', kind === CELEBRATION.LINEA);
+        this.el.celebrationText.textContent = texts.text;
+    }
+
     _setPlaying(playing) {
         this.el.icon.classList.toggle('playing', Boolean(playing) && Boolean(this.state?.current));
     }
@@ -97,6 +112,7 @@ export class ProjectionView {
         this.el.gameName.textContent = named ? state.gameName : '';
         this.el.gameName.hidden = !named;
         this.el.counter.textContent = TEXT.projection.counter(state.played, state.total);
+        this._showCelebration(state.celebration ?? null);
 
         const animate = previous !== null;
         this.docked = Boolean(state.current);

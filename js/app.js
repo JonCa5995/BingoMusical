@@ -30,6 +30,7 @@ import {ProjectionChannel, buildProjectionProgress, buildProjectionState} from "
 import {registerServiceWorker} from "./modules/ServiceWorkerRegistrar.js";
 import {deserializeCartones} from "./modules/CartonSerializer.js";
 import {
+    CELEBRATION,
     CELEBRATION_DELAY_MS,
     CONTINUOUS_NEXT_SONG_DELAY_MS,
     DEFAULT_SONGS_FOLDER,
@@ -192,13 +193,15 @@ export class BingoMusical {
 
     _createProjection() {
         this.songStartedAt = null;
+        this.celebration = null;
         this.waitingForProjection = false;
         this.projection = new ProjectionChannel({
             getState: () => buildProjectionState({
                 songs: this.songs,
                 game: this.game,
                 theme: this.theme.getCurrent(),
-                startedAt: this.songStartedAt
+                startedAt: this.songStartedAt,
+                celebration: this.celebration
             }),
             getProgress: () => buildProjectionProgress({
                 timeline: this.audio.getTimeline(),
@@ -432,13 +435,25 @@ export class BingoMusical {
 
     _setupCelebrationEventListeners() {
         this.dom.celebration.continueLineaBtn.addEventListener('click', () => {
-            this.dom.celebration.lineaOverlay.classList.add('hidden');
+            this._hideCelebration(this.dom.celebration.lineaOverlay);
         });
 
         this.dom.celebration.restartBtn.addEventListener('click', () => {
             this.reiniciarJuego();
-            this.dom.celebration.celebrationOverlay.classList.add('hidden');
+            this._hideCelebration(this.dom.celebration.celebrationOverlay);
         });
+    }
+
+    _showCelebration(kind, overlay) {
+        overlay.classList.remove('hidden');
+        this.celebration = kind;
+        this.projection.schedulePublish();
+    }
+
+    _hideCelebration(overlay) {
+        overlay.classList.add('hidden');
+        this.celebration = null;
+        this.projection.schedulePublish();
     }
 
     playPauseOnSpace() {
@@ -563,6 +578,7 @@ export class BingoMusical {
             canCall: () => this.game.canCallLinea(),
             complete: () => this.game.completeLinea(),
             sound: SOUND.WIN,
+            kind: CELEBRATION.LINEA,
             overlay: this.dom.celebration.lineaOverlay
         });
     }
@@ -572,11 +588,12 @@ export class BingoMusical {
             canCall: () => this.game.canCallBingo(),
             complete: () => this.game.completeBingo(),
             sound: SOUND.COMPLETE,
+            kind: CELEBRATION.BINGO,
             overlay: this.dom.celebration.celebrationOverlay
         });
     }
 
-    _callGame({canCall, complete, sound, overlay}) {
+    _callGame({canCall, complete, sound, kind, overlay}) {
         if (!this._ensureEnoughSongs()) return;
 
         const check = canCall();
@@ -588,7 +605,7 @@ export class BingoMusical {
         complete();
         this._onGameChanged();
         this.sounds.play(sound);
-        setTimeout(() => overlay.classList.remove('hidden'), CELEBRATION_DELAY_MS);
+        setTimeout(() => this._showCelebration(kind, overlay), CELEBRATION_DELAY_MS);
     }
 
     _ensureEnoughSongs() {
@@ -961,7 +978,7 @@ export class BingoMusical {
                 this._onGameChanged();
                 setTimeout(() => {
                     this.sounds.play(SOUND.COMPLETE);
-                    this.dom.celebration.celebrationOverlay.classList.remove('hidden');
+                    this._showCelebration(CELEBRATION.BINGO, this.dom.celebration.celebrationOverlay);
                 }, CELEBRATION_DELAY_MS);
             }
         }

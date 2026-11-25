@@ -20,10 +20,15 @@ const spreadEl = (rect = {left: 0, top: 0, width: 0, height: 0}) => {
 const ICON_RECT = {left: 400, top: 200, width: 300, height: 300};
 const SLOT_RECT = {left: 20, top: 10, width: 60, height: 60};
 
-const makeElements = () => ({
-    header: spreadEl(), logo: spreadEl(), logoSlot: spreadEl(SLOT_RECT), gameName: spreadEl(), status: spreadEl(), icon: spreadEl(ICON_RECT), title: spreadEl(),
-    counter: spreadEl(), history: spreadEl(), progressBar: spreadEl(), progressFill: spreadEl(), time: spreadEl()
-});
+const makeElements = () => {
+    const elements = {
+        header: spreadEl(), logo: spreadEl(), logoSlot: spreadEl(SLOT_RECT), gameName: spreadEl(), status: spreadEl(), icon: spreadEl(ICON_RECT), title: spreadEl(),
+        counter: spreadEl(), history: spreadEl(), progressBar: spreadEl(), progressFill: spreadEl(), time: spreadEl(),
+        celebration: spreadEl(), celebrationTitle: spreadEl(), celebrationText: spreadEl()
+    };
+    elements.celebration.classList.add('hidden');
+    return elements;
+};
 
 const fakeChannel = () => {
     const channel = {sent: [], postMessage(message) { channel.sent.push(message); }, onmessage: null};
@@ -531,4 +536,63 @@ test('la proyección avisa de que sigue abierta y de que se cierra', () => {
     view.sendBye();
 
     assert.deepEqual(channel.sent, [{type: 'alive'}, {type: 'bye'}]);
+});
+
+test('buildProjectionState incluye la celebración activa y por defecto ninguna', () => {
+    const {songs, game} = makeGame({songCount: 26, played: 3});
+
+    assert.equal(buildProjectionState({songs, game, theme: 'dark', startedAt: null}).celebration, null);
+    assert.equal(buildProjectionState({songs, game, theme: 'dark', startedAt: null, celebration: 'bingo'}).celebration, 'bingo');
+});
+
+test('la proyección muestra la celebración de LÍNEA con su texto y el estilo verde, y la oculta al terminar', () => {
+    const {view, el} = buildView();
+    view.start();
+
+    send(view, stateFor({celebration: 'linea'}));
+
+    assert.equal(el.celebration.classList.contains('hidden'), false);
+    assert.equal(el.celebrationTitle.textContent, TEXT.projection.celebration.linea.title);
+    assert.equal(el.celebrationText.textContent, TEXT.projection.celebration.linea.text);
+    assert.equal(el.celebrationTitle.classList.contains('celebration-title-linea'), true);
+
+    send(view, stateFor({celebration: null}));
+    assert.equal(el.celebration.classList.contains('hidden'), true);
+});
+
+test('la proyección muestra la celebración de BINGO sin el estilo de línea', () => {
+    const {view, el} = buildView();
+    view.start();
+    send(view, stateFor({celebration: 'linea'}));
+
+    send(view, stateFor({celebration: 'bingo'}));
+
+    assert.equal(el.celebrationTitle.textContent, TEXT.projection.celebration.bingo.title);
+    assert.equal(el.celebrationText.textContent, TEXT.projection.celebration.bingo.text);
+    assert.equal(el.celebrationTitle.classList.contains('celebration-title-linea'), false);
+    assert.equal(el.celebration.classList.contains('hidden'), false);
+});
+
+test('mientras dura la celebración, los estados repetidos no vuelven a pintarla', () => {
+    const {view, el} = buildView();
+    view.start();
+    send(view, stateFor({celebration: 'bingo'}));
+    el.celebrationTitle.textContent = 'marca';
+
+    send(view, stateFor({celebration: 'bingo', played: 5}));
+
+    assert.equal(el.celebrationTitle.textContent, 'marca');
+});
+
+test('un estado sin el campo celebration (versión anterior de la app) no muestra nada, y uno con valor desconocido se ignora', () => {
+    const {view, el} = buildView();
+    view.start();
+    const old = stateFor();
+    delete old.celebration;
+
+    send(view, old);
+    assert.equal(el.celebration.classList.contains('hidden'), true);
+
+    send(view, stateFor({celebration: 'fuegos', played: 9}));
+    assert.equal(el.counter.textContent, TEXT.projection.counter(2, 20));
 });

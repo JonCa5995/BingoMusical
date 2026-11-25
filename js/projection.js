@@ -6,6 +6,9 @@ const byId = (id) => document.getElementById(id);
 const view = new ProjectionView({
     elements: {
         header: byId('projection-header'),
+        celebration: byId('projection-celebration'),
+        celebrationTitle: byId('projection-celebration-title'),
+        celebrationText: byId('projection-celebration-text'),
         logo: byId('projection-logo'),
         logoSlot: byId('projection-logo-slot'),
         gameName: byId('projection-game-name'),

@@ -10,7 +10,7 @@ import {
     PROJECTION_WINDOW_NAME
 } from '../constants.js';
 
-export function buildProjectionState({songs, game, theme, startedAt, revealed}) {
+export function buildProjectionState({songs, game, theme, startedAt, revealed, celebration = null}) {
     const history = game.getHistory();
     const current = songs.find(song => song.id === game.getCurrentSong());
     const gameStarted = game.isGameStarted();
@@ -25,6 +25,7 @@ export function buildProjectionState({songs, game, theme, startedAt, revealed}) 
         total: songs.length,
         current: current ? {id: current.id, title: current.title, icon: current.icon, iconType: current.iconType} : null,
         startedAt: startedAt ?? null,
+        celebration,
         titleRevealMs: game.getTitleRevealTime() * MS_PER_SECOND,
         iconRevealMs: game.getIconRevealTime() * MS_PER_SECOND,
         revealed: Boolean(revealed) || !gameStarted,
