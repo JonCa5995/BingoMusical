@@ -5,7 +5,9 @@
   "description": "Bingo Musical: aplicación web para jugar al bingo con música.",
   "type": "module",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "build:exe": "node sea/build.mjs",
+    "start": "node sea/server.cjs"
   },
   "engines": {
     "node": ">=22"

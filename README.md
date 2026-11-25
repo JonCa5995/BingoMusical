@@ -64,6 +64,16 @@ La aplicación es una PWA: con `manifest.webmanifest` y un service worker (`sw.j
 ### Accesibilidad
 Las ventanas son `<dialog>` nativos (el foco queda dentro, Escape las cierra y el foco vuelve al botón que las abrió), los botones tienen nombre accesible y los contrastes de los botones cumplen WCAG AA en los dos temas. La única excepción conocida es la vista previa de impresión, que reproduce los colores elegidos por el usuario para el documento.
 
+### Ejecutable de Windows (sin instalar nada)
+Se puede generar un único `.exe` que lleva dentro la aplicación y un pequeño servidor local (Node SEA, el empaquetado oficial de Node). Al abrirlo arranca el servidor y abre el navegador en `http://localhost:8123`; la ventana negra que aparece es el servidor, y al cerrarla se sale.
+
+- **Generarlo:** `npm run build:exe` (necesita **Node 25.5 o superior**; no instala nada más). El resultado queda en `dist/BingoMusical.exe` (unos 95 MB, porque lleva Node dentro) y se puede copiar a cualquier ordenador Windows, sin instalar Node.
+- **Canciones:** si junto al `.exe` hay una carpeta `canciones/`, el servidor la sirve (con soporte para saltar dentro de la canción), así que sigue valiendo la convención `canciones/<título>.mp3`. También se pueden arrastrar los audios o usar «Vincular audio».
+- **Puerto fijo:** los ajustes y la partida guardada se guardan por dirección, que incluye el puerto, así que se usa siempre el 8123 (`--port=NNNN` o la variable `BINGO_PORT` lo cambian, pero entonces se ve otra copia de los datos). Si el 8123 ya lo usa otra aplicación, prueba con los siguientes. Si ya está abierto el propio Bingo Musical, el segundo arranque solo vuelve a abrir el navegador.
+- **Solo escucha en tu ordenador** (`127.0.0.1`), nadie de la red puede entrar, y solo sirve los archivos de la aplicación y la carpeta de canciones.
+- **Aviso de Windows:** al abrir un `.exe` sin firmar, SmartScreen avisa de «editor desconocido»: «Más información → Ejecutar de todos modos». Evitarlo exige un certificado de firma de código, que es de pago.
+- Cada cambio en la aplicación obliga a volver a generar el `.exe`. Sin generarlo, `npm start` arranca el mismo servidor desde el código fuente.
+
 ### Modo continuo
 
 El botón **«Automático»** (modo continuo) sirve para **reproducir las canciones sin empezar el juego**: al terminar una canción pasa sola a la siguiente, sin pulsar ningún botón. Es útil para ambientar o para probar la lista. Se desactiva solo al iniciar una partida (el botón pasa a mostrar «Manual» mientras está activo).
@@ -178,6 +188,7 @@ Los campos desconocidos se descartan y los ajustes inválidos se ignoran.
 ```
 index.html            Página única
 projection.html       Ventana de proyección para el público (css/projection.css, js/projection.js)
+sea/                  Servidor local y script para generar el ejecutable de Windows (Node SEA)
 manifest.webmanifest, sw.js   Aplicación instalable y sin conexión (PWA)
 css/                  Estilos por zonas (base, layout, components, modules, themes, utilities)
 js/app.js             Coordinador: crea los módulos y conecta sus eventos
