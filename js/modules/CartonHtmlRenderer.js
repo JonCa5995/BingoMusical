@@ -104,4 +104,42 @@ ${rowsHTML}
         }
         return `          <div class="carton-cell decorative" role="gridcell"><div class="decorative-icon" aria-hidden="true">${DECORATIVE_ICON_HTML}</div></div>\n`;
     }
+
+    generatePreviewHTML(carton, config, gameName = '') {
+        const {primaryColor, secondaryColor} = config;
+        const displayName = escapeHTML(gameNameOrDefault(gameName));
+
+        const cellsHTML = carton.rows.flatMap(row =>
+            row.cells.map(cell => {
+                const cellClass = cell.type === CELL_TYPE.SONG ? 'song' : 'decorative';
+                const icon = this._previewCellIcon(cell);
+
+                return `<div class="preview-cell ${cellClass}">
+                    ${icon}
+                </div>`;
+            })
+        ).join('');
+
+        return `
+            <div class="preview-carton" style="color: ${primaryColor}; border-color: ${primaryColor};">
+                <div class="preview-carton-header" style="border-color: ${primaryColor};">
+                    <div class="preview-carton-title" style="color: ${primaryColor};">${TEXT.document.cartonTitle(displayName)}</div>
+                    <div class="preview-carton-number" style="background-color: ${secondaryColor};">#1</div>
+                </div>
+                <div class="preview-carton-grid">
+                    ${cellsHTML}
+                </div>
+            </div>
+        `;
+    }
+
+    _previewCellIcon(cell) {
+        if (cell.type === CELL_TYPE.SONG && cell.song) {
+            if (cell.song.iconType === ICON_TYPE.IMAGE) {
+                return `<img src="${escapeHTML(cell.song.icon)}" alt="${escapeHTML(cell.song.title)}" style="max-width: 90%; max-height: 90%;">`;
+            }
+            return escapeHTML(cell.song.icon);
+        }
+        return `<span class="decorative-icon">${DECORATIVE_ICON_HTML}</span>`;
+    }
 }
