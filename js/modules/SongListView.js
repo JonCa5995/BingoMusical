@@ -51,71 +51,80 @@ export class SongListView {
 
     createSongItem(song) {
         const { currentSongId, gameStarted } = this.getPlaybackState();
-        const isCurrent = currentSongId === song.id;
-        const iconLocked = song.played || gameStarted;
+        const state = { isCurrent: currentSongId === song.id, gameStarted };
 
-        // Fila de la canción
         const li = document.createElement('li');
-        li.className = `song-item ${song.played ? 'played' : ''} ${isCurrent ? 'playing' : ''}`;
+        li.className = `song-item ${song.played ? 'played' : ''} ${state.isCurrent ? 'playing' : ''}`;
         li.setAttribute('role', 'listitem');
+        li.onclick = () => this.handlers.onSongClick(song);
 
-        // Botón del icono
-        const iconBtn = document.createElement('button');
-        iconBtn.type = 'button';
-        iconBtn.className = 'song-item-icon';
-        iconBtn.dataset.songId = song.id;
-        iconBtn.title = this.ui.getSongIconTitle(song, gameStarted);
-        iconBtn.style.cursor = iconLocked ? 'not-allowed' : 'pointer';
-        iconBtn.setAttribute('aria-label', TEXT.list.changeIconLabel(song.title));
-        iconBtn.disabled = iconLocked;
-        iconBtn.innerHTML = this.ui.getSongIconHtml(song);
+        li.append(
+            this._createIconButton(song, state),
+            this._createInfo(song, state),
+            this._createDeleteButton(song)
+        );
+        return li;
+    }
 
-        // La canción en juego se oculta hasta revelarla
+    _createIconButton(song, { isCurrent, gameStarted }) {
+        const locked = song.played || gameStarted;
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'song-item-icon';
+        button.dataset.songId = song.id;
+        button.title = this.ui.getSongIconTitle(song, gameStarted);
+        button.style.cursor = locked ? 'not-allowed' : 'pointer';
+        button.setAttribute('aria-label', TEXT.list.changeIconLabel(song.title));
+        button.disabled = locked;
+        button.innerHTML = this.ui.getSongIconHtml(song);
+
         if (isCurrent && gameStarted && song.hideIcon) {
-            iconBtn.style.opacity = '0';
+            button.style.opacity = '0';
         }
 
-        // Título y estado
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'song-item-info';
-
-        const titleStrong = document.createElement('strong');
-        titleStrong.className = 'song-item-title';
-        titleStrong.dataset.songId = song.id;
-        titleStrong.textContent = song.title;
-
-        if (isCurrent && gameStarted && song.hideTitle) {
-            titleStrong.style.opacity = '0';
-        }
-
-        const statusDiv = document.createElement('div');
-        statusDiv.className = 'song-item-status';
-        statusDiv.setAttribute('role', 'status');
-        statusDiv.setAttribute('aria-live', 'polite');
-        statusDiv.textContent = this.ui.getSongStateLabel(song);
-
-        infoDiv.append(titleStrong, statusDiv);
-
-        // Botón de borrar
-        const deleteBtn = document.createElement('button');
-        deleteBtn.type = 'button';
-        deleteBtn.className = 'song-item-delete';
-        deleteBtn.title = TEXT.list.deleteTitle;
-        deleteBtn.setAttribute('aria-label', TEXT.list.deleteLabel(song.title));
-        deleteBtn.innerHTML = '<span aria-hidden="true">❌</span>';
-
-        // Eventos y montaje de la fila
-        iconBtn.onclick = (e) => {
+        button.onclick = (e) => {
             e.stopPropagation();
             this.handlers.onIconClick(song);
         };
-        li.onclick = () => this.handlers.onSongClick(song);
-        deleteBtn.onclick = (e) => {
+        return button;
+    }
+
+    _createInfo(song, { isCurrent, gameStarted }) {
+        const info = document.createElement('div');
+        info.className = 'song-item-info';
+
+        const title = document.createElement('strong');
+        title.className = 'song-item-title';
+        title.dataset.songId = song.id;
+        title.textContent = song.title;
+
+        if (isCurrent && gameStarted && song.hideTitle) {
+            title.style.opacity = '0';
+        }
+
+        const status = document.createElement('div');
+        status.className = 'song-item-status';
+        status.setAttribute('role', 'status');
+        status.setAttribute('aria-live', 'polite');
+        status.textContent = this.ui.getSongStateLabel(song);
+
+        info.append(title, status);
+        return info;
+    }
+
+    _createDeleteButton(song) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'song-item-delete';
+        button.title = TEXT.list.deleteTitle;
+        button.setAttribute('aria-label', TEXT.list.deleteLabel(song.title));
+        button.innerHTML = '<span aria-hidden="true">❌</span>';
+
+        button.onclick = (e) => {
             e.stopPropagation();
             this.handlers.onDelete(song);
         };
-
-        li.append(iconBtn, infoDiv, deleteBtn);
-        return li;
+        return button;
     }
 }

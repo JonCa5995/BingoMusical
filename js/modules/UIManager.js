@@ -64,48 +64,46 @@ export class UIManager {
     }
 
     updatePlayerUI(song, titleRevealTime = 0, iconRevealTime = 0, gameStarted = false) {
-        // Cancela los revelados de la canción anterior
         this.clearPlayerRevealTimers();
+        this._showPlayerTitle(song, gameStarted, titleRevealTime);
+        this._showPlayerIcon(song, gameStarted, iconRevealTime);
+    }
 
-        // Fuera de partida se muestra todo al instante
-        if (!gameStarted) {
-            this.el.songTitleElement.textContent = song.title;
-            this.el.songTitleElement.style.opacity = '1';
-            this.el.songTitleElement.style.transition = '';
-            this.el.currentIconImg.style.opacity = '1';
-            this.el.currentIconImg.style.transition = '';
-        } else {
-            // En partida el título empieza oculto
-            this.el.songTitleElement.textContent = song.title;
-            this.el.songTitleElement.style.transition = '';
-            this.el.songTitleElement.style.opacity = '0';
-            
-            // Revela el título tras el tiempo configurado
-            this.playerRevealTimers.push(setTimeout(() => {
-                this.el.songTitleElement.style.transition = 'opacity 1s ease-in';
-                this.el.songTitleElement.style.opacity = '1';
-            }, titleRevealTime * MS_PER_SECOND));
-            
-            this.el.currentIconImg.style.transition = '';
-            this.el.currentIconImg.style.opacity = '0';
-        }
+    _showPlayerTitle(song, gameStarted, revealTime) {
+        const title = this.el.songTitleElement;
+        title.textContent = song.title;
+        title.style.transition = '';
+        title.style.opacity = gameStarted ? '0' : '1';
 
-        this.el.currentIconImg.alt = song.title;
-
-        // Muestra el icono
-        if (song.iconType === ICON_TYPE.IMAGE && song.icon) {
-            this.el.currentIconImg.src = song.icon;
-        } else {
-            this.el.currentIconImg.src = this.emojiToDataURL(song.icon, PLAYER_ICON_SIZE);
-        }
-
-        // Revela el icono tras el tiempo configurado (solo en partida)
         if (gameStarted) {
-            this.playerRevealTimers.push(setTimeout(() => {
-                this.el.currentIconImg.style.transition = 'opacity 1s ease-in';
-                this.el.currentIconImg.style.opacity = '1';
-            }, iconRevealTime * MS_PER_SECOND));
+            this.playerRevealTimers.push(this._fadeInAfter(title, revealTime));
         }
+    }
+
+    _showPlayerIcon(song, gameStarted, revealTime) {
+        const icon = this.el.currentIconImg;
+        icon.style.transition = '';
+        icon.style.opacity = gameStarted ? '0' : '1';
+        icon.alt = song.title;
+        icon.src = this._iconSrc(song, PLAYER_ICON_SIZE);
+
+        if (gameStarted) {
+            this.playerRevealTimers.push(this._fadeInAfter(icon, revealTime));
+        }
+    }
+
+    _iconSrc(song, size) {
+        if (song.iconType === ICON_TYPE.IMAGE && song.icon) {
+            return song.icon;
+        }
+        return this.emojiToDataURL(song.icon, size);
+    }
+
+    _fadeInAfter(element, seconds) {
+        return setTimeout(() => {
+            element.style.transition = 'opacity 1s ease-in';
+            element.style.opacity = '1';
+        }, seconds * MS_PER_SECOND);
     }
 
     clearPlayerRevealTimers() {
@@ -185,11 +183,7 @@ export class UIManager {
             img.style.opacity = '0';
         }
 
-        if (song.iconType === ICON_TYPE.IMAGE && song.icon) {
-            img.src = song.icon;
-        } else {
-            img.src = this.emojiToDataURL(song.icon, HISTORY_ICON_SIZE);
-        }
+        img.src = this._iconSrc(song, HISTORY_ICON_SIZE);
 
         img.alt = song.title;
         historyItem.appendChild(img);
@@ -199,10 +193,7 @@ export class UIManager {
         container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
 
         if (gameStarted) {
-            setTimeout(() => {
-                img.style.transition = 'opacity 1s ease-in';
-                img.style.opacity = '1';
-            }, iconRevealTime * MS_PER_SECOND);
+            this._fadeInAfter(img, iconRevealTime);
         }
 
         return historyItem;
