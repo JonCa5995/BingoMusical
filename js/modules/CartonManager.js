@@ -1,4 +1,4 @@
-import {CELL_TYPE, ICON_TYPE, PRINT_FORMAT, SOUND} from '../constants.js';
+import {CELL_TYPE, ICON_TYPE, MAX_CARTONS_GENERATED, MIN_SONGS_REQUIRED, PRINT_FORMAT, SOUND} from '../constants.js';
 import {escapeHTML, gameNameOrDefault} from '../utils.js';
 import {DECORATIVE_ICON_HTML} from './CartonHtmlRenderer.js';
 import {MSG, TEXT} from '../messages.js';
@@ -109,28 +109,25 @@ export class CartonManager {
         return cartones.slice(from - 1, to);
     }
 
-    async generateCartones(songs, count, maxCartones, minRequired, showAlertCallback, existingCartones = []) {
-        if (Number.isNaN(count) || count < 1 || count > maxCartones) {
-            showAlertCallback(MSG.cartones.invalidCount(maxCartones));
-            return {success: false};
+    generate(songs, count, existingCartones = []) {
+        if (Number.isNaN(count) || count < 1 || count > MAX_CARTONS_GENERATED) {
+            return {success: false, alert: MSG.cartones.invalidCount(MAX_CARTONS_GENERATED)};
         }
 
-        const totalSongs = songs.filter(s => s.file).length;
-        if (totalSongs < minRequired) {
-            showAlertCallback(MSG.cartones.notEnoughSongs(minRequired));
-            return {success: false};
+        const playableSongs = songs.filter(song => song.file);
+        if (playableSongs.length < MIN_SONGS_REQUIRED) {
+            return {success: false, alert: MSG.cartones.notEnoughSongs(MIN_SONGS_REQUIRED)};
         }
 
         this.sounds.play(SOUND.START);
 
         try {
-            const cartones = this.cartonGenerator.generateCartones(songs, count, existingCartones);
+            const cartones = this.cartonGenerator.generateCartones(playableSongs, count, existingCartones);
 
             this.sounds.play(SOUND.WIN);
             return {success: true, cartones};
         } catch (error) {
-            showAlertCallback(MSG.cartones.generateFailed(error.message));
-            return {success: false};
+            return {success: false, alert: MSG.cartones.generateFailed(error.message)};
         }
     }
 }
