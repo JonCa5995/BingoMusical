@@ -150,9 +150,7 @@ export class UIManager {
         this.el.importListBtn.disabled = isDisabled;
         this.el.importListBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
 
-        this.el.clearHistoryBtn.disabled = !isDisabled;
-        this.el.clearHistoryBtn.style.opacity = isDisabled ? '1' : '0.5';
-        this.el.clearHistoryBtn.style.cursor = isDisabled ? 'pointer' : 'not-allowed';
+        this._setLocked(this.el.clearHistoryBtn, !isDisabled);
 
         this._setLocked(this.el.shuffleAllBtn, isDisabled);
         if (isDisabled && continuousMode) {

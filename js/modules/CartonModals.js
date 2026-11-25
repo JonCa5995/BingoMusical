@@ -106,16 +106,11 @@ export class CartonModals {
 
     openOptions() {
         const existingCount = this.game.getCartonesCount();
+        const hasCartones = existingCount > 0;
 
-        if (existingCount > 0) {
-            this.el.existingCartonesInfo.textContent = TEXT.cartones.optionsInfo(existingCount);
-            this.el.printExistingCartonesBtn.disabled = false;
-            this.el.deleteAllCartonesBtn.disabled = false;
-        } else {
-            this.el.existingCartonesInfo.textContent = TEXT.cartones.noneInfo;
-            this.el.printExistingCartonesBtn.disabled = true;
-            this.el.deleteAllCartonesBtn.disabled = true;
-        }
+        this.el.existingCartonesInfo.textContent = hasCartones ? TEXT.cartones.optionsInfo(existingCount) : TEXT.cartones.noneInfo;
+        this.el.printExistingCartonesBtn.disabled = !hasCartones;
+        this.el.deleteAllCartonesBtn.disabled = !hasCartones;
 
         this.modals.openWithClick(this.el.cartonOptionsModal);
     }

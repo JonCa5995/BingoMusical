@@ -27,8 +27,10 @@ export class ThemeManager {
     }
 
     apply(theme) {
+        const dark = theme === THEME.DARK;
+
         this.root.dataset.theme = theme;
-        this.icon.textContent = theme === THEME.DARK ? '🌙' : '☀️';
-        this.toggleButton.setAttribute('title', theme === THEME.DARK ? TEXT.theme.toLight : TEXT.theme.toDark);
+        this.icon.textContent = dark ? '🌙' : '☀️';
+        this.toggleButton.setAttribute('title', dark ? TEXT.theme.toLight : TEXT.theme.toDark);
     }
 }

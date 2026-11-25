@@ -66,12 +66,21 @@ export class SongListView {
         return li;
     }
 
+    _createButton(className, onClick) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = className;
+        button.onclick = (e) => {
+            e.stopPropagation();
+            onClick();
+        };
+        return button;
+    }
+
     _createIconButton(song, { isCurrent, gameStarted }) {
         const locked = song.played || gameStarted;
 
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'song-item-icon';
+        const button = this._createButton('song-item-icon', () => this.handlers.onIconClick(song));
         button.dataset.songId = song.id;
         button.title = this.ui.getSongIconTitle(song, gameStarted);
         button.style.cursor = locked ? 'not-allowed' : 'pointer';
@@ -83,10 +92,6 @@ export class SongListView {
             button.style.opacity = '0';
         }
 
-        button.onclick = (e) => {
-            e.stopPropagation();
-            this.handlers.onIconClick(song);
-        };
         return button;
     }
 
@@ -114,17 +119,11 @@ export class SongListView {
     }
 
     _createDeleteButton(song) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'song-item-delete';
+        const button = this._createButton('song-item-delete', () => this.handlers.onDelete(song));
         button.title = TEXT.list.deleteTitle;
         button.setAttribute('aria-label', TEXT.list.deleteLabel(song.title));
         button.innerHTML = '<span aria-hidden="true">❌</span>';
 
-        button.onclick = (e) => {
-            e.stopPropagation();
-            this.handlers.onDelete(song);
-        };
         return button;
     }
 }
