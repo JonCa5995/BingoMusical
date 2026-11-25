@@ -17,6 +17,7 @@ const walk = (dir, extensions) => fs.readdirSync(path.join(root, dir), {withFile
 });
 
 const loadServiceWorker = () => {
+    const currentVersion = /CACHE_VERSION = '([^']+)'/.exec(read('sw.js'))[1];
     const listeners = {};
     const cacheStore = {opened: [], added: [], deleted: [], matched: []};
     const self = {
@@ -27,7 +28,7 @@ const loadServiceWorker = () => {
     };
     const caches = {
         open: async (name) => { cacheStore.opened.push(name); return {addAll: async (files) => { cacheStore.added.push(...files); }}; },
-        keys: async () => ['bingo-musical-v0', 'otro', 'bingo-musical-v1'],
+        keys: async () => ['bingo-musical-v0', 'otro', currentVersion],
         delete: async (key) => { cacheStore.deleted.push(key); return true; },
         match: async (request, options) => { cacheStore.matched.push([request.url, options]); return request.url.endsWith('/index.html') ? {cached: true} : undefined; }
     };
