@@ -85,7 +85,7 @@ Para **llevarlos a otro navegador**, la configuración (⚙️) tiene los botone
     "clipSeconds": 0,
     "randomClipStart": false,
     "gameName": "Noche de bingo",
-    "printPrimaryColor": "#6366f1",
+    "printPrimaryColor": "#4f46e5",
     "printSecondaryColor": "#f8faff",
     "cartonCount": 10
   }

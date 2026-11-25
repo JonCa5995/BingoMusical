@@ -105,7 +105,7 @@ export const DEFAULT_GAME_NAME = 'Bingo Musical';
 export const DEFAULT_PLAYLIST_NAME = 'Lista de Bingo Musical';
 
 // Colores de impresión de los cartones
-export const DEFAULT_PRINT_PRIMARY_COLOR = '#6366f1';
+export const DEFAULT_PRINT_PRIMARY_COLOR = '#4f46e5';
 export const DEFAULT_PRINT_SECONDARY_COLOR = '#f8faff';
 
 // Cartones que caben en una página impresa (A4)
