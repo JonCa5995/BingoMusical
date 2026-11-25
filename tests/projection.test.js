@@ -5,6 +5,7 @@ import {ProjectionChannel, buildProjectionState} from '../js/modules/ProjectionC
 import {ProjectionView} from '../js/modules/ProjectionView.js';
 import {PROJECTION_HISTORY_LIMIT, PROJECTION_PAGE, PROJECTION_STATE_VERSION} from '../js/constants.js';
 import {TEXT} from '../js/messages.js';
+import {gameNameOrDefault} from '../js/utils.js';
 import {installDocument, mkEl} from './helpers/fakeDom.js';
 import {makeGame} from './helpers/snapshot.js';
 
@@ -225,6 +226,16 @@ test('los iconos de imagen solo se pintan si son data:image válidos; si no, que
     send(view, stateFor({revealed: true, current: {id: 2, title: 'a', icon: 'https://malo.example/x.png', iconType: 'image'}}));
     assert.equal(el.icon.children[0].tag, 'span');
     assert.equal(el.icon.children[0].textContent, '');
+});
+
+test('sin nombre de partida muestra el nombre por defecto, nunca un título vacío', () => {
+    const {view, el} = buildView();
+    view.start();
+
+    send(view, stateFor({gameName: ''}));
+
+    assert.equal(el.gameName.textContent, gameNameOrDefault(''));
+    assert.ok(el.gameName.textContent.length > 0);
 });
 
 test('un tema desconocido se ignora', () => {

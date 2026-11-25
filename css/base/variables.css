@@ -10,6 +10,8 @@
     --warning-color: #f59e0b;
     --primary-hover: #4f46e5;
     --card-bg: #273449;
+    --button-bg: #5a5df0;
+    --button-secondary-bg: #64748b;
     --border-color: #334155;
     --border-radius: 12px;
     --spacing: 1.5rem;
@@ -31,6 +33,8 @@
     --warning-color: #d97706;
     --primary-hover: #4338ca;
     --card-bg: #f1f5f9;
+    --button-bg: #4f46e5;
+    --button-secondary-bg: #64748b;
     --border-color: #e2e8f0;
     --body-bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
 }

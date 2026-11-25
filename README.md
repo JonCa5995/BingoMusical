@@ -46,6 +46,9 @@ La aplicación es una PWA: con `manifest.webmanifest` y un service worker (`sw.j
 - En `localhost` el service worker **no se registra** para no confundir el desarrollo con código en caché; para probarlo, abre `http://localhost:8000/?sw=1`.
 - Al cambiar cualquier archivo de la aplicación hay que subir `CACHE_VERSION` en `sw.js`; si no, los navegadores que ya la tienen instalada seguirán viendo la versión guardada. Además, si se añade o quita un archivo, hay que reflejarlo en la lista `PRECACHE` (una prueba lo comprueba).
 
+### Accesibilidad
+Las ventanas son `<dialog>` nativos (el foco queda dentro, Escape las cierra y el foco vuelve al botón que las abrió), los botones tienen nombre accesible y los contrastes de los botones cumplen WCAG AA en los dos temas. La única excepción conocida es la vista previa de impresión, que reproduce los colores elegidos por el usuario para el documento.
+
 ### Modo continuo
 
 El botón **«Automático»** (modo continuo) sirve para **reproducir las canciones sin empezar el juego**: al terminar una canción pasa sola a la siguiente, sin pulsar ningún botón. Es útil para ambientar o para probar la lista. Se desactiva solo al iniciar una partida (el botón pasa a mostrar «Manual» mientras está activo).

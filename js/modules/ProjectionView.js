@@ -1,6 +1,6 @@
 import {ICON_TYPE, PROJECTION_STATE_VERSION, THEME} from '../constants.js';
 import {TEXT} from '../messages.js';
-import {isImageDataUrl} from '../utils.js';
+import {gameNameOrDefault, isImageDataUrl} from '../utils.js';
 
 const FADE_IN = 'opacity 1s ease-in';
 
@@ -33,7 +33,7 @@ export class ProjectionView {
         this._clearTimers();
 
         if (Object.values(THEME).includes(state.theme)) this.root.dataset.theme = state.theme;
-        this.el.gameName.textContent = state.gameName;
+        this.el.gameName.textContent = gameNameOrDefault(state.gameName);
         this.el.counter.textContent = TEXT.projection.counter(state.played, state.total);
 
         if (!state.current) {
