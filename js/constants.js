@@ -57,6 +57,10 @@ export const PROJECTION_FEATURES = 'popup,width=1280,height=720';
 export const PROJECTION_HISTORY_LIMIT = 12;
 export const PROJECTION_STATE_VERSION = 1;
 
+// Aplicación instalable sin conexión
+export const SERVICE_WORKER_FILE = 'sw.js';
+export const SERVICE_WORKER_DEV_PARAM = 'sw';
+
 // ============================================================
 // IMÁGENES Y AUDIO
 // ============================================================

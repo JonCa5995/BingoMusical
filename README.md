@@ -39,6 +39,13 @@ El botón **📺** (o la tecla **P**) abre una segunda ventana, `projection.html
 
 La ventana se alimenta con un `BroadcastChannel`, así que tiene que abrirse desde la propia aplicación (mismo navegador y mismo origen); no recibe ni los archivos de audio ni los cartones. Se puede abrir en cualquier momento, también a mitad de canción, o cerrar y volver a abrir.
 
+### Instalar y usar sin conexión
+La aplicación es una PWA: con `manifest.webmanifest` y un service worker (`sw.js`) el navegador puede **instalarla** (icono de instalar en la barra de direcciones) y abrirla sin conexión, porque guarda el esqueleto de la aplicación (HTML, estilos, scripts e iconos). Funciona cuando se sirve por **HTTPS** (o desde `localhost`).
+
+- Los **audios no se guardan** en esa caché: siguen siendo tus archivos (arrastrados, vinculados desde una carpeta o servidos desde `canciones/`).
+- En `localhost` el service worker **no se registra** para no confundir el desarrollo con código en caché; para probarlo, abre `http://localhost:8000/?sw=1`.
+- Al cambiar cualquier archivo de la aplicación hay que subir `CACHE_VERSION` en `sw.js`; si no, los navegadores que ya la tienen instalada seguirán viendo la versión guardada. Además, si se añade o quita un archivo, hay que reflejarlo en la lista `PRECACHE` (una prueba lo comprueba).
+
 ### Modo continuo
 
 El botón **«Automático»** (modo continuo) sirve para **reproducir las canciones sin empezar el juego**: al terminar una canción pasa sola a la siguiente, sin pulsar ningún botón. Es útil para ambientar o para probar la lista. Se desactiva solo al iniciar una partida (el botón pasa a mostrar «Manual» mientras está activo).
@@ -153,6 +160,7 @@ Los campos desconocidos se descartan y los ajustes inválidos se ignoran.
 ```
 index.html            Página única
 projection.html       Ventana de proyección para el público (css/projection.css, js/projection.js)
+manifest.webmanifest, sw.js   Aplicación instalable y sin conexión (PWA)
 css/                  Estilos por zonas (base, layout, components, modules, themes, utilities)
 js/app.js             Coordinador: crea los módulos y conecta sus eventos
 js/constants.js       Reglas del juego, tiempos, rutas y enumeraciones

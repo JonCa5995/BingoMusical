@@ -27,6 +27,7 @@ import {linkAudioFiles} from "./modules/AudioLinker.js";
 import {SavedGameController} from "./modules/SavedGameController.js";
 import {GameStateStore} from "./modules/GameStateStore.js";
 import {ProjectionChannel, buildProjectionState} from "./modules/ProjectionChannel.js";
+import {registerServiceWorker} from "./modules/ServiceWorkerRegistrar.js";
 import {deserializeCartones} from "./modules/CartonSerializer.js";
 import {
     CELEBRATION_DELAY_MS,
@@ -239,6 +240,7 @@ class BingoMusical {
         this.updateCounters();
         this.updateControls(false);
         this.savedGame.offerSavedGame();
+        registerServiceWorker();
     }
 
     _applyBootSettings() {
