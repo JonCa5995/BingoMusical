@@ -1,6 +1,4 @@
-/**
- * Utilidades compartidas
- */
+import {DEFAULT_GAME_NAME, REVOKE_URL_DELAY_MS} from './constants.js';
 
 const HTML_ESCAPES = {
     '&': '&amp;',
@@ -10,33 +8,24 @@ const HTML_ESCAPES = {
     "'": '&#39;'
 };
 
-/**
- * Escapa un texto para insertarlo de forma segura en HTML (contenido o atributos)
- * @param {*} value - Valor a escapar
- * @returns {string}
- */
 export function escapeHTML(value) {
     return String(value ?? '').replaceAll(/[&<>"']/g, char => HTML_ESCAPES[char]);
 }
 
-/**
- * Convierte un texto en un nombre de archivo seguro ("Mi Juego!" -> "mi-juego-")
- * @param {string} name
- * @returns {string}
- */
+export function gameNameOrDefault(name) {
+    return name || DEFAULT_GAME_NAME;
+}
+
+export function iconTextHtml({icon, text}) {
+    return `<span aria-hidden="true">${icon}</span> ${text}`;
+}
+
 export function slugify(name) {
     return String(name ?? '').toLowerCase().replaceAll(/[^a-z0-9]+/g, '-');
 }
 
-/**
- * Descarga un contenido como archivo en el navegador
- * @param {string|Blob} content - Contenido del archivo
- * @param {string} filename - Nombre con el que se descarga
- * @param {string} mimeType - Tipo MIME (si content no es ya un Blob)
- * @param {string} [ariaLabel] - Etiqueta accesible del enlace temporal
- */
 export function downloadFile(content, filename, mimeType, ariaLabel = '') {
-    const blob = content instanceof Blob ? content : new Blob([content], { type: mimeType });
+    const blob = content instanceof Blob ? content : new Blob([content], {type: mimeType});
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement('a');
@@ -48,6 +37,5 @@ export function downloadFile(content, filename, mimeType, ariaLabel = '') {
     link.click();
     link.remove();
 
-    // Liberar tras un margen: revocar justo después de click() puede cancelar la descarga en Firefox/Safari
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setTimeout(() => URL.revokeObjectURL(url), REVOKE_URL_DELAY_MS);
 }

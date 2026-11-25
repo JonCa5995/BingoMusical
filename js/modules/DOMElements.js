@@ -1,158 +1,194 @@
-/**
- * DOMElements Module
- * Centraliza todas las referencias a elementos DOM de la aplicación
- */
+const GROUPS = {
+    player: [
+        'audioPlayer', 'playBtn', 'pauseBtn', 'stopBtn', 'progressBar', 'progressFill', 'currentTimeSpan',
+        'durationSpan', 'songTitleElement', 'currentIconImg', 'songIconContainer'
+    ],
+    volume: [
+        'musicVolumeSlider', 'musicVolumeValueSpan', 'effectsVolumeSlider', 'effectsVolumeValueSpan'
+    ],
+    songs: [
+        'addSongsInput', 'addSongsLabel', 'songsListElement', 'songsSection', 'deleteAllBtn', 'searchInput',
+        'filterStatus', 'sortOrder', 'exportListBtn', 'importListBtn', 'importFileInput'
+    ],
+    history: [
+        'historyGrid', 'playedCounterSpan', 'totalCounterSpan', 'clearHistoryBtn'
+    ],
+    game: [
+        'gameNameInput', 'shuffleAllBtn', 'lineaBtn', 'bingoBtn'
+    ],
+    celebration: [
+        'lineaOverlay', 'continueLineaBtn', 'celebrationOverlay', 'restartBtn'
+    ],
+    toolbar: [
+        'themeToggleBtn', 'themeIcon', 'fullscreenBtn', 'shortcutsHelpBtn'
+    ],
+    iconPicker: [
+        'iconModal', 'closeIconModalBtn', 'modalSongTitle', 'iconPickerContainer', 'iconSearchInput',
+        'uploadCustomIconBtn', 'customIconUploadInput'
+    ],
+    config: [
+        'configBtn', 'configModal', 'closeConfigModalBtn', 'saveConfigBtn', 'titleRevealTimeSlider',
+        'titleRevealValueSpan', 'iconRevealTimeSlider', 'iconRevealValueSpan'
+    ],
+    dialogs: [
+        'confirmModal', 'confirmTitle', 'confirmMessage', 'confirmCancelBtn', 'confirmAcceptBtn', 'alertModal',
+        'alertTitle', 'alertMessage', 'alertOkBtn'
+    ],
+    cartones: [
+        'generateCartonesBtn', 'cartonOptionsModal', 'closeCartonOptionsModalBtn', 'existingCartonesInfo',
+        'createNewCartonesBtn', 'addCartonesBtn', 'printExistingCartonesBtn', 'deleteAllCartonesBtn',
+        'cartonModal', 'closeCartonModalBtn', 'cartonCountInput', 'generateSaveCartonesBtn', 'printModal',
+        'closePrintModalBtn', 'printCartonesInfo', 'printPrimaryColorInput', 'printSecondaryColorInput',
+        'printCartonPreview', 'previewPrintBtn', 'printPdfBtn', 'printHtmlBtn', 'printRangeRadios',
+        'rangeInputsContainer', 'rangeFromInput', 'rangeToInput'
+    ],
+    ui: [
+        'songsListElement', 'songTitleElement', 'currentIconImg', 'pauseBtn', 'stopBtn', 'songIconContainer',
+        'playBtn', 'playedCounterSpan', 'totalCounterSpan', 'addSongsInput', 'addSongsLabel', 'importListBtn',
+        'clearHistoryBtn', 'shuffleAllBtn', 'configBtn', 'historyGrid'
+    ]
+};
+
+const IDS = {
+    gameNameInput: 'game-name-input',
+
+    audioPlayer: 'audio-player',
+    playBtn: 'play-btn',
+    pauseBtn: 'pause-btn',
+    stopBtn: 'stop-btn',
+    progressFill: 'progress-fill',
+    currentTimeSpan: 'current-time',
+    durationSpan: 'duration',
+
+    songTitleElement: 'song-title',
+    currentIconImg: 'current-icon',
+
+    addSongsInput: 'add-songs',
+    songsListElement: 'songs-list',
+    deleteAllBtn: 'delete-all-btn',
+
+    searchInput: 'song-search',
+    filterStatus: 'filter-status',
+    sortOrder: 'sort-order',
+
+    historyGrid: 'history-grid',
+    playedCounterSpan: 'played-counter',
+    totalCounterSpan: 'total-counter',
+    clearHistoryBtn: 'clear-history',
+
+    shuffleAllBtn: 'shuffle-all',
+    lineaBtn: 'linea-btn',
+    bingoBtn: 'bingo-btn',
+
+    musicVolumeSlider: 'music-volume',
+    musicVolumeValueSpan: 'music-volume-value',
+    effectsVolumeSlider: 'effects-volume',
+    effectsVolumeValueSpan: 'effects-volume-value',
+
+    iconModal: 'icon-modal',
+    closeIconModalBtn: 'close-modal',
+    modalSongTitle: 'modal-song-title',
+    iconSearchInput: 'icon-search',
+    uploadCustomIconBtn: 'upload-custom-icon-btn',
+    customIconUploadInput: 'custom-icon-upload',
+
+    cartonModal: 'carton-modal',
+    closeCartonModalBtn: 'close-carton-modal',
+    generateCartonesBtn: 'generate-cartones',
+    cartonCountInput: 'carton-count',
+    generateSaveCartonesBtn: 'generate-save-cartones-btn',
+
+    printModal: 'print-modal',
+    closePrintModalBtn: 'close-print-modal',
+    printCartonesInfo: 'print-cartones-info',
+    printPrimaryColorInput: 'print-primary-color',
+    printSecondaryColorInput: 'print-secondary-color',
+    printCartonPreview: 'print-carton-preview',
+    previewPrintBtn: 'preview-print-btn',
+    printPdfBtn: 'print-pdf-btn',
+    printHtmlBtn: 'print-html-btn',
+    rangeInputsContainer: 'range-inputs',
+    rangeFromInput: 'range-from',
+    rangeToInput: 'range-to',
+
+    cartonOptionsModal: 'carton-options-modal',
+    closeCartonOptionsModalBtn: 'close-carton-options-modal',
+    existingCartonesInfo: 'existing-cartones-info',
+    createNewCartonesBtn: 'create-new-cartones-btn',
+    addCartonesBtn: 'add-cartones-btn',
+    printExistingCartonesBtn: 'print-existing-cartones-btn',
+    deleteAllCartonesBtn: 'delete-all-cartones-btn',
+
+    configBtn: 'config-btn',
+    configModal: 'config-modal',
+    closeConfigModalBtn: 'close-config-modal',
+    titleRevealTimeSlider: 'title-reveal-time',
+    titleRevealValueSpan: 'title-reveal-value',
+    iconRevealTimeSlider: 'icon-reveal-time',
+    iconRevealValueSpan: 'icon-reveal-value',
+    saveConfigBtn: 'save-config-btn',
+
+    confirmModal: 'confirm-modal',
+    confirmTitle: 'confirm-title',
+    confirmMessage: 'confirm-message',
+    confirmCancelBtn: 'confirm-cancel',
+    confirmAcceptBtn: 'confirm-accept',
+
+    alertModal: 'alert-modal',
+    alertTitle: 'alert-title',
+    alertMessage: 'alert-message',
+    alertOkBtn: 'alert-ok',
+
+    lineaOverlay: 'linea-overlay',
+    continueLineaBtn: 'continue-linea-btn',
+    celebrationOverlay: 'celebration-overlay',
+    restartBtn: 'restart-btn',
+
+    exportListBtn: 'export-list',
+    importListBtn: 'import-list',
+    importFileInput: 'import-file',
+
+    fullscreenBtn: 'fullscreen-btn',
+    shortcutsHelpBtn: 'shortcuts-help-btn',
+    themeToggleBtn: 'theme-toggle-btn',
+    themeIcon: 'theme-icon'
+};
+
+const SELECTORS = {
+    progressBar: '.progress-bar',
+    songIconContainer: '.song-icon',
+    addSongsLabel: 'label[for="add-songs"]',
+    songsSection: '.songs-section',
+    iconPickerContainer: '.icon-picker'
+};
+
+const RANGE_RADIOS_NAME = 'print-range';
+
+const pick = (all, names) => Object.fromEntries(names.map(name => {
+    if (!(name in all)) throw new Error(`DOMElements: el elemento "${name}" no está definido`);
+    return [name, all[name]];
+}));
+
 export class DOMElements {
     constructor() {
-        this.initializeElements();
-    }
+        const all = this._lookupAll();
 
-    initializeElements() {
-        // Nombre del juego
-        this.gameNameInput = document.getElementById('game-name-input');
-
-        // Audio y reproductor
-        this.audioPlayer = document.getElementById('audio-player');
-        this.playBtn = document.getElementById('play-btn');
-        this.pauseBtn = document.getElementById('pause-btn');
-        this.stopBtn = document.getElementById('stop-btn');
-        this.progressBar = document.querySelector('.progress-bar');
-        this.progressFill = document.getElementById('progress-fill');
-        this.currentTimeSpan = document.getElementById('current-time');
-        this.durationSpan = document.getElementById('duration');
-        
-        // Información de canción actual
-        this.songTitleElement = document.getElementById('song-title');
-        this.currentIconImg = document.getElementById('current-icon');
-        this.songIconContainer = document.querySelector('.song-icon');
-        
-        // Lista de canciones
-        this.addSongsInput = document.getElementById('add-songs');
-        this.addSongsLabel = document.querySelector('label[for="add-songs"]');
-        this.songsListElement = document.getElementById('songs-list');
-        this.songsSection = document.querySelector('.songs-section');
-        this.deleteAllBtn = document.getElementById('delete-all-btn');
-        
-        // Búsqueda y filtrado
-        this.searchInput = document.getElementById('song-search');
-        this.filterStatus = document.getElementById('filter-status');
-        this.sortOrder = document.getElementById('sort-order');
-        
-        // Historial
-        this.historyGrid = document.getElementById('history-grid');
-        this.playedCounterSpan = document.getElementById('played-counter');
-        this.totalCounterSpan = document.getElementById('total-counter');
-        this.clearHistoryBtn = document.getElementById('clear-history');
-        
-        // Control de juego
-        this.shuffleAllBtn = document.getElementById('shuffle-all');
-        this.lineaBtn = document.getElementById('linea-btn');
-        this.bingoBtn = document.getElementById('bingo-btn');
-        
-        // Volumen
-        this.musicVolumeSlider = document.getElementById('music-volume');
-        this.musicVolumeValueSpan = document.getElementById('music-volume-value');
-        this.effectsVolumeSlider = document.getElementById('effects-volume');
-        this.effectsVolumeValueSpan = document.getElementById('effects-volume-value');
-        
-        // Modal de iconos
-        this.iconModal = document.getElementById('icon-modal');
-        this.closeIconModalBtn = document.getElementById('close-modal');
-        this.modalSongTitle = document.getElementById('modal-song-title');
-        this.iconPickerContainer = document.querySelector('.icon-picker');
-        this.iconSearchInput = document.getElementById('icon-search');
-        this.uploadCustomIconBtn = document.getElementById('upload-custom-icon-btn');
-        this.customIconUploadInput = document.getElementById('custom-icon-upload');
-        
-        // Modal de cartones (generación simplificada)
-        this.cartonModal = document.getElementById('carton-modal');
-        this.closeCartonModalBtn = document.getElementById('close-carton-modal');
-        this.generateCartonesBtn = document.getElementById('generate-cartones');
-        this.cartonCountInput = document.getElementById('carton-count');
-        this.generateSaveCartonesBtn = document.getElementById('generate-save-cartones-btn');
-
-        // Modal de impresión (con personalización)
-        this.printModal = document.getElementById('print-modal');
-        this.closePrintModalBtn = document.getElementById('close-print-modal');
-        this.printCartonesInfo = document.getElementById('print-cartones-info');
-        this.printPrimaryColorInput = document.getElementById('print-primary-color');
-        this.printSecondaryColorInput = document.getElementById('print-secondary-color');
-        this.printCartonPreview = document.getElementById('print-carton-preview');
-        this.previewPrintBtn = document.getElementById('preview-print-btn');
-        this.printPdfBtn = document.getElementById('print-pdf-btn');
-        this.printHtmlBtn = document.getElementById('print-html-btn');
-        this.printRangeRadios = document.getElementsByName('print-range');
-        this.rangeInputsContainer = document.getElementById('range-inputs');
-        this.rangeFromInput = document.getElementById('range-from');
-        this.rangeToInput = document.getElementById('range-to');
-
-        // Modal de opciones de cartones
-        this.cartonOptionsModal = document.getElementById('carton-options-modal');
-        this.closeCartonOptionsModalBtn = document.getElementById('close-carton-options-modal');
-        this.existingCartonesInfo = document.getElementById('existing-cartones-info');
-        this.createNewCartonesBtn = document.getElementById('create-new-cartones-btn');
-        this.addCartonesBtn = document.getElementById('add-cartones-btn');
-        this.printExistingCartonesBtn = document.getElementById('print-existing-cartones-btn');
-        this.deleteAllCartonesBtn = document.getElementById('delete-all-cartones-btn');
-
-        // Modal de configuración
-        this.configBtn = document.getElementById('config-btn');
-        this.configModal = document.getElementById('config-modal');
-        this.closeConfigModalBtn = document.getElementById('close-config-modal');
-        this.titleRevealTimeSlider = document.getElementById('title-reveal-time');
-        this.titleRevealValueSpan = document.getElementById('title-reveal-value');
-        this.iconRevealTimeSlider = document.getElementById('icon-reveal-time');
-        this.iconRevealValueSpan = document.getElementById('icon-reveal-value');
-        this.saveConfigBtn = document.getElementById('save-config-btn');
-        
-        // Modal de confirmación
-        this.confirmModal = document.getElementById('confirm-modal');
-        this.confirmTitle = document.getElementById('confirm-title');
-        this.confirmMessage = document.getElementById('confirm-message');
-        this.confirmCancelBtn = document.getElementById('confirm-cancel');
-        this.confirmAcceptBtn = document.getElementById('confirm-accept');
-        
-        // Modal de alerta
-        this.alertModal = document.getElementById('alert-modal');
-        this.alertTitle = document.getElementById('alert-title');
-        this.alertMessage = document.getElementById('alert-message');
-        this.alertOkBtn = document.getElementById('alert-ok');
-        
-        // Overlays de celebración
-        this.lineaOverlay = document.getElementById('linea-overlay');
-        this.continueLineaBtn = document.getElementById('continue-linea-btn');
-        this.celebrationOverlay = document.getElementById('celebration-overlay');
-        this.restartBtn = document.getElementById('restart-btn');
-        
-        // Importar/Exportar
-        this.exportListBtn = document.getElementById('export-list');
-        this.importListBtn = document.getElementById('import-list');
-        this.importFileInput = document.getElementById('import-file');
-        
-        // Configuración general
-        this.fullscreenBtn = document.getElementById('fullscreen-btn');
-        this.shortcutsHelpBtn = document.getElementById('shortcuts-help-btn');
-        this.themeToggleBtn = document.getElementById('theme-toggle-btn');
-        this.themeIcon = document.getElementById('theme-icon');
-    }
-    
-    /**
-     * Verifica que todos los elementos críticos estén presentes
-     * @returns {boolean} true si todos los elementos están presentes
-     */
-    validateElements() {
-        const criticalElements = [
-            'audioPlayer', 'playBtn', 'pauseBtn', 'stopBtn',
-            'songsListElement', 'historyGrid', 'songTitleElement'
-        ];
-        
-        for (const elementName of criticalElements) {
-            if (!this[elementName]) {
-                console.error(`Elemento crítico no encontrado: ${elementName}`);
-                return false;
-            }
+        for (const [group, names] of Object.entries(GROUPS)) {
+            this[group] = pick(all, names);
         }
-        
-        return true;
+    }
+
+    _lookupAll() {
+        const all = {};
+
+        for (const [name, id] of Object.entries(IDS)) {
+            all[name] = document.getElementById(id);
+        }
+        for (const [name, selector] of Object.entries(SELECTORS)) {
+            all[name] = document.querySelector(selector);
+        }
+        all.printRangeRadios = document.getElementsByName(RANGE_RADIOS_NAME);
+
+        return all;
     }
 }

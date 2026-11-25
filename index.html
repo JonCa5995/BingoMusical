@@ -22,7 +22,6 @@
 </head>
 
 <body>
-  <!-- Barra de herramientas superior -->
   <header class="toolbar" role="banner">
     <div class="toolbar-left">
       <img id="toolbar-logo" class="toolbar-logo" src="icon.png" alt="Logo del Bingo Musical">
@@ -41,7 +40,6 @@
       </div>
     </div>
     <div class="toolbar-right">
-      <!-- Control de volumen de música -->
       <fieldset class="volume-control">
         <label class="volume-label" for="music-volume">Música:</label>
         <input id="music-volume"
@@ -58,7 +56,6 @@
         <output id="music-volume-value" class="volume-value" for="music-volume">100%</output>
       </fieldset>
 
-      <!-- Control de volumen de efectos -->
       <fieldset class="volume-control">
         <label class="volume-label" for="effects-volume">Efectos:</label>
         <input id="effects-volume"
@@ -75,7 +72,6 @@
         <output id="effects-volume-value" class="volume-value" for="effects-volume">70%</output>
       </fieldset>
 
-      <!-- Botón de Línea -->
       <button id="linea-btn"
               class="btn btn-special btn-linea"
               type="button"
@@ -85,7 +81,6 @@
         <span aria-hidden="true">📏</span>
       </button>
 
-      <!-- Botón de BINGO -->
       <button id="bingo-btn"
               class="btn btn-special btn-bingo"
               type="button"
@@ -95,7 +90,6 @@
         <span aria-hidden="true">🎉</span>
       </button>
 
-      <!-- Botón de pantalla completa -->
       <button id="fullscreen-btn"
               class="btn btn-fullscreen"
               type="button"
@@ -105,7 +99,6 @@
         <span class="fullscreen-icon" aria-hidden="true">⛶</span>
       </button>
       
-      <!-- Botón de ayuda de atajos -->
       <button id="shortcuts-help-btn"
               class="btn btn-secondary btn-icon"
               type="button"
@@ -115,7 +108,6 @@
         <span aria-hidden="true">⌨️</span>
       </button>
       
-      <!-- Botón de tema -->
       <button id="theme-toggle-btn"
               class="btn btn-secondary btn-icon"
               type="button"
@@ -128,12 +120,10 @@
   </header>
 
   <div class="container">
-    <!-- Historial de canciones reproducidas (izquierda) -->
     <aside class="history-panel" aria-label="Historial de canciones reproducidas">
       <h2>🎵 Canciones Reproducidas</h2>
       <div class="history-container">
         <nav id="history-grid" class="history-grid" aria-label="Canciones reproducidas">
-          <!-- Los iconos de las canciones reproducidas aparecerán aquí -->
         </nav>
       </div>
       <output class="history-counter" for="history-grid" aria-live="polite">
@@ -142,9 +132,7 @@
       </output>
     </aside>
 
-    <!-- Contenido principal (derecha) -->
     <main class="main-content">
-      <!-- Reproductor de música -->
       <section class="player-section" aria-label="Reproductor de música">
         <figure class="player-container">
           <div class="song-icon-wrapper">
@@ -190,7 +178,6 @@
         </figure>
       </section>
 
-      <!-- Lista de canciones -->
       <section class="songs-section" aria-label="Lista de canciones">
         <header class="songs-header">
           <h2>📋 Lista de Canciones</h2>
@@ -238,7 +225,6 @@
           </nav>
         </header>
         <div class="songs-controls">
-          <!-- Input de canciones con label personalizado -->
           <div class="file-input-wrapper">
             <input id="add-songs"
                    class="file-input"
@@ -267,7 +253,6 @@
             Reiniciar
           </button>
           
-          <!-- Buscador y filtros en la misma línea -->
           <div class="search-box">
             <label for="song-search" class="sr-only">Buscar canción</label>
             <input id="song-search"
@@ -293,13 +278,11 @@
         </div>
         
         <ul id="songs-list" class="songs-list">
-          <!-- La lista de canciones se generará dinámicamente -->
         </ul>
       </section>
     </main>
   </div>
 
-  <!-- Modal de configuración del juego -->
   <dialog id="config-modal" class="modal hidden" aria-labelledby="config-modal-title">
     <article class="modal-content">
       <header class="modal-header">
@@ -357,7 +340,6 @@
     </article>
   </dialog>
 
-  <!-- Modal de opciones de cartones (Crear/Añadir/Imprimir) -->
   <dialog id="carton-options-modal" class="modal hidden" aria-labelledby="carton-options-title">
     <article class="modal-content">
       <header class="modal-header">
@@ -368,7 +350,6 @@
       </header>
       <section class="modal-body">
         <p id="existing-cartones-info" class="info-message">
-          <!-- Se llenará dinámicamente con el número de cartones existentes -->
         </p>
 
         <div class="carton-options-grid">
@@ -400,7 +381,6 @@
     </article>
   </dialog>
 
-  <!-- Modal para generar cartones (simplificado) -->
   <dialog id="carton-modal" class="modal hidden" aria-labelledby="carton-modal-title">
     <article class="modal-content">
       <header class="modal-header">
@@ -410,7 +390,6 @@
         </button>
       </header>
       <section class="modal-body">
-        <!-- Solo configuración de cantidad -->
         <div class="config-group">
           <label class="config-label" for="carton-count">
             📊 ¿Cuántos cartones deseas generar?
@@ -438,7 +417,6 @@
     </article>
   </dialog>
 
-  <!-- Modal para imprimir cartones existentes (con personalización) -->
   <dialog id="print-modal" class="modal hidden" aria-labelledby="print-modal-title">
     <article class="modal-content modal-wide">
       <header class="modal-header">
@@ -449,15 +427,12 @@
       </header>
       <section class="modal-body">
         <div class="carton-settings-grid">
-          <!-- Columna izquierda: Configuración -->
           <div class="carton-config-section">
             <h3>⚙️ Personalización</h3>
 
             <p class="info-message" id="print-cartones-info">
-              <!-- Se llenará dinámicamente -->
             </p>
 
-            <!-- Selector de rango de cartones -->
             <div class="config-group">
               <label class="config-label">
                 📋 Cartones a imprimir:
@@ -474,7 +449,6 @@
               </div>
             </div>
 
-            <!-- Inputs para rango (ocultos inicialmente) -->
             <div class="config-group" id="range-inputs" style="display: none;">
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
                 <div>
@@ -501,7 +475,6 @@
               </small>
             </div>
 
-            <!-- Color principal -->
             <div class="config-group">
               <label class="config-label" for="print-primary-color">
                 🎨 Color principal:
@@ -516,7 +489,6 @@
               </div>
             </div>
 
-            <!-- Color secundario -->
             <div class="config-group">
               <label class="config-label" for="print-secondary-color">
                 🎨 Color secundario:
@@ -532,11 +504,9 @@
             </div>
           </div>
 
-          <!-- Columna derecha: Vista previa -->
           <div class="carton-preview-section">
             <h3>👁️ Vista Previa</h3>
             <div id="print-carton-preview" class="carton-preview-container">
-              <!-- La vista previa se generará dinámicamente -->
             </div>
           </div>
         </div>
@@ -559,8 +529,6 @@
     </article>
   </dialog>
 
-
-  <!-- Modal para personalizar icono -->
   <dialog id="icon-modal" class="modal hidden" aria-labelledby="icon-modal-title">
     <article class="modal-content">
       <header class="modal-header">
@@ -570,7 +538,6 @@
       <section class="modal-body">
         <p id="modal-song-title" class="modal-song-title"></p>
 
-        <!-- Botón para subir imagen PNG personalizada -->
         <div class="upload-wrapper">
           <input id="custom-icon-upload"
                  type="file"
@@ -584,7 +551,6 @@
           </button>
         </div>
 
-        <!-- Buscador de iconos -->
         <div class="icon-search-wrapper">
           <input id="icon-search"
                  type="text"
@@ -595,13 +561,11 @@
         </div>
 
         <nav class="icon-picker" aria-label="Selector de iconos">
-          <!-- Los iconos se generarán dinámicamente -->
         </nav>
       </section>
     </article>
   </dialog>
 
-  <!-- Modal genérico de confirmación -->
   <dialog id="confirm-modal"
           class="modal hidden"
           role="alertdialog"
@@ -628,7 +592,6 @@
     </article>
   </dialog>
 
-  <!-- Modal de alerta genérico -->
   <dialog id="alert-modal"
           class="modal hidden"
           role="alertdialog"
@@ -651,7 +614,6 @@
     </article>
   </dialog>
 
-  <!-- Overlay de celebración para LÍNEA -->
   <aside id="linea-overlay" class="celebration-overlay hidden" aria-labelledby="linea-title">
     <article class="celebration-content">
       <h1 id="linea-title" class="celebration-title celebration-title-linea">📏 ¡LÍNEA! 📏</h1>
@@ -663,7 +625,6 @@
     </article>
   </aside>
 
-  <!-- Overlay de celebración para BINGO -->
   <aside id="celebration-overlay" class="celebration-overlay hidden" aria-labelledby="celebration-title">
     <article class="celebration-content">
       <h1 id="celebration-title" class="celebration-title">🎉 ¡BINGO! 🎉</h1>

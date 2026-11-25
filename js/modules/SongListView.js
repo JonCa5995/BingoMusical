@@ -1,19 +1,7 @@
-/**
- * SongListView Module
- * Pinta la lista de canciones (búsqueda, filtro y orden incluidos) y avisa de lo
- * que hace el usuario sobre cada canción. No decide qué ocurre al pulsar: eso lo
- * deciden los handlers que recibe.
- */
+import { SEARCH_DEBOUNCE_MS } from '../constants.js';
+import { TEXT } from '../messages.js';
+
 export class SongListView {
-    /**
-     * @param {Object} deps
-     * @param {UIManager} deps.ui - Para los mensajes de lista vacía y el pintado final
-     * @param {SongManager} deps.songManager - Para filtrar, ordenar y contar canciones
-     * @param {{searchInput: HTMLInputElement, filterStatus: HTMLSelectElement, sortOrder: HTMLSelectElement}} deps.filterControls
-     * @param {Function} deps.getSongs - Devuelve la lista actual de canciones
-     * @param {Function} deps.getPlaybackState - Devuelve { currentSongId, gameStarted }
-     * @param {{onIconClick: Function, onSongClick: Function, onDelete: Function}} deps.handlers - Reciben la canción
-     */
     constructor({ ui, songManager, filterControls, getSongs, getPlaybackState, handlers }) {
         this.ui = ui;
         this.songManager = songManager;
@@ -24,49 +12,34 @@ export class SongListView {
         this.searchDebounceTimer = null;
     }
 
-    /**
-     * Escucha los controles de búsqueda, filtro y orden
-     */
     bindFilterControls() {
         const { searchInput, filterStatus, sortOrder } = this.filterControls;
 
-        // La búsqueda espera a que el usuario deje de escribir
         searchInput.addEventListener('input', () => {
             clearTimeout(this.searchDebounceTimer);
-            this.searchDebounceTimer = setTimeout(() => this.render(), 300);
+            this.searchDebounceTimer = setTimeout(() => this.render(), SEARCH_DEBOUNCE_MS);
         });
         filterStatus.addEventListener('change', () => this.render());
         sortOrder.addEventListener('change', () => this.render());
     }
 
-    /**
-     * Pinta la lista aplicando la búsqueda, el filtro y el orden actuales
-     */
     render() {
         const songs = this.getSongs();
-        const totalSongsWithFiles = this.songManager.getTotalSongsWithFiles(songs);
-        const createItem = (song) => this.createSongItem(song);
-
-        // Sin canciones: mensaje de lista vacía (no el de "sin resultados")
-        if (songs.length === 0) {
-            this.ui.renderSongsList(songs, totalSongsWithFiles, createItem);
-            return;
-        }
-
         const { searchInput, filterStatus, sortOrder } = this.filterControls;
         const visibleSongs = this.songManager.filterAndSort(songs, {
             searchTerm: searchInput.value,
             filterStatus: filterStatus.value,
             sortOrder: sortOrder.value
         });
-        this.ui.renderFilteredSongsList(visibleSongs, totalSongsWithFiles, createItem);
+
+        this.ui.renderSongs(
+            visibleSongs,
+            this.songManager.getTotalSongsWithFiles(songs),
+            (song) => this.createSongItem(song),
+            songs.length === 0 ? 'empty' : 'noResults'
+        );
     }
 
-    /**
-     * Muestra con un fundido el título o el icono de una canción de la lista
-     * @param {number} songId
-     * @param {'title'|'icon'} part
-     */
     reveal(songId, part) {
         const selector = part === 'title' ? '.song-item-title' : '.song-item-icon';
         const element = document.querySelector(`${selector}[data-song-id="${songId}"]`);
@@ -76,71 +49,81 @@ export class SongListView {
         }
     }
 
-    /**
-     * Crea el <li> de una canción
-     */
     createSongItem(song) {
         const { currentSongId, gameStarted } = this.getPlaybackState();
-        const isCurrent = currentSongId === song.id;
-        const iconLocked = song.played || gameStarted;
+        const state = { isCurrent: currentSongId === song.id, gameStarted };
 
         const li = document.createElement('li');
-        li.className = `song-item ${song.played ? 'played' : ''} ${isCurrent ? 'playing' : ''}`;
+        li.className = `song-item ${song.played ? 'played' : ''} ${state.isCurrent ? 'playing' : ''}`;
         li.setAttribute('role', 'listitem');
+        li.onclick = () => this.handlers.onSongClick(song);
 
-        const iconBtn = document.createElement('button');
-        iconBtn.type = 'button';
-        iconBtn.className = 'song-item-icon';
-        iconBtn.dataset.songId = song.id;
-        iconBtn.title = this.ui.getSongIconTitle(song, gameStarted);
-        iconBtn.style.cursor = iconLocked ? 'not-allowed' : 'pointer';
-        iconBtn.setAttribute('aria-label', `Cambiar icono de ${song.title}`);
-        iconBtn.disabled = iconLocked;
-        iconBtn.innerHTML = this.ui.getSongIconHtml(song);
+        li.append(
+            this._createIconButton(song, state),
+            this._createInfo(song, state),
+            this._createDeleteButton(song)
+        );
+        return li;
+    }
 
-        // La canción en juego se oculta hasta que se revela
+    _createButton(className, onClick) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = className;
+        button.onclick = (e) => {
+            e.stopPropagation();
+            onClick();
+        };
+        return button;
+    }
+
+    _createIconButton(song, { isCurrent, gameStarted }) {
+        const locked = song.played || gameStarted;
+
+        const button = this._createButton('song-item-icon', () => this.handlers.onIconClick(song));
+        button.dataset.songId = song.id;
+        button.title = this.ui.getSongIconTitle(song, gameStarted);
+        button.style.cursor = locked ? 'not-allowed' : 'pointer';
+        button.setAttribute('aria-label', TEXT.list.changeIconLabel(song.title));
+        button.disabled = locked;
+        button.innerHTML = this.ui.getSongIconHtml(song);
+
         if (isCurrent && gameStarted && song.hideIcon) {
-            iconBtn.style.opacity = '0';
+            button.style.opacity = '0';
         }
 
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'song-item-info';
+        return button;
+    }
 
-        const titleStrong = document.createElement('strong');
-        titleStrong.className = 'song-item-title';
-        titleStrong.dataset.songId = song.id;
-        titleStrong.textContent = song.title;
+    _createInfo(song, { isCurrent, gameStarted }) {
+        const info = document.createElement('div');
+        info.className = 'song-item-info';
+
+        const title = document.createElement('strong');
+        title.className = 'song-item-title';
+        title.dataset.songId = song.id;
+        title.textContent = song.title;
 
         if (isCurrent && gameStarted && song.hideTitle) {
-            titleStrong.style.opacity = '0';
+            title.style.opacity = '0';
         }
 
-        const statusDiv = document.createElement('div');
-        statusDiv.className = 'song-item-status';
-        statusDiv.setAttribute('role', 'status');
-        statusDiv.setAttribute('aria-live', 'polite');
-        statusDiv.textContent = this.ui.getSongStateLabel(song);
+        const status = document.createElement('div');
+        status.className = 'song-item-status';
+        status.setAttribute('role', 'status');
+        status.setAttribute('aria-live', 'polite');
+        status.textContent = this.ui.getSongStateLabel(song);
 
-        infoDiv.append(titleStrong, statusDiv);
+        info.append(title, status);
+        return info;
+    }
 
-        const deleteBtn = document.createElement('button');
-        deleteBtn.type = 'button';
-        deleteBtn.className = 'song-item-delete';
-        deleteBtn.title = 'Eliminar canción';
-        deleteBtn.setAttribute('aria-label', `Eliminar ${song.title}`);
-        deleteBtn.innerHTML = '<span aria-hidden="true">❌</span>';
+    _createDeleteButton(song) {
+        const button = this._createButton('song-item-delete', () => this.handlers.onDelete(song));
+        button.title = TEXT.list.deleteTitle;
+        button.setAttribute('aria-label', TEXT.list.deleteLabel(song.title));
+        button.innerHTML = '<span aria-hidden="true">❌</span>';
 
-        iconBtn.onclick = (e) => {
-            e.stopPropagation();
-            this.handlers.onIconClick(song);
-        };
-        li.onclick = () => this.handlers.onSongClick(song);
-        deleteBtn.onclick = (e) => {
-            e.stopPropagation();
-            this.handlers.onDelete(song);
-        };
-
-        li.append(iconBtn, infoDiv, deleteBtn);
-        return li;
+        return button;
     }
 }

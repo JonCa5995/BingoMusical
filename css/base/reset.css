@@ -9,7 +9,6 @@ html {
     font-size: 1em;
     line-height: 1.6;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    /* Firefox scrollbar */
     scrollbar-width: thin;
     scrollbar-color: var(--primary-color) var(--surface-color);
 }
@@ -20,7 +19,6 @@ body {
     transition: background 0.3s ease;
 }
 
-/* Chrome, Edge, Safari scrollbar */
 ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -44,4 +42,3 @@ body {
 ::-webkit-scrollbar-corner {
     background: var(--surface-color);
 }
-

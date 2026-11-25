@@ -1,22 +1,14 @@
-/**
- * UIManager Module
- * Gestiona el renderizado y actualización de la interfaz de usuario
- */
-import { escapeHTML } from '../utils.js';
+import {escapeHTML, iconTextHtml} from '../utils.js';
+import {HISTORY_ICON_SIZE, ICON_TYPE, MS_PER_SECOND, PLAYER_ICON_SIZE} from '../constants.js';
+import {TEXT} from '../messages.js';
 
 export class UIManager {
-    constructor(dom, minSongsRequired) {
-        this.dom = dom;
+    constructor(elements, minSongsRequired) {
+        this.el = elements;
         this.MIN_SONGS_REQUIRED = minSongsRequired;
         this.playerRevealTimers = [];
     }
 
-    /**
-     * Convierte un emoji a una imagen Data URL
-     * @param {string} emoji - El emoji a convertir
-     * @param {number} size - Tamaño del canvas (ancho y alto)
-     * @returns {string} - Data URL de la imagen
-     */
     emojiToDataURL(emoji, size) {
         const canvas = document.createElement('canvas');
         canvas.width = size;
@@ -30,287 +22,197 @@ export class UIManager {
         return canvas.toDataURL();
     }
 
-    /**
-     * Método interno para renderizar canciones al DOM
-     * @private
-     */
-    _renderToDOM(songs, totalSongsWithFiles, createSongItemCallback, emptyMessageFn) {
+    renderSongs(songs, totalSongsWithFiles, createSongItem, emptyKind = 'empty') {
         const fragment = document.createDocumentFragment();
 
         if (songs.length === 0) {
-            const emptyLi = emptyMessageFn();
-            fragment.appendChild(emptyLi);
-            this.dom.songsListElement.innerHTML = '';
-            this.dom.songsListElement.appendChild(fragment);
-            return;
+            fragment.appendChild(this._createEmptyMessage(emptyKind));
+        } else {
+            if (totalSongsWithFiles < this.MIN_SONGS_REQUIRED) {
+                fragment.appendChild(this.createWarningMessage(totalSongsWithFiles));
+            }
+            for (const song of songs) {
+                fragment.appendChild(createSongItem(song));
+            }
         }
 
-        if (totalSongsWithFiles < this.MIN_SONGS_REQUIRED) {
-            const warning = this.createWarningMessage(totalSongsWithFiles);
-            fragment.appendChild(warning);
-        }
-
-        for (const song of songs) {
-            const li = createSongItemCallback(song);
-            fragment.appendChild(li);
-        }
-
-        this.dom.songsListElement.innerHTML = '';
-        this.dom.songsListElement.appendChild(fragment);
+        this.el.songsListElement.replaceChildren(fragment);
     }
 
-    /**
-     * Renderiza la lista completa de canciones
-     */
-    renderSongsList(songs, totalSongsWithFiles, createSongItemCallback) {
-        this._renderToDOM(songs, totalSongsWithFiles, createSongItemCallback, () => this.createEmptyListMessage());
-    }
+    _createEmptyMessage(kind) {
+        const {title, text, minSongsWarning: warning} = TEXT.list[kind];
+        const minSongsWarning = warning
+            ? `\n            <p role="alert" style="font-size:0.85rem;margin-top:1rem;color:var(--warning-color);"><strong>${warning(this.MIN_SONGS_REQUIRED)}</strong></p>`
+            : '';
 
-    /**
-     * Renderiza una lista filtrada de canciones
-     */
-    renderFilteredSongsList(songsToShow, totalSongsWithFiles, createSongItemCallback) {
-        this._renderToDOM(songsToShow, totalSongsWithFiles, createSongItemCallback, () => this.createNoResultsMessage());
-    }
-
-    /**
-     * Crea el mensaje para lista vacía
-     */
-    createEmptyListMessage() {
         const emptyLi = document.createElement('li');
         emptyLi.setAttribute('role', 'listitem');
         emptyLi.style.cssText = 'text-align:center;padding:2rem;color:var(--text-muted);list-style:none;';
         emptyLi.innerHTML = `
-            <strong style="font-size:1.2rem;margin-bottom:0.5rem;display:block;">No hay canciones cargadas</strong>
-            <p style="font-size:0.9rem;margin:0.5rem 0;">Arrastra archivos de audio o usa el botón "Agregar Canciones"</p>
-            <p role="alert" style="font-size:0.85rem;margin-top:1rem;color:var(--warning-color);"><strong>⚠️ Necesitas al menos ${this.MIN_SONGS_REQUIRED} canciones para jugar</strong></p>
+            <strong style="font-size:1.2rem;margin-bottom:0.5rem;display:block;">${title}</strong>
+            <p style="font-size:0.9rem;margin:0.5rem 0;">${text}</p>${minSongsWarning}
         `;
         return emptyLi;
     }
 
-    /**
-     * Crea el mensaje de sin resultados
-     */
-    createNoResultsMessage() {
-        const emptyLi = document.createElement('li');
-        emptyLi.setAttribute('role', 'listitem');
-        emptyLi.style.cssText = 'text-align:center;padding:2rem;color:var(--text-muted);list-style:none;';
-        emptyLi.innerHTML = `
-            <strong style="font-size:1.2rem;margin-bottom:0.5rem;display:block;">No se encontraron canciones</strong>
-            <p style="font-size:0.9rem;margin:0.5rem 0;">Intenta con otro término de búsqueda o cambia los filtros</p>
-        `;
-        return emptyLi;
-    }
-
-    /**
-     * Crea el mensaje de advertencia de canciones insuficientes
-     */
     createWarningMessage(totalSongs) {
         const warning = document.createElement('li');
         warning.setAttribute('role', 'alert');
         warning.style.cssText = 'text-align:center;padding:1rem;margin-bottom:1rem;background:rgba(245,158,11,0.1);border-radius:8px;color:var(--warning-color);list-style:none;';
-        warning.innerHTML = `<strong>⚠️ Tienes ${totalSongs}/${this.MIN_SONGS_REQUIRED} canciones.</strong> Necesitas al menos ${this.MIN_SONGS_REQUIRED} para jugar.`;
+        warning.innerHTML = `<strong>${TEXT.list.notEnoughWarning.count(totalSongs, this.MIN_SONGS_REQUIRED)}</strong>${TEXT.list.notEnoughWarning.rest(this.MIN_SONGS_REQUIRED)}`;
         return warning;
     }
 
-    /**
-     * Actualiza la UI del reproductor con información de la canción
-     */
     updatePlayerUI(song, titleRevealTime = 0, iconRevealTime = 0, gameStarted = false) {
-        // Cancelar revelados pendientes de la canción anterior para que no destapen la nueva antes de tiempo
         this.clearPlayerRevealTimers();
+        this._showPlayerTitle(song, gameStarted, titleRevealTime);
+        this._showPlayerIcon(song, gameStarted, iconRevealTime);
+    }
 
-        // Si el juego no ha iniciado, mostrar todo inmediatamente
-        if (!gameStarted) {
-            this.dom.songTitleElement.textContent = song.title;
-            this.dom.songTitleElement.style.opacity = '1';
-            this.dom.songTitleElement.style.transition = '';
-            this.dom.currentIconImg.style.opacity = '1';
-            this.dom.currentIconImg.style.transition = '';
-        } else {
-            // Si el juego ha iniciado, ocultar y revelar progresivamente
-            // Establecer el título inmediatamente pero oculto
-            this.dom.songTitleElement.textContent = song.title;
-            this.dom.songTitleElement.style.transition = '';
-            this.dom.songTitleElement.style.opacity = '0';
-            
-            // Revelar título después del tiempo configurado
-            this.playerRevealTimers.push(setTimeout(() => {
-                this.dom.songTitleElement.style.transition = 'opacity 1s ease-in';
-                this.dom.songTitleElement.style.opacity = '1';
-            }, titleRevealTime * 1000));
-            
-            // Icono se maneja más abajo
-            this.dom.currentIconImg.style.transition = '';
-            this.dom.currentIconImg.style.opacity = '0';
-        }
+    _showPlayerTitle(song, gameStarted, revealTime) {
+        const title = this.el.songTitleElement;
+        title.textContent = song.title;
+        title.style.transition = '';
+        title.style.opacity = gameStarted ? '0' : '1';
 
-        this.dom.currentIconImg.alt = song.title;
-
-        // Preparar icono
-        if (song.iconType === 'image' && song.icon) {
-            this.dom.currentIconImg.src = song.icon;
-        } else {
-            this.dom.currentIconImg.src = this.emojiToDataURL(song.icon, 300);
-        }
-
-        // Revelar icono después del tiempo configurado (solo si el juego ha iniciado)
         if (gameStarted) {
-            this.playerRevealTimers.push(setTimeout(() => {
-                this.dom.currentIconImg.style.transition = 'opacity 1s ease-in';
-                this.dom.currentIconImg.style.opacity = '1';
-            }, iconRevealTime * 1000));
+            this.playerRevealTimers.push(this._fadeInAfter(title, revealTime));
         }
     }
 
-    /**
-     * Cancela los revelados pendientes del reproductor
-     */
+    _showPlayerIcon(song, gameStarted, revealTime) {
+        const icon = this.el.currentIconImg;
+        icon.style.transition = '';
+        icon.style.opacity = gameStarted ? '0' : '1';
+        icon.alt = song.title;
+        icon.src = this._iconSrc(song, PLAYER_ICON_SIZE);
+
+        if (gameStarted) {
+            this.playerRevealTimers.push(this._fadeInAfter(icon, revealTime));
+        }
+    }
+
+    _iconSrc(song, size) {
+        if (song.iconType === ICON_TYPE.IMAGE && song.icon) {
+            return song.icon;
+        }
+        return this.emojiToDataURL(song.icon, size);
+    }
+
+    _fadeInAfter(element, seconds) {
+        return setTimeout(() => {
+            element.style.transition = 'opacity 1s ease-in';
+            element.style.opacity = '1';
+        }, seconds * MS_PER_SECOND);
+    }
+
     clearPlayerRevealTimers() {
         for (const timer of this.playerRevealTimers) clearTimeout(timer);
         this.playerRevealTimers = [];
     }
 
-    /**
-     * Actualiza los controles del reproductor
-     */
     updateControls(playing, gameStarted, hasSongLoaded = true, noSongsLeft = false) {
         if (playing) {
-            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span>';
-            this.dom.pauseBtn.setAttribute('aria-label', 'Pausar canción actual');
-            this.dom.stopBtn.disabled = false;
-            this.dom.pauseBtn.disabled = false;
-            this.dom.songIconContainer.classList.add('playing');
+            this.el.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span>';
+            this.el.pauseBtn.setAttribute('aria-label', TEXT.player.pauseLabel);
+            this.el.stopBtn.disabled = false;
+            this.el.pauseBtn.disabled = false;
+            this.el.songIconContainer.classList.add('playing');
         } else {
-            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">▶️</span>';
-            this.dom.pauseBtn.setAttribute('aria-label', 'Reproducir canción seleccionada');
-            this.dom.stopBtn.disabled = !hasSongLoaded;
-            this.dom.pauseBtn.disabled = !hasSongLoaded;
-            this.dom.songIconContainer.classList.remove('playing');
+            this.el.pauseBtn.innerHTML = '<span aria-hidden="true">▶️</span>';
+            this.el.pauseBtn.setAttribute('aria-label', TEXT.player.playLabel);
+            this.el.stopBtn.disabled = !hasSongLoaded;
+            this.el.pauseBtn.disabled = !hasSongLoaded;
+            this.el.songIconContainer.classList.remove('playing');
         }
 
-        // En partida: desactivado mientras suena o cuando ya no quedan canciones por sacar
-        this.dom.playBtn.disabled = gameStarted && (playing || noSongsLeft);
+        this.el.playBtn.disabled = gameStarted && (playing || noSongsLeft);
     }
 
-    /**
-     * Actualiza los contadores de canciones
-     */
     updateCounters(playedCount, totalSongs) {
-        this.dom.playedCounterSpan.textContent = playedCount.toString();
-        this.dom.totalCounterSpan.textContent = totalSongs.toString();
+        this.el.playedCounterSpan.textContent = playedCount.toString();
+        this.el.totalCounterSpan.textContent = totalSongs.toString();
     }
 
-    /**
-     * Actualiza el estado de la UI según si el juego ha iniciado
-     */
+    _setLocked(element, locked) {
+        if ('disabled' in element) element.disabled = locked;
+        element.style.opacity = locked ? '0.5' : '1';
+        element.style.cursor = locked ? 'not-allowed' : 'pointer';
+    }
+
     updateUIState(gameStarted, continuousMode, toggleContinuousModeCallback) {
         const isDisabled = gameStarted;
 
-        this.dom.addSongsInput.disabled = isDisabled;
-        this.dom.addSongsLabel.style.opacity = isDisabled ? '0.5' : '1';
-        this.dom.addSongsLabel.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
-        this.dom.addSongsLabel.style.pointerEvents = isDisabled ? 'none' : 'auto';
+        this.el.addSongsInput.disabled = isDisabled;
+        this._setLocked(this.el.addSongsLabel, isDisabled);
+        this.el.addSongsLabel.style.pointerEvents = isDisabled ? 'none' : 'auto';
 
-        this.dom.importListBtn.disabled = isDisabled;
-        this.dom.importListBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+        this.el.importListBtn.disabled = isDisabled;
+        this.el.importListBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
 
-        this.dom.clearHistoryBtn.disabled = !isDisabled;
-        this.dom.clearHistoryBtn.style.opacity = isDisabled ? '1' : '0.5';
-        this.dom.clearHistoryBtn.style.cursor = isDisabled ? 'pointer' : 'not-allowed';
+        this._setLocked(this.el.clearHistoryBtn, !isDisabled);
 
-        this.dom.shuffleAllBtn.disabled = isDisabled;
-        this.dom.shuffleAllBtn.style.opacity = isDisabled ? '0.5' : '1';
-        this.dom.shuffleAllBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+        this._setLocked(this.el.shuffleAllBtn, isDisabled);
         if (isDisabled && continuousMode) {
             toggleContinuousModeCallback();
         }
 
-        // Deshabilitar botón de configuración cuando el juego está iniciado
-        this.dom.configBtn.disabled = isDisabled;
-        this.dom.configBtn.style.opacity = isDisabled ? '0.5' : '1';
-        this.dom.configBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+        this._setLocked(this.el.configBtn, isDisabled);
 
-        if (gameStarted) {
-            this.dom.playBtn.innerHTML = '<span aria-hidden="true">🔀</span> Siguiente';
-            this.dom.playBtn.setAttribute('aria-label', 'Siguiente canción');
-        } else {
-            this.dom.playBtn.innerHTML = '<span aria-hidden="true">▶️</span> Iniciar Juego';
-            this.dom.playBtn.setAttribute('aria-label', 'Iniciar Juego');
-        }
+        const playLabel = gameStarted ? TEXT.player.next : TEXT.player.start;
+        this.el.playBtn.innerHTML = iconTextHtml(playLabel);
+        this.el.playBtn.setAttribute('aria-label', playLabel.label);
     }
 
-    /**
-     * Agrega una canción al historial visual
-     */
     addToHistory(song, iconRevealTime = 0, gameStarted = false) {
         const historyItem = document.createElement('div');
         historyItem.className = 'history-item';
         historyItem.title = song.title;
         historyItem.setAttribute('role', 'img');
-        historyItem.setAttribute('aria-label', `Canción reproducida: ${song.title}`);
+        historyItem.setAttribute('aria-label', TEXT.player.playedHistoryLabel(song.title));
 
         const img = document.createElement('img');
-        
-        // Solo ocultar si el juego ha iniciado
+
         if (gameStarted) {
             img.style.opacity = '0';
         }
 
-        if (song.iconType === 'image' && song.icon) {
-            img.src = song.icon;
-        } else {
-            img.src = this.emojiToDataURL(song.icon, 150);
-        }
+        img.src = this._iconSrc(song, HISTORY_ICON_SIZE);
 
         img.alt = song.title;
         historyItem.appendChild(img);
-        this.dom.historyGrid.appendChild(historyItem);
+        this.el.historyGrid.appendChild(historyItem);
 
-        // Scroll suave al final del contenedor
-        const container = this.dom.historyGrid.parentElement;
-        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        const container = this.el.historyGrid.parentElement;
+        container.scrollTo({top: container.scrollHeight, behavior: 'smooth'});
 
-        // Revelar icono después del tiempo configurado (solo si el juego ha iniciado)
         if (gameStarted) {
-            setTimeout(() => {
-                img.style.transition = 'opacity 1s ease-in';
-                img.style.opacity = '1';
-            }, iconRevealTime * 1000);
+            this._fadeInAfter(img, iconRevealTime);
         }
 
         return historyItem;
     }
 
-    /**
-     * Obtiene el título del icono de una canción
-     */
     getSongIconTitle(song, gameStarted) {
-        if (song.played) return 'Icono bloqueado (canción ya reproducida)';
-        return gameStarted ? 'Icono bloqueado (juego iniciado)' : 'Click para cambiar icono';
+        if (song.played) return TEXT.list.iconTitle.lockedPlayed;
+        return gameStarted ? TEXT.list.iconTitle.lockedStarted : TEXT.list.iconTitle.change;
     }
 
-    /**
-     * Obtiene el HTML del icono de una canción
-     */
     getSongIconHtml(song) {
         const title = escapeHTML(song.title);
-        if (song.iconType === 'image') {
+        if (song.iconType === ICON_TYPE.IMAGE) {
             return `<img src="${escapeHTML(song.icon)}" alt="${title}" style="padding:.25rem;aspect-ratio:1;object-fit:contain;">`;
         }
         return `<span role="img" aria-label="${title}">${escapeHTML(song.icon)}</span>`;
     }
 
-    /**
-     * Obtiene la etiqueta de estado de una canción
-     */
     getSongStateLabel(song) {
         if (song.played) {
-            return '✓ Ya reproducida';
+            return TEXT.list.songState.played;
         } else if (song.file) {
-            return '○ Pendiente';
+            return TEXT.list.songState.pending;
         } else {
-            return '⚠ Sin archivo';
+            return TEXT.list.songState.noFile;
         }
     }
 }
