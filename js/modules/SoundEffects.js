@@ -57,8 +57,7 @@ export class SoundEffects {
         return this.audioContext;
     }
 
-    _playSweep({ startFreq, endFreq, duration, volume = 1, waveType = 'sine' }) {
-        const audioCtx = this._getAudioContext();
+    _createVoice(audioCtx, waveType) {
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
 
@@ -67,35 +66,39 @@ export class SoundEffects {
 
         oscillator.type = waveType;
 
-        oscillator.frequency.setValueAtTime(startFreq, audioCtx.currentTime);
+        return { oscillator, gainNode };
+    }
+
+    _applyEnvelope(gainNode, startTime, duration, volume) {
+        gainNode.gain.setValueAtTime(this.volume * volume, startTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+    }
+
+    _playSweep({ startFreq, endFreq, duration, volume = 1, waveType = 'sine' }) {
+        const audioCtx = this._getAudioContext();
+        const { oscillator, gainNode } = this._createVoice(audioCtx, waveType);
+        const startTime = audioCtx.currentTime;
+
+        oscillator.frequency.setValueAtTime(startFreq, startTime);
         if (startFreq !== endFreq) {
-            oscillator.frequency.exponentialRampToValueAtTime(endFreq, audioCtx.currentTime + duration);
+            oscillator.frequency.exponentialRampToValueAtTime(endFreq, startTime + duration);
         }
 
-        gainNode.gain.setValueAtTime(this.volume * volume, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        this._applyEnvelope(gainNode, startTime, duration, volume);
 
-        oscillator.start(audioCtx.currentTime);
-        oscillator.stop(audioCtx.currentTime + duration);
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration);
     }
 
     _playMelody({ notes, interval, noteDuration = 0.15, volume = 1, waveType = 'sine' }) {
         const audioCtx = this._getAudioContext();
 
         for (const [index, freq] of notes.entries()) {
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            oscillator.type = waveType;
+            const { oscillator, gainNode } = this._createVoice(audioCtx, waveType);
             oscillator.frequency.value = freq;
 
             const startTime = audioCtx.currentTime + (index * interval);
-
-            gainNode.gain.setValueAtTime(this.volume * volume, startTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + noteDuration);
+            this._applyEnvelope(gainNode, startTime, noteDuration, volume);
 
             oscillator.start(startTime);
             oscillator.stop(startTime + noteDuration);

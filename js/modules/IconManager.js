@@ -68,7 +68,7 @@ export class IconManager {
         this.el.iconPickerContainer.innerHTML = '';
         this.el.iconPickerContainer.appendChild(fragment);
 
-        this._showIconModal();
+        this.modals.openModal(this.el.iconModal);
         this.sounds.play(SOUND.CLICK);
 
         return {success: true};
@@ -103,18 +103,8 @@ export class IconManager {
         return option;
     }
 
-    _showIconModal() {
-        this.el.iconModal.classList.remove('hidden');
-        if (this.el.iconModal.showModal) {
-            this.el.iconModal.showModal();
-        }
-    }
-
     closeIconModal() {
-        if (this.el.iconModal.close) {
-            this.el.iconModal.close();
-        }
-        this.el.iconModal.classList.add('hidden');
+        this.modals.closeModal(this.el.iconModal);
 
         this.currentEditingSongId = null;
         this.onIconSelected = null;
