@@ -90,6 +90,16 @@
         <span aria-hidden="true">🎉</span>
       </button>
 
+      <button id="open-check-carton-btn"
+              class="btn btn-special btn-check"
+              type="button"
+              disabled
+              title="Comprobar un cartón (C)"
+              aria-label="Comprobar un cartón"
+      >
+        <span aria-hidden="true">🔍</span>
+      </button>
+
       <button id="fullscreen-btn"
               class="btn btn-fullscreen"
               type="button"
@@ -648,6 +658,34 @@
             Aceptar
           </button>
         </footer>
+      </section>
+    </article>
+  </dialog>
+
+  <dialog id="check-carton-modal" class="modal hidden" aria-labelledby="check-carton-title">
+    <article class="modal-content">
+      <header class="modal-header">
+        <h2 id="check-carton-title">🔍 Comprobar cartón</h2>
+        <button id="close-check-carton-modal" class="close-btn" type="button" aria-label="Cerrar la comprobación">
+          ✕
+        </button>
+      </header>
+      <section class="modal-body">
+        <div class="check-carton-form">
+          <label class="config-label" for="check-carton-number">Número de cartón:</label>
+          <input id="check-carton-number"
+                 class="config-input"
+                 type="number"
+                 min="1"
+                 step="1"
+                 inputmode="numeric"
+          >
+          <button id="check-carton-submit" class="btn btn-play btn-icon" type="button">
+            <span aria-hidden="true">🔍</span>
+            Comprobar
+          </button>
+        </div>
+        <div id="check-carton-result" class="check-carton-result" aria-live="polite"></div>
       </section>
     </article>
   </dialog>

@@ -16,6 +16,7 @@ import {ModalManager} from "./modules/ModalManager.js";
 import {Dialogs} from "./modules/Dialogs.js";
 import {ConfigModal} from "./modules/ConfigModal.js";
 import {CartonModals} from "./modules/CartonModals.js";
+import {CartonCheckModal} from "./modules/CartonCheckModal.js";
 import {CartonManager} from "./modules/CartonManager.js";
 import {KeyboardShortcuts} from "./modules/KeyboardShortcuts.js";
 import {CartonHtmlRenderer} from "./modules/CartonHtmlRenderer.js";
@@ -151,6 +152,14 @@ class BingoMusical {
             settings: this.settings,
             onSettingsChanged: (partial) => this._saveSettings(partial)
         });
+        this.cartonCheck = new CartonCheckModal({
+            elements: this.dom.checkCarton,
+            openButton: this.dom.toolbar.openCheckCartonBtn,
+            game: this.game,
+            modals: this.modal,
+            dialogs: this.dialogs,
+            sounds: this.sounds
+        });
     }
 
     _createSongList() {
@@ -201,6 +210,7 @@ class BingoMusical {
         this.setupEventListeners();
         this.configModal.init();
         this.cartonModals.init();
+        this.cartonCheck.init();
         this.audioControls.bind();
         this.dragAndDrop.init();
         this.theme.init();
@@ -456,6 +466,10 @@ class BingoMusical {
                 action: () => {
                     if (!this.dom.game.bingoBtn.disabled) this.triggerBingo();
                 }
+            })
+            .register('c', {
+                ...SHORTCUTS.check,
+                action: () => this.cartonCheck.open()
             })
             .register('escape', {
                 ...SHORTCUTS.escape,
@@ -734,6 +748,8 @@ class BingoMusical {
             this.game.isContinuousMode(),
             () => this.toggleContinuousMode()
         );
+
+        this.dom.toolbar.openCheckCartonBtn.disabled = !this.game.hasCartonesGenerated();
 
         const shouldDisableGameName = this.game.isGameStarted() || this.game.hasCartonesGenerated();
         this.dom.game.gameNameInput.disabled = shouldDisableGameName;

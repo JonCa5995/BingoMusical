@@ -74,6 +74,12 @@ export const MSG = {
         songNotFound: errorMsg(T.error, 'Canción no encontrada')
     },
 
+    checkCarton: {
+        noCartones: msg(T.noCartones, 'No hay cartones guardados para comprobar. Genera cartones primero.'),
+        invalidNumber: (max) => errorMsg('Número Inválido', `Escribe el número del cartón, entre 1 y ${max}.`),
+        notFound: (number, max) => msg('Cartón No Encontrado', `No existe el cartón número ${number}. Hay ${max} cartón(es).`)
+    },
+
     savedGame: {
         found: ({songs, played, cartones}) => msg('Partida Guardada',
             `Hay una partida guardada en este navegador: ${songs} canciones (${played} reproducidas) y ${cartones} cartones.\n\n¿Quieres reanudarla? Si no, se descartará.`),
@@ -126,6 +132,21 @@ export const MSG = {
 // TEXTOS DE LA INTERFAZ
 // ============================================================
 export const TEXT = {
+    checkCarton: {
+        cartonTitle: (id) => `Cartón ${id}`,
+        played: 'Ha salido',
+        pending: 'Aún no ha salido',
+        linea: ({linea, completeRows, missingForLinea}) => {
+            if (linea) return `📏 LÍNEA: sí (${completeRows.length === 1 ? 'fila' : 'filas'} ${completeRows.join(' y ')})`;
+            if (missingForLinea === null) return '📏 LÍNEA: no (el cartón no tiene canciones)';
+            return `📏 LÍNEA: no, a la fila más cercana le ${missingForLinea === 1 ? 'falta 1 canción' : `faltan ${missingForLinea} canciones`}`;
+        },
+        bingo: ({bingo, missingForBingo, total}) => bingo
+            ? '🎉 BINGO: sí, han salido todas las canciones'
+            : `🎉 BINGO: no, ${missingForBingo === 1 ? 'falta 1 canción' : `faltan ${missingForBingo} de ${total}`}`,
+        row: (number, row) => `Fila ${number}: ${row.songs.length - row.missing} de ${row.songs.length}${row.complete ? ' ✓ completa' : ''}`
+    },
+
     savedGame: {
         downloadLabel: 'Descargar la partida en formato JSON',
         notGame: 'El archivo no es una partida de Bingo Musical.',
@@ -280,5 +301,6 @@ export const SHORTCUTS = {
     linea: {icon: '📏', label: 'L', description: 'Cantar LÍNEA'},
     bingo: {icon: '🎉', label: 'B', description: 'Cantar BINGO'},
     escape: {icon: '❌', label: 'ESC', description: 'Cerrar modal'},
+    check: {icon: '🔍', label: 'C', description: 'Comprobar un cartón'},
     help: {icon: '❓', label: '?', description: 'Mostrar esta ayuda'}
 };

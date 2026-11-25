@@ -21,7 +21,10 @@ const GROUPS = {
         'lineaOverlay', 'continueLineaBtn', 'celebrationOverlay', 'restartBtn'
     ],
     toolbar: [
-        'themeToggleBtn', 'themeIcon', 'fullscreenBtn', 'shortcutsHelpBtn'
+        'themeToggleBtn', 'themeIcon', 'fullscreenBtn', 'shortcutsHelpBtn', 'openCheckCartonBtn'
+    ],
+    checkCarton: [
+        'checkCartonModal', 'closeCheckCartonModalBtn', 'checkCartonNumberInput', 'checkCartonSubmitBtn', 'checkCartonResult'
     ],
     iconPicker: [
         'iconModal', 'closeIconModalBtn', 'modalSongTitle', 'iconPickerContainer', 'iconSearchInput',
@@ -154,6 +157,12 @@ const IDS = {
     restartBtn: 'restart-btn',
 
     exportListBtn: 'export-list',
+    openCheckCartonBtn: 'open-check-carton-btn',
+    checkCartonModal: 'check-carton-modal',
+    closeCheckCartonModalBtn: 'close-check-carton-modal',
+    checkCartonNumberInput: 'check-carton-number',
+    checkCartonSubmitBtn: 'check-carton-submit',
+    checkCartonResult: 'check-carton-result',
     exportGameBtn: 'export-game-btn',
     linkAudioBtn: 'link-audio-btn',
     linkAudioInput: 'link-audio-input',

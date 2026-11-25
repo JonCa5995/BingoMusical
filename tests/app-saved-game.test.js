@@ -131,3 +131,23 @@ test('un archivo que no es JSON de lista ni de partida se rechaza como antes', a
     assert.equal(get('#alert-title').textContent, 'Error de Importación');
     get('#alert-ok').fire('click');
 });
+
+test('con cartones en el juego, el botón de comprobar se habilita y el resultado cuadra con las canciones reproducidas', () => {
+    const snapshot = makeSnapshot({songCount: 30, played: 7, cartones: 2, name: 'Importada'});
+    const expected = snapshot.cartones[1].rows.flatMap(row => row.cells.map(cell => cell.songId)).filter(id => id !== null && id <= 7).length;
+
+    assert.equal(get('#open-check-carton-btn').disabled, false);
+    get('#open-check-carton-btn').fire('click');
+    assert.equal(isOpen('#check-carton-modal'), true);
+
+    get('#check-carton-number').value = '2';
+    get('#check-carton-submit').fire('click');
+
+    const result = get('#check-carton-result');
+    assert.equal(result.children[0].textContent, 'Cartón 2');
+    const rows = result.children.slice(3);
+    const played = rows.flatMap(row => row.children[1].children).filter(item => item.className.includes('check-song-played')).length;
+    assert.equal(rows.length, 3);
+    assert.equal(played, expected);
+    get('#close-check-carton-modal').fire('click');
+});

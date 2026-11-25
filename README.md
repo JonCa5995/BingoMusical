@@ -30,6 +30,10 @@ y abrir <http://localhost:8000>.
 6. **Cantar:** **LÍNEA** se puede cantar a partir de 4 canciones reproducidas y **BINGO** a partir de 12. Cada uno se puede cantar una sola vez por partida.
 7. **Reiniciar:** el botón «Reiniciar juego» deja la partida a cero y mantiene la lista y los cartones.
 
+### Comprobar un cartón
+
+Cuando alguien canta LÍNEA o BINGO, el botón **🔍** (o la tecla **C**) abre «Comprobar cartón». Se escribe el número del cartón y la aplicación lo compara con las canciones que han salido: muestra sus tres filas con ✓/✗ en cada canción, si hay **LÍNEA** (y en qué fila o filas) y si hay **BINGO**. Si aún no lo hay, dice cuántas canciones le faltan a la fila más cercana y al cartón entero. Solo informa: no cambia el estado de la partida. El botón está desactivado mientras no haya cartones.
+
 ### Modo continuo
 
 El botón **«Automático»** (modo continuo) sirve para **reproducir las canciones sin empezar el juego**: al terminar una canción pasa sola a la siguiente, sin pulsar ningún botón. Es útil para ambientar o para probar la lista. Se desactiva solo al iniciar una partida (el botón pasa a mostrar «Manual» mientras está activo).
@@ -134,6 +138,7 @@ Los campos desconocidos se descartan y los ajustes inválidos se ignoran.
 | `F` | Pantalla completa |
 | `L` | Cantar LÍNEA |
 | `B` | Cantar BINGO |
+| `C` | Comprobar un cartón |
 | `Esc` | Cerrar la ventana abierta |
 | `?` | Mostrar la ayuda de atajos |
 

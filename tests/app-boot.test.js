@@ -116,3 +116,12 @@ test('vincular audio sin canciones avisa de que no hay a qué vincular', () => {
     assert.ok(get('#alert-message').textContent.includes('No hay canciones'));
     click('#alert-ok');
 });
+
+test('el atajo C sin cartones avisa de que no hay nada que comprobar', () => {
+    (documentListeners.keydown || []).forEach(listener => listener({key: 'c', target: {tagName: 'BODY'}, preventDefault() {}}));
+
+    assert.equal(isOpen('#alert-modal'), true);
+    assert.equal(get('#alert-title').textContent, 'Sin Cartones');
+    assert.equal(isOpen('#check-carton-modal'), false);
+    click('#alert-ok');
+});
