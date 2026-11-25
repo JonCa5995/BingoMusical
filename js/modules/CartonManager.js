@@ -1,13 +1,13 @@
-import {CELL_TYPE, ICON_TYPE, PRINT_FORMAT, SOUND} from '../constants.js';
+import {MAX_CARTONS_GENERATED, MIN_SONGS_REQUIRED, PRINT_FORMAT, SOUND} from '../constants.js';
 import {escapeHTML, gameNameOrDefault} from '../utils.js';
-import {DECORATIVE_ICON_HTML} from './CartonHtmlRenderer.js';
 import {MSG, TEXT} from '../messages.js';
 
 export class CartonManager {
-    constructor(previewContainer, sounds, cartonGenerator, cartonExporter) {
+    constructor(previewContainer, sounds, cartonGenerator, cartonExporter, renderer) {
         this.previewContainer = previewContainer;
         this.sounds = sounds;
         this.cartonGenerator = cartonGenerator;
+        this.renderer = renderer;
 
         this.exporters = new Map();
         this.registerExporter(PRINT_FORMAT.HTML, (cartones, config) => cartonExporter.downloadAsHTML(cartones, config));
@@ -22,7 +22,7 @@ export class CartonManager {
         try {
             const previewCarton = this.cartonGenerator.generateSingleCarton(songs, 1);
 
-            this.previewContainer.innerHTML = this.generatePreviewHTML(previewCarton, colors, gameName);
+            this.previewContainer.innerHTML = this.renderer.generatePreviewHTML(previewCarton, colors, gameName);
         } catch (error) {
             this.previewContainer.innerHTML = `
                 <div class="carton-preview-placeholder">
@@ -32,44 +32,6 @@ export class CartonManager {
             `;
             console.error(error);
         }
-    }
-
-    generatePreviewHTML(carton, config, gameName = '') {
-        const {primaryColor, secondaryColor} = config;
-        const displayName = escapeHTML(gameNameOrDefault(gameName));
-
-        const cellsHTML = carton.rows.flatMap(row =>
-            row.cells.map(cell => {
-                const cellClass = cell.type === CELL_TYPE.SONG ? 'song' : 'decorative';
-                const icon = this._previewCellIcon(cell);
-
-                return `<div class="preview-cell ${cellClass}">
-                    ${icon}
-                </div>`;
-            })
-        ).join('');
-
-        return `
-            <div class="preview-carton" style="color: ${primaryColor}; border-color: ${primaryColor};">
-                <div class="preview-carton-header" style="border-color: ${primaryColor};">
-                    <div class="preview-carton-title" style="color: ${primaryColor};">${TEXT.document.cartonTitle(displayName)}</div>
-                    <div class="preview-carton-number" style="background-color: ${secondaryColor};">#1</div>
-                </div>
-                <div class="preview-carton-grid">
-                    ${cellsHTML}
-                </div>
-            </div>
-        `;
-    }
-
-    _previewCellIcon(cell) {
-        if (cell.type === CELL_TYPE.SONG && cell.song) {
-            if (cell.song.iconType === ICON_TYPE.IMAGE) {
-                return `<img src="${escapeHTML(cell.song.icon)}" alt="${escapeHTML(cell.song.title)}" style="max-width: 90%; max-height: 90%;">`;
-            }
-            return escapeHTML(cell.song.icon);
-        }
-        return `<span class="decorative-icon">${DECORATIVE_ICON_HTML}</span>`;
     }
 
     async printCartonesWithConfig(cartones, gameName, format = PRINT_FORMAT.HTML, options = {}) {
@@ -109,28 +71,25 @@ export class CartonManager {
         return cartones.slice(from - 1, to);
     }
 
-    async generateCartones(songs, count, maxCartones, minRequired, showAlertCallback, existingCartones = []) {
-        if (Number.isNaN(count) || count < 1 || count > maxCartones) {
-            showAlertCallback(MSG.cartones.invalidCount(maxCartones));
-            return {success: false};
+    generate(songs, count, existingCartones = []) {
+        if (Number.isNaN(count) || count < 1 || count > MAX_CARTONS_GENERATED) {
+            return {success: false, alert: MSG.cartones.invalidCount(MAX_CARTONS_GENERATED)};
         }
 
-        const totalSongs = songs.filter(s => s.file).length;
-        if (totalSongs < minRequired) {
-            showAlertCallback(MSG.cartones.notEnoughSongs(minRequired));
-            return {success: false};
+        const playableSongs = songs.filter(song => song.file);
+        if (playableSongs.length < MIN_SONGS_REQUIRED) {
+            return {success: false, alert: MSG.cartones.notEnoughSongs(MIN_SONGS_REQUIRED)};
         }
 
         this.sounds.play(SOUND.START);
 
         try {
-            const cartones = this.cartonGenerator.generateCartones(songs, count, existingCartones);
+            const cartones = this.cartonGenerator.generateCartones(playableSongs, count, existingCartones);
 
             this.sounds.play(SOUND.WIN);
             return {success: true, cartones};
         } catch (error) {
-            showAlertCallback(MSG.cartones.generateFailed(error.message));
-            return {success: false};
+            return {success: false, alert: MSG.cartones.generateFailed(error.message)};
         }
     }
 }

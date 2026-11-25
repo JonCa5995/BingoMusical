@@ -112,8 +112,9 @@ class BingoMusical {
     }
 
     _createCartones() {
+        const renderer = new CartonHtmlRenderer();
         this.carton = new CartonManager(this.dom.cartones.printCartonPreview, this.sounds, this.cartonGenerator,
-            new CartonExporter(new CartonHtmlRenderer())
+            new CartonExporter(renderer), renderer
         );
         this.configModal = new ConfigModal({
             elements: this.dom.config,

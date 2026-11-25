@@ -4,7 +4,6 @@ import {
     DEFAULT_PRINT_PRIMARY_COLOR,
     DEFAULT_PRINT_SECONDARY_COLOR,
     MAX_CARTONS_GENERATED,
-    MIN_SONGS_REQUIRED,
     PRINT_FORMAT,
     SOUND
 } from '../constants.js';
@@ -159,30 +158,30 @@ export class CartonModals {
         const mode = this.mode || CARTON_MODE.NEW;
         const existingCartones = mode === CARTON_MODE.ADD ? this.game.getCartones() : [];
 
-        const result = await this.cartonManager.generateCartones(
+        const result = this.cartonManager.generate(
             this.getSongs(),
             Number.parseInt(this.el.cartonCountInput.value),
-            MAX_CARTONS_GENERATED,
-            MIN_SONGS_REQUIRED,
-            (alert) => this.dialogs.showAlert(alert),
             existingCartones
         );
 
-        if (result.success) {
-            const count = result.cartones.length;
-
-            if (mode === CARTON_MODE.NEW) {
-                this.game.setCartones(result.cartones);
-                this.dialogs.showAlert(MSG.cartones.generated(count));
-            } else if (mode === CARTON_MODE.ADD) {
-                this.game.addCartones(result.cartones);
-                this.dialogs.showAlert(MSG.cartones.added(count, this.game.getCartonesCount()));
-            }
-
-            this.onCartonesChanged();
-            this.modals.closeWithClick(this.el.cartonModal);
-            this.mode = null;
+        if (!result.success) {
+            this.dialogs.showAlert(result.alert);
+            return;
         }
+
+        const count = result.cartones.length;
+
+        if (mode === CARTON_MODE.NEW) {
+            this.game.setCartones(result.cartones);
+            this.dialogs.showAlert(MSG.cartones.generated(count));
+        } else if (mode === CARTON_MODE.ADD) {
+            this.game.addCartones(result.cartones);
+            this.dialogs.showAlert(MSG.cartones.added(count, this.game.getCartonesCount()));
+        }
+
+        this.onCartonesChanged();
+        this.modals.closeWithClick(this.el.cartonModal);
+        this.mode = null;
     }
 
     // ============================================================
