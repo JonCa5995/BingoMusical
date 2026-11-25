@@ -7,10 +7,17 @@ import {CUSTOM_ICON_SIZE, ICON_MODAL_CLOSE_DELAY_MS, ICON_TYPE, SOUND} from '../
 import {MSG, TEXT} from '../messages.js';
 
 export class IconManager {
-    constructor(dom, sounds, getSongs) {
+    /**
+     * @param {DOMElements} dom
+     * @param {SoundEffects} sounds
+     * @param {Function} getSongs - Devuelve las canciones actuales
+     * @param {ModalManager} modals - Donde se registra el modal de iconos (Escape y clic fuera)
+     */
+    constructor(dom, sounds, getSongs, modals) {
         this.dom = dom;
         this.sounds = sounds;
-        this.getSongs = getSongs; // Función para obtener las canciones actuales
+        this.getSongs = getSongs;
+        this.modals = modals;
         this.currentEditingSongId = null;
 
         this.setupEventListeners();
@@ -21,8 +28,8 @@ export class IconManager {
      * Configura event listeners para el modal de iconos
      */
     setupEventListeners() {
-        // El cierre al hacer clic fuera y con Escape lo gestiona ModalManager (registerModal)
         this.dom.closeIconModalBtn.addEventListener('click', () => this.closeIconModal());
+        this.modals.registerModal(this.dom.iconModal, () => this.closeIconModal());
 
         this.dom.uploadCustomIconBtn.addEventListener('click', () => {
             this.dom.customIconUploadInput.click();

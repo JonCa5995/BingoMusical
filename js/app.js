@@ -14,6 +14,9 @@ import {SongManager} from "./modules/SongManager.js";
 import {GameManager} from "./modules/GameManager.js";
 import {UIManager} from "./modules/UIManager.js";
 import {ModalManager} from "./modules/ModalManager.js";
+import {Dialogs} from "./modules/Dialogs.js";
+import {ConfigModal} from "./modules/ConfigModal.js";
+import {CartonModals} from "./modules/CartonModals.js";
 import {CartonManager} from "./modules/CartonManager.js";
 import {KeyboardShortcuts} from "./modules/KeyboardShortcuts.js";
 import {CartonHtmlRenderer} from "./modules/CartonHtmlRenderer.js";
@@ -22,26 +25,17 @@ import {SongListView} from "./modules/SongListView.js";
 import {PlaylistImporter} from "./modules/PlaylistImporter.js";
 import {deserializeCartones} from "./modules/CartonSerializer.js";
 import {
-    CARTON_MODE,
     CELEBRATION_DELAY_MS,
     CONTINUOUS_NEXT_SONG_DELAY_MS,
-    DEFAULT_CARTON_COUNT,
     DEFAULT_EFFECTS_VOLUME,
     DEFAULT_GAME_NAME,
-    DEFAULT_ICON_REVEAL_TIME,
     DEFAULT_MUSIC_VOLUME,
-    DEFAULT_PRINT_PRIMARY_COLOR,
-    DEFAULT_PRINT_SECONDARY_COLOR,
     DEFAULT_SONGS_FOLDER,
-    DEFAULT_TITLE_REVEAL_TIME,
     IMPORT_MESSAGE_DELAY_MS,
     LOGO_PATH,
-    MAX_CARTONS_GENERATED,
     MAX_GAME_NAME_LENGTH,
-    MAX_REVEAL_TIME_SECONDS,
     MIN_SONGS_REQUIRED,
     MS_PER_SECOND,
-    PRINT_FORMAT,
     SOUND
 } from "./constants.js";
 import {MSG, SHORTCUTS, TEXT} from "./messages.js";
@@ -75,11 +69,12 @@ class BingoMusical {
             }
         });
         this.playlistFile = new PlaylistFile();
-        this.icons = new IconManager(this.dom, this.sounds, () => this.songs);
+        this.modal = new ModalManager(this.sounds);
+        this.dialogs = new Dialogs(this.dom, this.modal, this.sounds);
+        this.icons = new IconManager(this.dom, this.sounds, () => this.songs, this.modal);
         this.songManager = new SongManager();
         this.game = new GameManager();
         this.ui = new UIManager(this.dom, MIN_SONGS_REQUIRED);
-        this.modal = new ModalManager(this.dom, this.sounds);
         this.theme = new ThemeManager({
             preferences: new PreferencesStore(),
             toggleButton: this.dom.themeToggleBtn,
@@ -98,6 +93,24 @@ class BingoMusical {
         this.carton = new CartonManager(this.dom, this.sounds, this.cartonGenerator,
             new CartonExporter(new CartonHtmlRenderer())
         );
+        this.configModal = new ConfigModal({
+            dom: this.dom,
+            game: this.game,
+            modals: this.modal,
+            dialogs: this.dialogs,
+            sounds: this.sounds,
+            canOpen: () => this.checkGameNotStarted(MSG.gameStarted.changeConfig)
+        });
+        this.cartonModals = new CartonModals({
+            dom: this.dom,
+            game: this.game,
+            cartonManager: this.carton,
+            modals: this.modal,
+            dialogs: this.dialogs,
+            sounds: this.sounds,
+            getSongs: () => this.songs,
+            onCartonesChanged: () => this.updateUIState()
+        });
         this.importer = new PlaylistImporter({
             songsFolder: this.songsFolder,
             songManager: this.songManager,
@@ -129,6 +142,8 @@ class BingoMusical {
     init() {
         this._applyConfigToDom();
         this.setupEventListeners();
+        this.configModal.init();
+        this.cartonModals.init();
         this.audioControls.bind();
         this.dragAndDrop.init();
         this.theme.init();
@@ -149,20 +164,6 @@ class BingoMusical {
         dom.gameNameInput.maxLength = MAX_GAME_NAME_LENGTH;
         dom.gameNameInput.title = TEXT.gameName.editHint(MAX_GAME_NAME_LENGTH);
 
-        // Cantidad de cartones que propone el modal de generación
-        dom.cartonCountInput.max = MAX_CARTONS_GENERATED;
-        dom.cartonCountInput.value = DEFAULT_CARTON_COUNT;
-
-        // Tiempos de revelado (en segundos)
-        for (const [slider, label, seconds] of [
-            [dom.titleRevealTimeSlider, dom.titleRevealValueSpan, DEFAULT_TITLE_REVEAL_TIME],
-            [dom.iconRevealTimeSlider, dom.iconRevealValueSpan, DEFAULT_ICON_REVEAL_TIME]
-        ]) {
-            slider.max = MAX_REVEAL_TIME_SECONDS;
-            slider.value = seconds;
-            label.textContent = TEXT.seconds(seconds);
-        }
-
         // Volúmenes iniciales (los sliders van de 0 a 100)
         for (const [slider, label, volume] of [
             [dom.musicVolumeSlider, dom.musicVolumeValueSpan, DEFAULT_MUSIC_VOLUME],
@@ -173,12 +174,6 @@ class BingoMusical {
             slider.setAttribute('aria-valuenow', percent);
             label.textContent = `${percent}%`;
         }
-
-        // Colores de impresión
-        dom.printPrimaryColorInput.value = DEFAULT_PRINT_PRIMARY_COLOR;
-        dom.printSecondaryColorInput.value = DEFAULT_PRINT_SECONDARY_COLOR;
-        document.querySelector('.color-preview-print')?.style.setProperty('background-color', DEFAULT_PRINT_PRIMARY_COLOR);
-        document.querySelector('.color-preview-print-secondary')?.style.setProperty('background-color', DEFAULT_PRINT_SECONDARY_COLOR);
     }
 
     _setupPlayerEventListeners() {
@@ -198,7 +193,7 @@ class BingoMusical {
         this.dom.addSongsLabel.addEventListener('click', async (e) => {
             if (this.game.getCartonesCount() > 0) {
                 e.preventDefault();
-                if (await this.confirmAndClearCartones(TEXT.cartonActions.addSongs)) {
+                if (await this.cartonModals.confirmAndClear(TEXT.cartonActions.addSongs)) {
                     this.dom.addSongsInput.click();
                 }
             }
@@ -215,67 +210,6 @@ class BingoMusical {
         this.dom.deleteAllBtn.addEventListener('click', () => this.deleteAllSongs());
     }
 
-    _setupCartonEventListeners() {
-        this.dom.generateCartonesBtn.addEventListener('click', () => this.openCartonOptionsModal());
-
-        // Modal de opciones
-        this._registerModal(this.dom.cartonOptionsModal, this.dom.closeCartonOptionsModalBtn);
-        this.dom.createNewCartonesBtn.addEventListener('click', () => this._startCartonGeneration(CARTON_MODE.NEW));
-        this.dom.addCartonesBtn.addEventListener('click', () => this._startCartonGeneration(CARTON_MODE.ADD));
-        this.dom.printExistingCartonesBtn.addEventListener('click', () => this.handlePrintExistingCartones());
-        this.dom.deleteAllCartonesBtn.addEventListener('click', () => this.handleDeleteAllCartones());
-
-        // Modal de generación (simplificado - solo cantidad)
-        this._registerModal(this.dom.cartonModal, this.dom.closeCartonModalBtn);
-        this.dom.generateSaveCartonesBtn.addEventListener('click', () => this.generateCartones());
-
-        // Modal de impresión (con personalización)
-        this._registerModal(this.dom.printModal, this.dom.closePrintModalBtn);
-        this.dom.printHtmlBtn.addEventListener('click', () => this.printCartones(PRINT_FORMAT.HTML));
-        this.dom.printPdfBtn.addEventListener('click', () => this.printCartones(PRINT_FORMAT.PDF));
-        this.dom.previewPrintBtn.addEventListener('click', () => this.updatePrintPreview());
-
-        // Event listeners para selector de rango
-        this.dom.printRangeRadios.forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                const showRange = e.target.value === 'range';
-                this.dom.rangeInputsContainer.style.display = showRange ? 'block' : 'none';
-            });
-        });
-
-        // Actualizar preview al cambiar colores
-        this.dom.printPrimaryColorInput.addEventListener('input', (e) => {
-            document.querySelector('.color-preview-print').style.backgroundColor = e.target.value;
-            this.updatePrintPreview();
-        });
-        this.dom.printSecondaryColorInput.addEventListener('input', (e) => {
-            document.querySelector('.color-preview-print-secondary').style.backgroundColor = e.target.value;
-            this.updatePrintPreview();
-        });
-    }
-
-    /**
-     * Registra un modal (Escape, atajos bloqueados y cierre al hacer clic fuera) y conecta su botón de cerrar.
-     * Todos los cierres suenan con el clic.
-     */
-    _registerModal(modalElement, closeButton) {
-        const close = () => this._closeModal(modalElement);
-        closeButton.addEventListener('click', close);
-        this.modal.registerModal(modalElement, close);
-    }
-
-    /** Abre un modal con el sonido de clic */
-    _openModal(modalElement) {
-        this.sounds.play(SOUND.CLICK);
-        this.modal.openModal(modalElement);
-    }
-
-    /** Cierra un modal con el sonido de clic */
-    _closeModal(modalElement) {
-        this.sounds.play(SOUND.CLICK);
-        this.modal.closeModal(modalElement);
-    }
-
     // ============================================================
     // CONFIGURACIÓN DE EVENT LISTENERS
     // ============================================================
@@ -283,9 +217,6 @@ class BingoMusical {
     setupEventListeners() {
         this._setupPlayerEventListeners();
         this._setupSongManagementEventListeners();
-        this._setupCartonEventListeners();
-        this._setupConfigEventListeners();
-        this._setupModalEventListeners();
         this._setupCelebrationEventListeners();
         this._setupKeyboardShortcuts();
         this._setupGameNameEventListeners();
@@ -308,34 +239,11 @@ class BingoMusical {
         this.dom.gameNameInput.addEventListener('blur', (e) => {
             const name = e.target.value.trim();
             if (name.length > MAX_GAME_NAME_LENGTH) {
-                this.modal.showAlert(MSG.game.nameTooLong(MAX_GAME_NAME_LENGTH));
+                this.dialogs.showAlert(MSG.game.nameTooLong(MAX_GAME_NAME_LENGTH));
                 e.target.value = name.substring(0, MAX_GAME_NAME_LENGTH);
                 this.game.setGameName(e.target.value);
             }
         });
-    }
-
-    _setupConfigEventListeners() {
-        this.dom.configBtn.addEventListener('click', () => this.openConfigModal());
-        this._registerModal(this.dom.configModal, this.dom.closeConfigModalBtn);
-        this.dom.saveConfigBtn.addEventListener('click', () => this.saveConfig());
-
-        // Actualizar valores en tiempo real
-        this.dom.titleRevealTimeSlider.addEventListener('input', (e) => {
-            this.dom.titleRevealValueSpan.textContent = TEXT.seconds(e.target.value);
-        });
-
-        this.dom.iconRevealTimeSlider.addEventListener('input', (e) => {
-            this.dom.iconRevealValueSpan.textContent = TEXT.seconds(e.target.value);
-        });
-    }
-
-    _setupModalEventListeners() {
-        this.dom.confirmCancelBtn.addEventListener('click', () => this.modal.closeConfirmModal(false));
-        this.dom.confirmAcceptBtn.addEventListener('click', () => this.modal.closeConfirmModal(true));
-        this.dom.alertOkBtn.addEventListener('click', () => this.modal.closeAlertModal());
-
-        this.modal.registerModal(this.dom.iconModal, () => this.icons.closeIconModal());
     }
 
     _setupCelebrationEventListeners() {
@@ -415,7 +323,7 @@ class BingoMusical {
     }
 
     showKeyboardShortcutsHelp() {
-        this.modal.showAlert({title: TEXT.shortcuts.helpTitle, message: this.shortcuts.getHelpText()});
+        this.dialogs.showAlert({title: TEXT.shortcuts.helpTitle, message: this.shortcuts.getHelpText()});
     }
 
     // ============================================================
@@ -429,28 +337,8 @@ class BingoMusical {
      */
     checkGameNotStarted(gameStartedMessage) {
         if (this.game.isGameStarted()) {
-            this.modal.showAlert(gameStartedMessage);
+            this.dialogs.showAlert(gameStartedMessage);
             return false;
-        }
-        return true;
-    }
-
-    /**
-     * Verifica si hay cartones existentes, pide confirmación y los borra si el usuario acepta
-     * @param {string} action - Descripción de la acción que se va a realizar
-     * @returns {Promise<boolean>} - true si no hay cartones o el usuario confirmó, false si canceló
-     */
-    async confirmAndClearCartones(action) {
-        const cartonesCount = this.game.getCartonesCount();
-        if (cartonesCount > 0) {
-            const confirmed = await this.modal.showConfirm(MSG.cartones.existing(cartonesCount, action));
-
-            if (!confirmed) {
-                return false;
-            }
-
-            this.game.clearCartones();
-            this.updateUIState();
         }
         return true;
     }
@@ -503,7 +391,7 @@ class BingoMusical {
 
         const check = canCall();
         if (!check.valid) {
-            this.modal.showAlert(check.alert);
+            this.dialogs.showAlert(check.alert);
             return;
         }
 
@@ -519,33 +407,9 @@ class BingoMusical {
     _ensureEnoughSongs() {
         const validation = this.songManager.validateMinSongs(this.songs, MIN_SONGS_REQUIRED);
         if (!validation.valid) {
-            this.modal.showAlert(validation.alert);
+            this.dialogs.showAlert(validation.alert);
         }
         return validation.valid;
-    }
-
-    // ============================================================
-    // GESTIÓN DE CONFIGURACIÓN
-    // ============================================================
-
-    openConfigModal() {
-        if (!this.checkGameNotStarted(MSG.gameStarted.changeConfig)) {
-            return;
-        }
-
-        this._openModal(this.dom.configModal);
-    }
-
-    saveConfig() {
-        const titleRevealTime = Number.parseInt(this.dom.titleRevealTimeSlider.value);
-        const iconRevealTime = Number.parseInt(this.dom.iconRevealTimeSlider.value);
-
-        this.game.setTitleRevealTime(titleRevealTime);
-        this.game.setIconRevealTime(iconRevealTime);
-
-        this.sounds.play(SOUND.WIN);
-        this.modal.showAlert(MSG.config.saved(titleRevealTime, iconRevealTime));
-        this._closeModal(this.dom.configModal);
     }
 
     // ============================================================
@@ -559,9 +423,9 @@ class BingoMusical {
 
         if (result.success) {
             this.sounds.play(SOUND.CLICK);
-            this.modal.showAlert(MSG.playlist.exportOk(result.message));
+            this.dialogs.showAlert(MSG.playlist.exportOk(result.message));
         } else {
-            this.modal.showAlert(MSG.playlist.exportFailed(result.error));
+            this.dialogs.showAlert(MSG.playlist.exportFailed(result.error));
         }
     }
 
@@ -578,7 +442,7 @@ class BingoMusical {
         const result = await this.playlistFile.read(file);
 
         if (!result.success) {
-            this.modal.showAlert(MSG.playlist.importFailed(result.error));
+            this.dialogs.showAlert(MSG.playlist.importFailed(result.error));
             this.clearFileInput(event);
             return;
         }
@@ -608,17 +472,17 @@ class BingoMusical {
         // Show duplicate warning first, if any
         if (duplicates.length > 0) {
             this.sounds.play(SOUND.ERROR);
-            this.modal.showAlert(MSG.playlist.importDuplicates(duplicates));
+            this.dialogs.showAlert(MSG.playlist.importDuplicates(duplicates));
         }
 
         // Then, show the main success/error message
         setTimeout(() => {
             if (this.songs.length === 0) {
                 this.sounds.play(SOUND.ERROR);
-                this.modal.showAlert(MSG.playlist.importNoSongs(this.songsFolder));
+                this.dialogs.showAlert(MSG.playlist.importNoSongs(this.songsFolder));
             } else {
                 this.sounds.play(SOUND.WIN);
-                this.modal.showAlert(MSG.playlist.importOk(this.songs.length, this.songsFolder));
+                this.dialogs.showAlert(MSG.playlist.importOk(this.songs.length, this.songsFolder));
             }
         }, duplicates.length > 0 ? IMPORT_MESSAGE_DELAY_MS : 0);
 
@@ -634,7 +498,7 @@ class BingoMusical {
             return;
         }
 
-        if (!await this.confirmAndClearCartones(TEXT.cartonActions.changeIcon)) {
+        if (!await this.cartonModals.confirmAndClear(TEXT.cartonActions.changeIcon)) {
             return;
         }
 
@@ -644,7 +508,7 @@ class BingoMusical {
         });
 
         if (!result.success) {
-            this.modal.showAlert(result.alert);
+            this.dialogs.showAlert(result.alert);
         }
     }
 
@@ -662,7 +526,7 @@ class BingoMusical {
         }
 
         // Verificar si existen cartones (para drag & drop)
-        if (!await this.confirmAndClearCartones(TEXT.cartonActions.addSongs)) {
+        if (!await this.cartonModals.confirmAndClear(TEXT.cartonActions.addSongs)) {
             this.clearFileInput(event);
             return;
         }
@@ -681,7 +545,7 @@ class BingoMusical {
         }
 
         if (result.duplicates.length > 0) {
-            this.modal.showAlert(MSG.songs.duplicatesNotAdded(result.duplicates));
+            this.dialogs.showAlert(MSG.songs.duplicatesNotAdded(result.duplicates));
         }
 
         this.clearFileInput(event);
@@ -692,7 +556,7 @@ class BingoMusical {
             return;
         }
 
-        if (!await this.confirmAndClearCartones(TEXT.cartonActions.deleteSong)) {
+        if (!await this.cartonModals.confirmAndClear(TEXT.cartonActions.deleteSong)) {
             return;
         }
 
@@ -727,7 +591,7 @@ class BingoMusical {
     // Qué ocurre al interactuar con una canción de la lista (SongListView solo avisa)
     onSongIconClick(song) {
         if (song.played) {
-            this.modal.showAlert(MSG.songs.iconLocked);
+            this.dialogs.showAlert(MSG.songs.iconLocked);
         } else {
             this.openIconPicker(song.id);
         }
@@ -756,11 +620,11 @@ class BingoMusical {
         }
 
         if (this.songs.length === 0) {
-            this.modal.showAlert(MSG.songs.nothingToDelete);
+            this.dialogs.showAlert(MSG.songs.nothingToDelete);
             return;
         }
 
-        const confirmed = await this.modal.showConfirm(MSG.songs.confirmDeleteAll(this.songs.length));
+        const confirmed = await this.dialogs.showConfirm(MSG.songs.confirmDeleteAll(this.songs.length));
 
         if (confirmed) {
             this.songs = [];
@@ -772,7 +636,7 @@ class BingoMusical {
             this.dom.gameNameInput.value = '';
 
             this.refreshUI();
-            this.modal.showAlert(MSG.songs.allDeleted);
+            this.dialogs.showAlert(MSG.songs.allDeleted);
         }
     }
 
@@ -813,7 +677,7 @@ class BingoMusical {
         const randomSong = this.game.getRandomUnplayedSong(this.songs);
 
         if (!randomSong) {
-            this.modal.showAlert(MSG.songs.noMoreSongs);
+            this.dialogs.showAlert(MSG.songs.noMoreSongs);
             return;
         }
 
@@ -823,7 +687,7 @@ class BingoMusical {
     playSong(songId) {
         const song = this.songManager.findSongById(this.songs, songId);
         if (!song?.file) {
-            this.modal.showAlert(MSG.songs.noAudioFile);
+            this.dialogs.showAlert(MSG.songs.noAudioFile);
             return;
         }
 
@@ -983,7 +847,7 @@ class BingoMusical {
     async reiniciarJuego() {
         this.sounds.play(SOUND.CLICK);
 
-        const confirmed = await this.modal.showConfirm(MSG.game.confirmRestart);
+        const confirmed = await this.dialogs.showConfirm(MSG.game.confirmRestart);
 
         if (confirmed) {
             this.game.resetGame();
@@ -1008,140 +872,6 @@ class BingoMusical {
             this.dom.songTitleElement.style.opacity = '1';
             this.dom.currentIconImg.style.opacity = '1';
         }
-    }
-
-    // ============================================================
-    // GENERACIÓN DE CARTONES
-    // ============================================================
-
-    openCartonOptionsModal() {
-        const existingCount = this.game.getCartonesCount();
-
-        // Mostrar información de cartones existentes
-        if (existingCount > 0) {
-            this.dom.existingCartonesInfo.textContent = TEXT.cartones.optionsInfo(existingCount);
-            this.dom.printExistingCartonesBtn.disabled = false;
-            this.dom.deleteAllCartonesBtn.disabled = false;
-        } else {
-            this.dom.existingCartonesInfo.textContent = TEXT.cartones.noneInfo;
-            this.dom.printExistingCartonesBtn.disabled = true;
-            this.dom.deleteAllCartonesBtn.disabled = true;
-        }
-
-        this._openModal(this.dom.cartonOptionsModal);
-    }
-
-    /**
-     * Pasa del modal de opciones al de generación (solo pide la cantidad)
-     * @param {'new'|'add'} mode - Crear cartones nuevos o añadir a los existentes
-     */
-    _startCartonGeneration(mode) {
-        this.cartonMode = mode;
-        this._closeModal(this.dom.cartonOptionsModal);
-        this._openModal(this.dom.cartonModal);
-    }
-
-    handlePrintExistingCartones() {
-        if (this.game.getCartonesCount() === 0) {
-            this.modal.showAlert(MSG.cartones.noneToPrint);
-            return;
-        }
-
-        this._closeModal(this.dom.cartonOptionsModal);
-
-        // Abrir modal de impresión con personalización
-        this.openPrintModal();
-    }
-
-    async handleDeleteAllCartones() {
-        const existingCount = this.game.getCartonesCount();
-
-        if (existingCount === 0) {
-            this.modal.showAlert(MSG.cartones.noneToDelete);
-            return;
-        }
-
-        const confirmed = await this.modal.showConfirm(MSG.cartones.confirmDelete(existingCount));
-
-        if (confirmed) {
-            this.game.clearCartones();
-            this.sounds.play(SOUND.CLICK);
-            this.updateUIState();
-            this._closeModal(this.dom.cartonOptionsModal);
-            this.modal.showAlert(MSG.cartones.deleted);
-        }
-    }
-
-    async generateCartones() {
-        const mode = this.cartonMode || CARTON_MODE.NEW;
-        const existingCartones = mode === CARTON_MODE.ADD ? this.game.getCartones() : [];
-
-        const result = await this.carton.generateCartones(
-            this.songs,
-            MAX_CARTONS_GENERATED,
-            MIN_SONGS_REQUIRED,
-            (alert) => this.modal.showAlert(alert),
-            existingCartones
-        );
-
-        if (result.success) {
-            const count = result.cartones.length;
-
-            // Guardar o añadir cartones según el modo
-            if (mode === CARTON_MODE.NEW) {
-                this.game.setCartones(result.cartones);
-                this.modal.showAlert(MSG.cartones.generated(count));
-            } else if (mode === CARTON_MODE.ADD) {
-                this.game.addCartones(result.cartones);
-                this.modal.showAlert(MSG.cartones.added(count, this.game.getCartonesCount()));
-            }
-
-            this.updateUIState();
-            this._closeModal(this.dom.cartonModal);
-            this.cartonMode = null;
-        }
-    }
-
-    openPrintModal() {
-        const count = this.game.getCartonesCount();
-
-        // Actualizar información
-        this.dom.printCartonesInfo.textContent = TEXT.cartones.printInfo(count);
-
-        // Configurar valores de rango
-        this.dom.rangeFromInput.max = count;
-        this.dom.rangeToInput.max = count;
-        this.dom.rangeToInput.value = count;
-
-        // Resetear a "todos"
-        this.dom.printRangeRadios[0].checked = true;
-        this.dom.rangeInputsContainer.style.display = 'none';
-
-        // Generar vista previa inicial
-        this.updatePrintPreview();
-
-        this._openModal(this.dom.printModal);
-    }
-
-    async printCartones(format = PRINT_FORMAT.HTML) {
-        const gameName = this.game.getGameName() || DEFAULT_GAME_NAME;
-
-        this.sounds.play(SOUND.START);
-
-        const result = await this.carton.printCartonesWithConfig(this.game.getCartones(), gameName, format);
-
-        if (result.success) {
-            this.sounds.play(SOUND.WIN);
-            this.modal.showAlert(MSG.cartones.printed(result.count, format));
-            this._closeModal(this.dom.printModal);
-        } else {
-            this.modal.showAlert(MSG.cartones.printFailed(result.error));
-        }
-    }
-
-    updatePrintPreview() {
-        const gameName = this.game.getGameName() || DEFAULT_GAME_NAME;
-        this.carton.updatePrintPreview(this.songs, gameName);
     }
 }
 

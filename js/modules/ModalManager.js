@@ -1,18 +1,17 @@
 /**
  * ModalManager Module
- * Gestiona todos los modales de la aplicación (alertas, confirmaciones, cartones)
+ * Registro de los modales de la aplicación: abrir, cerrar, cierre con Escape y clic fuera.
+ * Las alertas y confirmaciones están en Dialogs.
  */
-import { SOUND } from '../constants.js';
-import { DEFAULT_TITLES } from '../messages.js';
+import {SOUND} from '../constants.js';
 
 export class ModalManager {
-    constructor(dom, sounds) {
-        this.dom = dom;
+    /**
+     * @param {SoundEffects} sounds - Para el clic al abrir y cerrar con openWithClick/closeWithClick
+     */
+    constructor(sounds) {
         this.sounds = sounds;
-        this.confirmCallback = null;
         this.modals = [];
-
-        this._registerOwnModals();
     }
 
     /**
@@ -35,52 +34,29 @@ export class ModalManager {
         modalElement.classList.add('hidden');
     }
 
-    /**
-     * Muestra un modal de alerta
-     */
-    showAlert({message, title = DEFAULT_TITLES.alert}) {
-        this.dom.alertTitle.textContent = title;
-        // textContent: los mensajes pueden incluir nombres de archivo; los saltos de línea se respetan por CSS
-        this.dom.alertMessage.textContent = message;
-        this.openModal(this.dom.alertModal);
+    /** Abre un modal con el sonido de clic */
+    openWithClick(modalElement) {
+        this.sounds.play(SOUND.CLICK);
+        this.openModal(modalElement);
+    }
 
-        const isError = /error|inválido|insuficientes/i.test(title);
-        this.sounds.play(isError ? SOUND.ERROR : SOUND.CLICK);
+    /** Cierra un modal con el sonido de clic */
+    closeWithClick(modalElement) {
+        this.sounds.play(SOUND.CLICK);
+        this.closeModal(modalElement);
     }
 
     /**
-     * Cierra el modal de alerta
+     * Registra un modal (Escape, atajos bloqueados y cierre al hacer clic fuera) y conecta su botón de cerrar.
+     * Todos los cierres suenan con el clic.
+     * @returns {Function} La función que cierra el modal
      */
-    closeAlertModal() {
-        this.closeModal(this.dom.alertModal);
+    registerWithCloseButton(modalElement, closeButton) {
+        const close = () => this.closeWithClick(modalElement);
+        closeButton.addEventListener('click', close);
+        this.registerModal(modalElement, close);
+        return close;
     }
-
-    /**
-     * Muestra un modal de confirmación y retorna una promesa
-     */
-    showConfirm({message, title = DEFAULT_TITLES.confirm}) {
-        return new Promise((resolve) => {
-            this.dom.confirmTitle.textContent = title;
-            this.dom.confirmMessage.textContent = message;
-            this.openModal(this.dom.confirmModal);
-
-            this.confirmCallback = resolve;
-            this.sounds.play(SOUND.CLICK);
-        });
-    }
-
-    /**
-     * Cierra el modal de confirmación
-     */
-    closeConfirmModal(result) {
-        this.closeModal(this.dom.confirmModal);
-
-        if (this.confirmCallback) {
-            this.confirmCallback(result);
-            this.confirmCallback = null;
-        }
-    }
-
 
     /**
      * Verifica si un modal está abierto
@@ -110,16 +86,6 @@ export class ModalManager {
                 if (e.target === element) onClose();
             });
         }
-    }
-
-    /**
-     * Registra los modales propios de este módulo. Se abren encima de los demás,
-     * así que tienen prioridad para Escape.
-     */
-    _registerOwnModals() {
-        const options = {priority: 10, closeOnOutsideClick: false};
-        this.registerModal(this.dom.confirmModal, () => this.closeConfirmModal(false), options);
-        this.registerModal(this.dom.alertModal, () => this.closeAlertModal(), options);
     }
 
     /**
