@@ -46,6 +46,7 @@ export const CONTINUOUS_NEXT_SONG_DELAY_MS = 1000; // pausa entre canciones en m
 export const PRINT_DIALOG_DELAY_MS = 250;          // para que cargue el documento antes de abrir el diálogo de impresión
 export const REVOKE_URL_DELAY_MS = 1000;           // margen antes de liberar la URL de una descarga
 export const ICON_MODAL_CLOSE_DELAY_MS = 300;      // el modal de iconos se cierra un instante después de elegir
+export const AUTOSAVE_DELAY_MS = 750;              // tras el último cambio, antes de guardar la partida en el navegador
 export const MS_PER_SECOND = 1000;
 
 // ============================================================
@@ -73,6 +74,14 @@ export const DECORATIVE_ICON_PATH = 'img/icon-decorative.svg';
 export const STORAGE_PREFIX = 'bingoMusical_';
 export const SETTINGS_FILE_TYPE = 'settings';
 export const SETTINGS_FILE_VERSION = 1;
+
+// Archivos de partida (los JSON vienen de fuera, así que tienen límites)
+export const GAME_FILE_TYPE = 'game';
+export const GAME_FILE_VERSION = 1;
+export const MAX_SONGS_IN_FILE = 2000;
+export const MAX_CARTONES_IN_FILE = 20000;
+export const MAX_SONG_TITLE_LENGTH = 300;
+export const MAX_ICON_DATA_LENGTH = 2000000;
 
 // ============================================================
 // VALORES POR DEFECTO

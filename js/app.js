@@ -23,11 +23,14 @@ import {CartonExporter} from "./modules/CartonExporter.js";
 import {SongListView} from "./modules/SongListView.js";
 import {PlaylistImporter} from "./modules/PlaylistImporter.js";
 import {linkAudioFiles} from "./modules/AudioLinker.js";
+import {SavedGameController} from "./modules/SavedGameController.js";
+import {GameStateStore} from "./modules/GameStateStore.js";
 import {deserializeCartones} from "./modules/CartonSerializer.js";
 import {
     CELEBRATION_DELAY_MS,
     CONTINUOUS_NEXT_SONG_DELAY_MS,
     DEFAULT_SONGS_FOLDER,
+    GAME_FILE_TYPE,
     IMPORT_MESSAGE_DELAY_MS,
     LOGO_PATH,
     MAX_GAME_NAME_LENGTH,
@@ -53,6 +56,7 @@ class BingoMusical {
         this._createShellFeatures();
         this._createCartones();
         this._createSongList();
+        this._createSavedGame();
 
         this.init();
     }
@@ -143,7 +147,7 @@ class BingoMusical {
             dialogs: this.dialogs,
             sounds: this.sounds,
             getSongs: () => this.songs,
-            onCartonesChanged: () => this.updateUIState(),
+            onCartonesChanged: () => this._onCartonesChanged(),
             settings: this.settings,
             onSettingsChanged: (partial) => this._saveSettings(partial)
         });
@@ -176,6 +180,22 @@ class BingoMusical {
         });
     }
 
+    _createSavedGame() {
+        this.initialPlayerTitle = this.dom.player.songTitleElement.textContent;
+        this.savedGame = new SavedGameController({
+            game: this.game,
+            songManager: this.songManager,
+            store: new GameStateStore(),
+            dialogs: this.dialogs,
+            sounds: this.sounds,
+            getSongs: () => this.songs,
+            setSongs: (songs) => { this.songs = songs; },
+            getSettings: () => this._currentSettings(),
+            applySettings: (values) => this._applyImportedSettings(values),
+            renderRestored: (state) => this._renderRestoredGame(state)
+        });
+    }
+
     init() {
         this._applyBootSettings();
         this.setupEventListeners();
@@ -188,6 +208,7 @@ class BingoMusical {
         this.songList.render();
         this.updateCounters();
         this.updateControls(false);
+        this.savedGame.offerSavedGame();
     }
 
     _applyBootSettings() {
@@ -260,6 +281,45 @@ class BingoMusical {
 
     _saveSettings(partial) {
         this.preferences.saveSettings(partial);
+
+        if ('gameName' in partial) {
+            this.savedGame?.scheduleAutosave();
+        }
+    }
+
+    _onCartonesChanged() {
+        this.updateUIState();
+        this.savedGame.scheduleAutosave();
+    }
+
+    _renderRestoredGame({playedSongs, currentSong}) {
+        this._clearListRevealTimers();
+        this.ui.clearPlayerRevealTimers();
+
+        if (this.audio.hasSongLoaded()) {
+            this.stopSong();
+        }
+
+        this.dom.history.historyGrid.innerHTML = '';
+        playedSongs.forEach(song => this._addHistoryItem(song, true));
+
+        this._showPlayerFor(currentSong);
+        this._renderContinuousModeButton(false);
+        this.refreshUI();
+        this.updateControls(false);
+    }
+
+    _showPlayerFor(song) {
+        if (song) {
+            this.ui.updatePlayerUI(song, 0, 0, false);
+            return;
+        }
+
+        this.dom.player.songTitleElement.textContent = this.initialPlayerTitle;
+        this.dom.player.currentIconImg.alt = TEXT.player.currentSongAlt;
+        this.dom.player.currentIconImg.src = LOGO_PATH;
+        this.dom.player.songTitleElement.style.opacity = '1';
+        this.dom.player.currentIconImg.style.opacity = '1';
     }
 
     _setupPlayerEventListeners() {
@@ -303,6 +363,10 @@ class BingoMusical {
         this._setupGameNameEventListeners();
 
         this.dom.songs.exportListBtn.addEventListener('click', () => this.exportPlaylist());
+        this.dom.songs.exportGameBtn.addEventListener('click', () => this.savedGame.exportGame());
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') this.savedGame.flush();
+        });
         this.dom.songs.linkAudioBtn.addEventListener('click', () => this.dom.songs.linkAudioInput.click());
         this.dom.songs.linkAudioInput.addEventListener('change', (e) => this.linkAudio(e));
         this.dom.songs.importListBtn.addEventListener('click', () => this.dom.songs.importFileInput.click());
@@ -443,6 +507,7 @@ class BingoMusical {
         this.songList.render();
         this.updateCounters();
         this.updateUIState();
+        this.savedGame.scheduleAutosave();
     }
 
     // ============================================================
@@ -477,6 +542,7 @@ class BingoMusical {
         }
 
         complete();
+        this.savedGame.scheduleAutosave();
         this.sounds.play(sound);
         setTimeout(() => overlay.classList.remove('hidden'), CELEBRATION_DELAY_MS);
     }
@@ -535,15 +601,21 @@ class BingoMusical {
         const file = event.target.files[0];
         if (!file) return;
 
-        if (!this.checkGameNotStarted(MSG.gameStarted.importList)) {
-            this.clearFileInput(event);
-            return;
-        }
-
         const result = await this.playlistFile.read(file);
 
         if (!result.success) {
             this.dialogs.showAlert(MSG.playlist.importFailed(result.error));
+            this.clearFileInput(event);
+            return;
+        }
+
+        if (result.playlist.type === GAME_FILE_TYPE) {
+            await this.savedGame.importGame(result.playlist);
+            this.clearFileInput(event);
+            return;
+        }
+
+        if (!this.checkGameNotStarted(MSG.gameStarted.importList)) {
             this.clearFileInput(event);
             return;
         }
@@ -602,6 +674,7 @@ class BingoMusical {
 
         const result = this.icons.openIconPicker(songId, this.songs, () => {
             this.songList.render();
+            this.savedGame.scheduleAutosave();
         });
 
         if (!result.success) {
@@ -784,6 +857,7 @@ class BingoMusical {
 
         this.songList.render();
         this._scheduleListReveal(song);
+        this.savedGame.scheduleAutosave();
     }
 
     _scheduleListReveal(song) {
@@ -868,6 +942,7 @@ class BingoMusical {
         if (this.game.isGameStarted()) {
             if (this.game.allSongsPlayed(this.songs) && !this.game.isBingoCompleted()) {
                 this.game.completeBingo();
+                this.savedGame.scheduleAutosave();
                 setTimeout(() => {
                     this.sounds.play(SOUND.COMPLETE);
                     this.dom.celebration.celebrationOverlay.classList.remove('hidden');
@@ -890,8 +965,12 @@ class BingoMusical {
     }
 
     addToHistory(song) {
-        const iconRevealTime = this.game.getIconRevealTime();
-        const gameStarted = this.game.isGameStarted();
+        this._addHistoryItem(song, false);
+    }
+
+    _addHistoryItem(song, instant) {
+        const iconRevealTime = instant ? 0 : this.game.getIconRevealTime();
+        const gameStarted = instant ? false : this.game.isGameStarted();
         const historyItem = this.ui.addToHistory(song, iconRevealTime, gameStarted);
 
         historyItem.addEventListener('click', () => {

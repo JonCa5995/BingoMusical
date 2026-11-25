@@ -114,3 +114,44 @@ test('guarda el fragmento de canción: sin fragmento por defecto', () => {
     game.setClip(30, true);
     assert.deepEqual(game.getClip(), {seconds: 30, randomStart: true});
 });
+
+test('isLineaCompleted refleja si se ha cantado la línea', () => {
+    const game = new GameManager();
+
+    assert.equal(game.isLineaCompleted(), false);
+    game.completeLinea();
+    assert.equal(game.isLineaCompleted(), true);
+});
+
+test('restore sustituye el estado de la partida pero conserva el nombre y los cartones', () => {
+    const game = new GameManager();
+    const [first, second] = makeSongs(2);
+    game.setGameName('Mi juego');
+    game.setCartones([{id: 1}]);
+    game.startGame();
+    game.markSongAsPlayed(makeSongs(1)[0]);
+    game.toggleContinuousMode();
+
+    game.restore({started: true, lineaCompleted: true, bingoCompleted: false, currentSongId: 2, playedSongs: [first, second]});
+
+    assert.equal(game.isGameStarted(), true);
+    assert.equal(game.isLineaCompleted(), true);
+    assert.equal(game.isBingoCompleted(), false);
+    assert.equal(game.getCurrentSong(), 2);
+    assert.deepEqual(game.getHistory().map(song => song.id), [1, 2]);
+    assert.equal(game.isContinuousMode(), false);
+    assert.equal(game.getGameName(), 'Mi juego');
+    assert.equal(game.getCartonesCount(), 1);
+});
+
+test('tras restaurar, la siguiente canción reproducida continúa la numeración', () => {
+    const game = new GameManager();
+    const songs = makeSongs(4);
+    songs[0].played = true; songs[0].playedOrder = 1;
+    songs[1].played = true; songs[1].playedOrder = 2;
+
+    game.restore({started: true, lineaCompleted: false, bingoCompleted: false, currentSongId: 2, playedSongs: [songs[0], songs[1]]});
+    game.markSongAsPlayed(songs[2]);
+
+    assert.equal(songs[2].playedOrder, 3);
+});

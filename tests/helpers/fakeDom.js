@@ -1,6 +1,6 @@
 export const mkEl = (tag = 'div') => {
     const el = {
-        tag, attrs: {}, children: [], dataset: {}, className: '', title: '', textContent: '', innerHTML: '', value: '', disabled: false, checked: false,
+        tag, attrs: {}, children: [], dataset: {}, className: '', title: '', textContent: '', value: '', disabled: false, checked: false,
         type: '', max: '', min: '',
         style: {setProperty(key, value) { this[key] = value; }},
         _cls: new Set(), _listeners: {},
@@ -33,6 +33,14 @@ export const mkEl = (tag = 'div') => {
         toDataURL() { return 'data:image/png;base64,canvas'; },
         querySelector() { return null; }, querySelectorAll() { return []; }
     };
+    let html = '';
+    Object.defineProperty(el, 'innerHTML', {
+        get: () => html,
+        set(value) {
+            html = value;
+            if (value === '') el.children = [];
+        }
+    });
     return el;
 };
 

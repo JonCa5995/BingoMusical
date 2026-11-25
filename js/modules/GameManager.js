@@ -121,6 +121,10 @@ export class GameManager {
         this.lineaCompleted = true;
     }
 
+    isLineaCompleted() {
+        return this.lineaCompleted;
+    }
+
     canCallBingo() {
         return this._canCall(this.bingoCompleted, MSG.game.bingoAlreadyCalled, MIN_SONGS_FOR_BINGO, MSG.game.bingoNeedsSongs);
     }
@@ -135,6 +139,15 @@ export class GameManager {
 
     allSongsPlayed(songs) {
         return this._unplayedSongs(songs).length === 0;
+    }
+
+    restore({started, lineaCompleted, bingoCompleted, currentSongId, playedSongs}) {
+        this.resetGame();
+        this.gameStarted = started;
+        this.lineaCompleted = lineaCompleted;
+        this.bingoCompleted = bingoCompleted;
+        this.currentSongIndex = currentSongId;
+        this.playedSongs = [...playedSongs];
     }
 
     resetGame() {

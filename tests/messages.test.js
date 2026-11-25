@@ -4,7 +4,7 @@ import {MSG} from '../js/messages.js';
 import {ALERT_KIND} from '../js/constants.js';
 
 const REGLA_ANTIGUA = /error|inválido|insuficientes/i;
-const ARGUMENTOS = [['texto', 'pdf'], [['a', 'b'], 'pdf'], [3, 'pdf'], [['theme'], ['otro']], [[], ['otro']], [{linked: [{title: 'a'}], missing: [{title: 'b'}], pendingCount: 2}]];
+const ARGUMENTOS = [['texto', 'pdf'], [['a', 'b'], 'pdf'], [3, 'pdf'], [['theme'], ['otro']], [[], ['otro']], [{linked: [{title: 'a'}], missing: [{title: 'b'}], pendingCount: 2}], [{songs: 3, played: 1, cartones: 2}]];
 
 const collectAlerts = () => {
     const alerts = [];

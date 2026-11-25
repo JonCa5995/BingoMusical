@@ -43,7 +43,7 @@ Al acabar el fragmento la canción se da por terminada, igual que si hubiera aca
 ### Listas
 
 - **Exportar lista** descarga un JSON con las canciones (título e icono), el nombre del juego y los cartones generados.
-- **Importar lista** lee ese JSON y busca los audios en la carpeta `canciones/` (convención: `canciones/<título>.mp3`). Los JSON no contienen el audio. Las canciones cuyo audio no se encuentra **se conservan como «Sin archivo»**, con su icono y sus cartones, en lugar de descartarse.
+- **Importar** lee ese JSON (una lista, o una partida: ver más abajo) y busca los audios en la carpeta `canciones/` (convención: `canciones/<título>.mp3`). Los JSON no contienen el audio. Las canciones cuyo audio no se encuentra **se conservan como «Sin archivo»**, con su icono y sus cartones, en lugar de descartarse.
 - **Vincular audio** (🔗) abre un selector de carpeta y asigna a cada canción sin archivo el audio cuyo nombre, sin extensión, es igual a su título (sin distinguir mayúsculas, espacios sobrantes ni acentos descompuestos). Solo lee archivos de audio, no toca las canciones que ya tienen archivo y avisa de cuántas ha vinculado y cuáles quedan sin coincidencia. Se puede usar tantas veces como haga falta, también con la partida empezada. Sirve para recuperar el audio tras importar una lista en otro navegador o equipo, sin necesidad de un servidor con la carpeta `canciones/`.
 
 ### Ajustes
@@ -85,6 +85,44 @@ Para **llevarlos a otro navegador**, la configuración (⚙️) tiene los botone
 | `cartonCount` | entero entre 1 y 1500 |
 
 Al importar, cada campo se valida: los inválidos o desconocidos se **descartan** (la aplicación dice cuáles) y el resto se aplica. Un archivo puede llevar solo algunos campos. Si el archivo no es de ajustes, no es un JSON válido o es de una versión más nueva que la que entiende la aplicación, se rechaza sin cambiar nada.
+
+### Reanudar y llevar una partida
+
+**La partida se guarda sola** en el navegador (IndexedDB) unos instantes después de cada cambio: canciones, reproducidas y su orden, canción actual, LÍNEA y BINGO cantados, cartones y ajustes. Al volver a abrir la aplicación, si hay una partida guardada pregunta si quieres **reanudarla**; si dices que no, se descarta.
+
+Los archivos de audio **no se guardan** (pesan demasiado): tras reanudar, las canciones quedan «Sin archivo» y hay que pulsar **Vincular audio** (🔗) y elegir la carpeta donde están. Hasta entonces el botón «Siguiente» está desactivado.
+
+Para **llevar la partida a otro navegador o equipo**, el botón **Exportar partida** (💾) descarga un JSON y **Importar** (⬆️) lo reconoce (acepta tanto listas como partidas). Si ya hay una partida en curso, pide confirmación antes de reemplazarla.
+
+```json
+{
+  "type": "game",
+  "version": 1,
+  "date": "2026-04-05T06:07:08.000Z",
+  "settings": { "theme": "dark", "musicVolume": 1, "gameName": "Noche de bingo" },
+  "songs": [
+    { "id": 1, "title": "Canción 1", "icon": "🎵", "iconType": "emoji", "played": true, "playedOrder": 1 }
+  ],
+  "game": { "started": true, "currentSongId": 1, "lineaCompleted": false, "bingoCompleted": false },
+  "cartones": [
+    { "id": 1, "songs": [1], "generatedAt": "2026-04-05T06:00:00.000Z",
+      "rows": [ { "cells": [ { "position": 0, "songId": 1 }, { "position": 1, "songId": null } ] } ] }
+  ]
+}
+```
+
+`settings` usa los mismos campos que el archivo de ajustes. Como el archivo viene de fuera, **se valida por completo** antes de tocar nada, y si algo no cuadra se rechaza con un mensaje que dice qué falla:
+
+| Campo | Regla |
+|---|---|
+| `type`, `version` | `"game"` y un entero entre 1 y la versión que entiende la aplicación |
+| `songs` | hasta 2.000; `id` entero único y no negativo; `title` de 1 a 300 caracteres |
+| `icon` | emoji de hasta 32 caracteres, o con `iconType: "image"` una imagen `data:image/png`, `jpeg`, `gif` o `webp` en base64 de hasta 2 MB (no se aceptan URL ni SVG) |
+| `played`, `playedOrder` | booleano; las reproducidas necesitan un orden entero ≥ 1 y sin repetirse |
+| `game` | tres booleanos y, si hay canción actual, que exista en la lista |
+| `cartones` | hasta 20.000, con la estructura de 3 filas de hasta 8 casillas; las canciones que ya no existan quedan como casillas decorativas |
+
+Los campos desconocidos se descartan y los ajustes inválidos se ignoran.
 
 ### Atajos de teclado
 

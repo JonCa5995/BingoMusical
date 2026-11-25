@@ -74,6 +74,17 @@ export const MSG = {
         songNotFound: errorMsg(T.error, 'Canción no encontrada')
     },
 
+    savedGame: {
+        found: ({songs, played, cartones}) => msg('Partida Guardada',
+            `Hay una partida guardada en este navegador: ${songs} canciones (${played} reproducidas) y ${cartones} cartones.\n\n¿Quieres reanudarla? Si no, se descartará.`),
+        replaceCurrent: msg('Reemplazar Partida', 'Tienes una partida en curso. Al importar se reemplazarán las canciones, el progreso y los cartones actuales. ¿Continuar?'),
+        restored: ({songs, played, cartones}) => msg('Partida Restaurada',
+            `Partida restaurada: ${songs} canciones (${played} reproducidas) y ${cartones} cartones.\n\nLos archivos de audio no se guardan en la partida: usa el botón «Vincular audio» (🔗) y elige la carpeta donde están para poder seguir jugando.`),
+        exported: msg('Partida Exportada', 'Se ha descargado la partida con las canciones, el progreso, los cartones y los ajustes. No incluye los archivos de audio. Impórtala desde «Importar» en cualquier navegador.'),
+        nothingToExport: msg(T.emptyList, 'No hay nada que exportar: agrega canciones primero.'),
+        importFailed: (error) => errorMsg('Error de Importación', `Error al importar la partida: ${error}`)
+    },
+
     audio: {
         noSongsToLink: msg(T.emptyList, 'No hay canciones a las que vincular audio. Importa una lista o agrega canciones primero.'),
         allLinked: msg('Audio Completo', 'Todas las canciones de la lista ya tienen su archivo de audio.'),
@@ -115,6 +126,15 @@ export const MSG = {
 // TEXTOS DE LA INTERFAZ
 // ============================================================
 export const TEXT = {
+    savedGame: {
+        downloadLabel: 'Descargar la partida en formato JSON',
+        notGame: 'El archivo no es una partida de Bingo Musical.',
+        newerVersion: (version) => `El archivo de partida es de una versión más nueva (${version}) que la que entiende esta aplicación.`,
+        invalid: (detail) => `El archivo de partida no es válido: ${detail}.`,
+        songLabel: (number) => `La canción ${number}`,
+        cartonLabel: (number) => `El cartón ${number}`
+    },
+
     settings: {
         labels: {
             theme: 'Tema',
