@@ -135,24 +135,4 @@ export class DOMElements {
         this.themeToggleBtn = document.getElementById('theme-toggle-btn');
         this.themeIcon = document.getElementById('theme-icon');
     }
-    
-    /**
-     * Verifica que todos los elementos críticos estén presentes
-     * @returns {boolean} true si todos los elementos están presentes
-     */
-    validateElements() {
-        const criticalElements = [
-            'audioPlayer', 'playBtn', 'pauseBtn', 'stopBtn',
-            'songsListElement', 'historyGrid', 'songTitleElement'
-        ];
-        
-        for (const elementName of criticalElements) {
-            if (!this[elementName]) {
-                console.error(`Elemento crítico no encontrado: ${elementName}`);
-                return false;
-            }
-        }
-        
-        return true;
-    }
 }

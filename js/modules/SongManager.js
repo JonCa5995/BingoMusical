@@ -75,13 +75,6 @@ export class SongManager {
     }
 
     /**
-     * Elimina todas las canciones
-     */
-    deleteAllSongs() {
-        return [];
-    }
-
-    /**
      * Filtra y ordena canciones según criterios
      */
     filterAndSort(songs, filters) {

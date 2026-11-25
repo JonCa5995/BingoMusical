@@ -44,22 +44,20 @@ export class SongListView {
      */
     render() {
         const songs = this.getSongs();
-        const totalSongsWithFiles = this.songManager.getTotalSongsWithFiles(songs);
-        const createItem = (song) => this.createSongItem(song);
-
-        // Sin canciones: mensaje de lista vacía (no el de "sin resultados")
-        if (songs.length === 0) {
-            this.ui.renderSongsList(songs, totalSongsWithFiles, createItem);
-            return;
-        }
-
         const { searchInput, filterStatus, sortOrder } = this.filterControls;
         const visibleSongs = this.songManager.filterAndSort(songs, {
             searchTerm: searchInput.value,
             filterStatus: filterStatus.value,
             sortOrder: sortOrder.value
         });
-        this.ui.renderFilteredSongsList(visibleSongs, totalSongsWithFiles, createItem);
+
+        // Sin canciones cargadas: "No hay canciones". Con canciones pero ninguna visible: "Sin resultados"
+        this.ui.renderSongs(
+            visibleSongs,
+            this.songManager.getTotalSongsWithFiles(songs),
+            (song) => this.createSongItem(song),
+            songs.length === 0 ? 'empty' : 'noResults'
+        );
     }
 
     /**

@@ -9,8 +9,6 @@ export class IconManager {
         this.dom = dom;
         this.sounds = sounds;
         this.getSongs = getSongs; // Función para obtener las canciones actuales
-        this.availableIcons = availableIcons;
-        this.iconKeywords = iconKeywords;
         this.currentEditingSongId = null;
 
         this.setupEventListeners();
@@ -21,10 +19,8 @@ export class IconManager {
      * Configura event listeners para el modal de iconos
      */
     setupEventListeners() {
+        // El cierre al hacer clic fuera y con Escape lo gestiona ModalManager (registerModal)
         this.dom.closeIconModalBtn.addEventListener('click', () => this.closeIconModal());
-        this.dom.iconModal.addEventListener('click', (e) => {
-            if (e.target.id === 'icon-modal') this.closeIconModal();
-        });
 
         this.dom.uploadCustomIconBtn.addEventListener('click', () => {
             this.dom.customIconUploadInput.click();
@@ -49,7 +45,7 @@ export class IconManager {
                 .filter(song => song.iconType === 'emoji' && song.icon != null)
                 .map(song => song.icon)
         );
-        return this.availableIcons.filter(icon => !usedIcons.has(icon));
+        return availableIcons.filter(icon => !usedIcons.has(icon));
     }
 
     /**
@@ -85,7 +81,7 @@ export class IconManager {
         // Renderizar iconos usando DocumentFragment
         const fragment = document.createDocumentFragment();
 
-        for (const icon of this.availableIcons) {
+        for (const icon of availableIcons) {
             const iconOption = document.createElement('button');
             iconOption.type = 'button';
             iconOption.className = 'icon-option';
@@ -107,11 +103,7 @@ export class IconManager {
                 iconOption.title = 'Este icono ya está en uso';
                 iconOption.disabled = true;
             } else {
-                iconOption.onclick = () => {
-                    if (!isUsed || isCurrentSongIcon) {
-                        this.selectIcon(icon, 'emoji', songs);
-                    }
-                };
+                iconOption.onclick = () => this.selectIcon(icon, songs);
             }
 
             iconOption.textContent = icon;
@@ -173,7 +165,7 @@ export class IconManager {
 
         for (const option of iconOptions) {
             const icon = option.textContent;
-            const keywords = this.iconKeywords[icon] || [];
+            const keywords = iconKeywords[icon] || [];
 
             // Buscar en las palabras clave (sin acentos)
             const matches = query === '' || keywords.some(keyword =>
@@ -196,14 +188,14 @@ export class IconManager {
     /**
      * Selecciona un icono para la canción actual
      */
-    selectIcon(icon, iconType, songs) {
+    selectIcon(icon, songs) {
         if (this.currentEditingSongId === null) return;
 
         const song = songs.find(s => s.id === this.currentEditingSongId);
         if (!song || song.played) return;
 
         song.icon = icon;
-        song.iconType = iconType;
+        song.iconType = 'emoji';
 
         this.sounds.play('click');
 
@@ -225,7 +217,7 @@ export class IconManager {
     /**
      * Carga un icono personalizado desde archivo
      */
-    async uploadCustomIcon(e, songs) {
+    uploadCustomIcon(e, songs) {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -246,12 +238,6 @@ export class IconManager {
             if (callback) {
                 callback();
             }
-
-            return {
-                success: true,
-                message: 'Icono personalizado cargado correctamente.',
-                title: 'Icono Actualizado'
-            };
         };
 
         reader.onload = (event) => {
@@ -284,6 +270,6 @@ export class IconManager {
         if (availableIconsList.length > 0) {
             return availableIconsList[Math.floor(Math.random() * availableIconsList.length)];
         }
-        return this.availableIcons[Math.floor(Math.random() * this.availableIcons.length)];
+        return availableIcons[Math.floor(Math.random() * availableIcons.length)];
     }
 }

@@ -4,6 +4,19 @@
  */
 import { escapeHTML } from '../utils.js';
 
+/** Mensajes de la lista de canciones cuando no hay nada que mostrar */
+const EMPTY_LIST_MESSAGES = {
+    empty: {
+        title: 'No hay canciones cargadas',
+        text: 'Arrastra archivos de audio o usa el botón "Agregar Canciones"',
+        warnsMinSongs: true
+    },
+    noResults: {
+        title: 'No se encontraron canciones',
+        text: 'Intenta con otro término de búsqueda o cambia los filtros'
+    }
+};
+
 export class UIManager {
     constructor(dom, minSongsRequired) {
         this.dom = dom;
@@ -31,73 +44,44 @@ export class UIManager {
     }
 
     /**
-     * Método interno para renderizar canciones al DOM
-     * @private
+     * Renderiza una lista de canciones (o el mensaje que corresponda si no hay ninguna)
+     * @param {Array} songs - Canciones a mostrar
+     * @param {number} totalSongsWithFiles - Para avisar de que faltan canciones para jugar
+     * @param {Function} createSongItem - (canción) => <li>
+     * @param {'empty'|'noResults'} [emptyKind] - Mensaje si `songs` está vacío: no hay canciones, o ninguna coincide
      */
-    _renderToDOM(songs, totalSongsWithFiles, createSongItemCallback, emptyMessageFn) {
+    renderSongs(songs, totalSongsWithFiles, createSongItem, emptyKind = 'empty') {
         const fragment = document.createDocumentFragment();
 
         if (songs.length === 0) {
-            const emptyLi = emptyMessageFn();
-            fragment.appendChild(emptyLi);
-            this.dom.songsListElement.innerHTML = '';
-            this.dom.songsListElement.appendChild(fragment);
-            return;
+            fragment.appendChild(this._createEmptyMessage(emptyKind));
+        } else {
+            if (totalSongsWithFiles < this.MIN_SONGS_REQUIRED) {
+                fragment.appendChild(this.createWarningMessage(totalSongsWithFiles));
+            }
+            for (const song of songs) {
+                fragment.appendChild(createSongItem(song));
+            }
         }
 
-        if (totalSongsWithFiles < this.MIN_SONGS_REQUIRED) {
-            const warning = this.createWarningMessage(totalSongsWithFiles);
-            fragment.appendChild(warning);
-        }
-
-        for (const song of songs) {
-            const li = createSongItemCallback(song);
-            fragment.appendChild(li);
-        }
-
-        this.dom.songsListElement.innerHTML = '';
-        this.dom.songsListElement.appendChild(fragment);
+        this.dom.songsListElement.replaceChildren(fragment);
     }
 
     /**
-     * Renderiza la lista completa de canciones
+     * Crea el mensaje que se muestra cuando la lista no tiene canciones
      */
-    renderSongsList(songs, totalSongsWithFiles, createSongItemCallback) {
-        this._renderToDOM(songs, totalSongsWithFiles, createSongItemCallback, () => this.createEmptyListMessage());
-    }
+    _createEmptyMessage(kind) {
+        const { title, text, warnsMinSongs } = EMPTY_LIST_MESSAGES[kind];
+        const minSongsWarning = warnsMinSongs
+            ? `\n            <p role="alert" style="font-size:0.85rem;margin-top:1rem;color:var(--warning-color);"><strong>⚠️ Necesitas al menos ${this.MIN_SONGS_REQUIRED} canciones para jugar</strong></p>`
+            : '';
 
-    /**
-     * Renderiza una lista filtrada de canciones
-     */
-    renderFilteredSongsList(songsToShow, totalSongsWithFiles, createSongItemCallback) {
-        this._renderToDOM(songsToShow, totalSongsWithFiles, createSongItemCallback, () => this.createNoResultsMessage());
-    }
-
-    /**
-     * Crea el mensaje para lista vacía
-     */
-    createEmptyListMessage() {
         const emptyLi = document.createElement('li');
         emptyLi.setAttribute('role', 'listitem');
         emptyLi.style.cssText = 'text-align:center;padding:2rem;color:var(--text-muted);list-style:none;';
         emptyLi.innerHTML = `
-            <strong style="font-size:1.2rem;margin-bottom:0.5rem;display:block;">No hay canciones cargadas</strong>
-            <p style="font-size:0.9rem;margin:0.5rem 0;">Arrastra archivos de audio o usa el botón "Agregar Canciones"</p>
-            <p role="alert" style="font-size:0.85rem;margin-top:1rem;color:var(--warning-color);"><strong>⚠️ Necesitas al menos ${this.MIN_SONGS_REQUIRED} canciones para jugar</strong></p>
-        `;
-        return emptyLi;
-    }
-
-    /**
-     * Crea el mensaje de sin resultados
-     */
-    createNoResultsMessage() {
-        const emptyLi = document.createElement('li');
-        emptyLi.setAttribute('role', 'listitem');
-        emptyLi.style.cssText = 'text-align:center;padding:2rem;color:var(--text-muted);list-style:none;';
-        emptyLi.innerHTML = `
-            <strong style="font-size:1.2rem;margin-bottom:0.5rem;display:block;">No se encontraron canciones</strong>
-            <p style="font-size:0.9rem;margin:0.5rem 0;">Intenta con otro término de búsqueda o cambia los filtros</p>
+            <strong style="font-size:1.2rem;margin-bottom:0.5rem;display:block;">${title}</strong>
+            <p style="font-size:0.9rem;margin:0.5rem 0;">${text}</p>${minSongsWarning}
         `;
         return emptyLi;
     }
@@ -202,14 +186,23 @@ export class UIManager {
     }
 
     /**
+     * Atenúa y bloquea (o restaura) un control mientras dura la partida.
+     * Los elementos que no son botones ni inputs (p. ej. un <label>) no tienen `disabled`: solo cambian de aspecto.
+     */
+    _setLocked(element, locked) {
+        if ('disabled' in element) element.disabled = locked;
+        element.style.opacity = locked ? '0.5' : '1';
+        element.style.cursor = locked ? 'not-allowed' : 'pointer';
+    }
+
+    /**
      * Actualiza el estado de la UI según si el juego ha iniciado
      */
     updateUIState(gameStarted, continuousMode, toggleContinuousModeCallback) {
         const isDisabled = gameStarted;
 
         this.dom.addSongsInput.disabled = isDisabled;
-        this.dom.addSongsLabel.style.opacity = isDisabled ? '0.5' : '1';
-        this.dom.addSongsLabel.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+        this._setLocked(this.dom.addSongsLabel, isDisabled);
         this.dom.addSongsLabel.style.pointerEvents = isDisabled ? 'none' : 'auto';
 
         this.dom.importListBtn.disabled = isDisabled;
@@ -219,17 +212,13 @@ export class UIManager {
         this.dom.clearHistoryBtn.style.opacity = isDisabled ? '1' : '0.5';
         this.dom.clearHistoryBtn.style.cursor = isDisabled ? 'pointer' : 'not-allowed';
 
-        this.dom.shuffleAllBtn.disabled = isDisabled;
-        this.dom.shuffleAllBtn.style.opacity = isDisabled ? '0.5' : '1';
-        this.dom.shuffleAllBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+        this._setLocked(this.dom.shuffleAllBtn, isDisabled);
         if (isDisabled && continuousMode) {
             toggleContinuousModeCallback();
         }
 
         // Deshabilitar botón de configuración cuando el juego está iniciado
-        this.dom.configBtn.disabled = isDisabled;
-        this.dom.configBtn.style.opacity = isDisabled ? '0.5' : '1';
-        this.dom.configBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+        this._setLocked(this.dom.configBtn, isDisabled);
 
         if (gameStarted) {
             this.dom.playBtn.innerHTML = '<span aria-hidden="true">🔀</span> Siguiente';

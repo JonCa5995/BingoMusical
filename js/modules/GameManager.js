@@ -19,7 +19,6 @@ export class GameManager {
     titleRevealTime = DEFAULT_TITLE_REVEAL_TIME;
     iconRevealTime = DEFAULT_ICON_REVEAL_TIME;
     gameName = '';
-    cartonesGenerated = false;
     cartones = [];
 
     /**
@@ -27,7 +26,6 @@ export class GameManager {
      */
     setCartones(cartones) {
         this.cartones = cartones || [];
-        this.cartonesGenerated = this.cartones.length > 0;
     }
 
     /**
@@ -43,7 +41,6 @@ export class GameManager {
     addCartones(newCartones) {
         if (!Array.isArray(newCartones)) return;
         this.cartones = [...this.cartones, ...newCartones];
-        this.cartonesGenerated = this.cartones.length > 0;
     }
 
     /**
@@ -51,7 +48,6 @@ export class GameManager {
      */
     clearCartones() {
         this.cartones = [];
-        this.cartonesGenerated = false;
     }
 
     /**
@@ -80,7 +76,7 @@ export class GameManager {
      * Verifica si se generaron cartones
      */
     hasCartonesGenerated() {
-        return this.cartonesGenerated;
+        return this.cartones.length > 0;
     }
 
     /**

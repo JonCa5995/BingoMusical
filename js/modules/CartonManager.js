@@ -155,8 +155,9 @@ export class CartonManager {
 
     /**
      * Genera cartones sin descargarlos
+     * @param {Array} existingCartones - Cartones ya existentes (solo en modo añadir): los nuevos no repiten sus filas
      */
-    async generateCartones(songs, maxCartones, minRequired, showAlertCallback, mode = 'new', existingCartones = []) {
+    async generateCartones(songs, maxCartones, minRequired, showAlertCallback, existingCartones = []) {
         const count = Number.parseInt(this.dom.cartonCountInput.value);
 
         if (Number.isNaN(count) || count < 1 || count > maxCartones) {
@@ -179,9 +180,7 @@ export class CartonManager {
         this.sounds.play('start');
 
         try {
-            // Generar cartones pasando los existentes si estamos en modo añadir
-            const cartonesToPass = mode === 'add' ? existingCartones : [];
-            const cartones = this.cartonGenerator.generateCartones(songs, count, cartonesToPass);
+            const cartones = this.cartonGenerator.generateCartones(songs, count, existingCartones);
 
             this.sounds.play('win');
             return {success: true, cartones};
