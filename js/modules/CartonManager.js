@@ -9,13 +9,13 @@ import {MSG, TEXT} from '../messages.js';
 
 export class CartonManager {
     /**
-     * @param {DOMElements} dom
+     * @param {HTMLElement} previewContainer - Donde se pinta la vista previa de impresión (dom.cartones.printCartonPreview)
      * @param {SoundEffects} sounds - Efectos de sonido de cada acción
      * @param {BingoCartonGenerator} cartonGenerator - Genera los datos de los cartones
      * @param {CartonExporter} cartonExporter - Entrega los cartones (HTML/PDF)
      */
-    constructor(dom, sounds, cartonGenerator, cartonExporter) {
-        this.dom = dom;
+    constructor(previewContainer, sounds, cartonGenerator, cartonExporter) {
+        this.previewContainer = previewContainer;
         this.sounds = sounds;
         this.cartonGenerator = cartonGenerator;
 
@@ -37,21 +37,19 @@ export class CartonManager {
 
     /**
      * Actualiza vista previa de impresión (modal de imprimir)
+     * @param {Array} songs - Canciones con las que se genera el cartón de ejemplo
+     * @param {string} gameName
+     * @param {{primaryColor: string, secondaryColor: string}} colors - Colores elegidos en el modal
      */
-    updatePrintPreview(songs, gameName = '') {
+    updatePrintPreview(songs, gameName, colors) {
         try {
-            const config = {
-                primaryColor: this.dom.printPrimaryColorInput.value,
-                secondaryColor: this.dom.printSecondaryColorInput.value
-            };
-
             // Generar un cartón de ejemplo
             const previewCarton = this.cartonGenerator.generateSingleCarton(songs, 1);
 
             // Renderizar vista previa
-            this.dom.printCartonPreview.innerHTML = this.generatePreviewHTML(previewCarton, config, gameName);
+            this.previewContainer.innerHTML = this.generatePreviewHTML(previewCarton, colors, gameName);
         } catch (error) {
-            this.dom.printCartonPreview.innerHTML = `
+            this.previewContainer.innerHTML = `
                 <div class="carton-preview-placeholder">
                     <p>${TEXT.cartones.previewError}</p>
                     <p>${escapeHTML(error.message)}</p>
@@ -107,21 +105,30 @@ export class CartonManager {
 
     /**
      * Imprime cartones con configuración personalizada del modal
+     * @param {Array} cartones
+     * @param {string} gameName
+     * @param {string} format - PRINT_FORMAT.HTML o PRINT_FORMAT.PDF
+     * @param {Object} options - Lo que el usuario eligió en el modal de impresión
+     * @param {boolean} options.printAll - Imprimir todos los cartones (si no, solo el rango)
+     * @param {number} options.from - Primer cartón del rango (NaN si el campo está vacío)
+     * @param {number} options.to - Último cartón del rango (NaN si el campo está vacío)
+     * @param {string} options.primaryColor
+     * @param {string} options.secondaryColor
      */
-    async printCartonesWithConfig(cartones, gameName, format = PRINT_FORMAT.HTML) {
+    async printCartonesWithConfig(cartones, gameName, format = PRINT_FORMAT.HTML, options = {}) {
+        const {printAll, from: rawFrom, to: rawTo, primaryColor, secondaryColor} = options;
+
         if (!cartones || cartones.length === 0) {
             return {success: false, error: TEXT.cartones.noneToPrint};
         }
 
         try {
-            // Obtener selección de rango
-            const printAll = this.dom.printRangeRadios[0].checked;
             let cartonesToPrint = cartones;
 
             if (!printAll) {
                 // Filtrar por rango
-                const from = Number.parseInt(this.dom.rangeFromInput.value) || 1;
-                const to = Number.parseInt(this.dom.rangeToInput.value) || cartones.length;
+                const from = rawFrom || 1;
+                const to = rawTo || cartones.length;
 
                 // Validar rango
                 if (from < 1 || from > cartones.length || to < 1 || to > cartones.length || from > to) {
@@ -137,8 +144,8 @@ export class CartonManager {
 
             // Obtener configuración del modal de impresión
             const config = {
-                primaryColor: this.dom.printPrimaryColorInput.value,
-                secondaryColor: this.dom.printSecondaryColorInput.value,
+                primaryColor,
+                secondaryColor,
                 gameName: gameName || DEFAULT_GAME_NAME
             };
 
@@ -156,11 +163,11 @@ export class CartonManager {
 
     /**
      * Genera cartones sin descargarlos
+     * @param {Array} songs
+     * @param {number} count - Cuántos cartones se piden (NaN si el campo está vacío; se valida aquí)
      * @param {Array} existingCartones - Cartones ya existentes (solo en modo añadir): los nuevos no repiten sus filas
      */
-    async generateCartones(songs, maxCartones, minRequired, showAlertCallback, existingCartones = []) {
-        const count = Number.parseInt(this.dom.cartonCountInput.value);
-
+    async generateCartones(songs, count, maxCartones, minRequired, showAlertCallback, existingCartones = []) {
         if (Number.isNaN(count) || count < 1 || count > maxCartones) {
             showAlertCallback(MSG.cartones.invalidCount(maxCartones));
             return {success: false};

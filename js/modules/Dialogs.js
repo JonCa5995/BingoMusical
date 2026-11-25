@@ -11,24 +11,24 @@ const ERROR_TITLE = /error|inválido|insuficientes/i;
 
 export class Dialogs {
     /**
-     * @param {DOMElements} dom
+     * @param {Object} elements - Los elementos de los diálogos (dom.dialogs)
      * @param {ModalManager} modals - Donde se registran los dos diálogos
      * @param {SoundEffects} sounds
      */
-    constructor(dom, modals, sounds) {
-        this.dom = dom;
+    constructor(elements, modals, sounds) {
+        this.el = elements;
         this.modals = modals;
         this.sounds = sounds;
         this.confirmCallback = null;
 
-        dom.confirmCancelBtn.addEventListener('click', () => this.closeConfirm(false));
-        dom.confirmAcceptBtn.addEventListener('click', () => this.closeConfirm(true));
-        dom.alertOkBtn.addEventListener('click', () => this.closeAlert());
+        elements.confirmCancelBtn.addEventListener('click', () => this.closeConfirm(false));
+        elements.confirmAcceptBtn.addEventListener('click', () => this.closeConfirm(true));
+        elements.alertOkBtn.addEventListener('click', () => this.closeAlert());
 
         // Se abren encima de cualquier otro modal, así que Escape los cierra primero
         const options = {priority: 10, closeOnOutsideClick: false};
-        modals.registerModal(dom.confirmModal, () => this.closeConfirm(false), options);
-        modals.registerModal(dom.alertModal, () => this.closeAlert(), options);
+        modals.registerModal(elements.confirmModal, () => this.closeConfirm(false), options);
+        modals.registerModal(elements.alertModal, () => this.closeAlert(), options);
     }
 
     /**
@@ -36,16 +36,16 @@ export class Dialogs {
      * @param {{message: string, title?: string}} alert
      */
     showAlert({message, title = DEFAULT_TITLES.alert}) {
-        this.dom.alertTitle.textContent = title;
+        this.el.alertTitle.textContent = title;
         // textContent: los mensajes pueden incluir nombres de archivo; los saltos de línea se respetan por CSS
-        this.dom.alertMessage.textContent = message;
-        this.modals.openModal(this.dom.alertModal);
+        this.el.alertMessage.textContent = message;
+        this.modals.openModal(this.el.alertModal);
 
         this.sounds.play(ERROR_TITLE.test(title) ? SOUND.ERROR : SOUND.CLICK);
     }
 
     closeAlert() {
-        this.modals.closeModal(this.dom.alertModal);
+        this.modals.closeModal(this.el.alertModal);
     }
 
     /**
@@ -55,9 +55,9 @@ export class Dialogs {
      */
     showConfirm({message, title = DEFAULT_TITLES.confirm}) {
         return new Promise((resolve) => {
-            this.dom.confirmTitle.textContent = title;
-            this.dom.confirmMessage.textContent = message;
-            this.modals.openModal(this.dom.confirmModal);
+            this.el.confirmTitle.textContent = title;
+            this.el.confirmMessage.textContent = message;
+            this.modals.openModal(this.el.confirmModal);
 
             this.confirmCallback = resolve;
             this.sounds.play(SOUND.CLICK);
@@ -65,7 +65,7 @@ export class Dialogs {
     }
 
     closeConfirm(result) {
-        this.modals.closeModal(this.dom.confirmModal);
+        this.modals.closeModal(this.el.confirmModal);
 
         if (this.confirmCallback) {
             this.confirmCallback(result);

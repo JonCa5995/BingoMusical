@@ -7,8 +7,12 @@ import { ICON_TYPE, MS_PER_SECOND, PLAYER_ICON_SIZE, HISTORY_ICON_SIZE } from '.
 import { TEXT } from '../messages.js';
 
 export class UIManager {
-    constructor(dom, minSongsRequired) {
-        this.dom = dom;
+    /**
+     * @param {Object} elements - Los elementos que gestiona (dom.ui): lista, reproductor, historial y botones que se bloquean
+     * @param {number} minSongsRequired - Canciones mínimas para jugar (para los avisos de la lista)
+     */
+    constructor(elements, minSongsRequired) {
+        this.el = elements;
         this.MIN_SONGS_REQUIRED = minSongsRequired;
         this.playerRevealTimers = [];
     }
@@ -53,7 +57,7 @@ export class UIManager {
             }
         }
 
-        this.dom.songsListElement.replaceChildren(fragment);
+        this.el.songsListElement.replaceChildren(fragment);
     }
 
     /**
@@ -95,43 +99,43 @@ export class UIManager {
 
         // Si el juego no ha iniciado, mostrar todo inmediatamente
         if (!gameStarted) {
-            this.dom.songTitleElement.textContent = song.title;
-            this.dom.songTitleElement.style.opacity = '1';
-            this.dom.songTitleElement.style.transition = '';
-            this.dom.currentIconImg.style.opacity = '1';
-            this.dom.currentIconImg.style.transition = '';
+            this.el.songTitleElement.textContent = song.title;
+            this.el.songTitleElement.style.opacity = '1';
+            this.el.songTitleElement.style.transition = '';
+            this.el.currentIconImg.style.opacity = '1';
+            this.el.currentIconImg.style.transition = '';
         } else {
             // Si el juego ha iniciado, ocultar y revelar progresivamente
             // Establecer el título inmediatamente pero oculto
-            this.dom.songTitleElement.textContent = song.title;
-            this.dom.songTitleElement.style.transition = '';
-            this.dom.songTitleElement.style.opacity = '0';
+            this.el.songTitleElement.textContent = song.title;
+            this.el.songTitleElement.style.transition = '';
+            this.el.songTitleElement.style.opacity = '0';
             
             // Revelar título después del tiempo configurado
             this.playerRevealTimers.push(setTimeout(() => {
-                this.dom.songTitleElement.style.transition = 'opacity 1s ease-in';
-                this.dom.songTitleElement.style.opacity = '1';
+                this.el.songTitleElement.style.transition = 'opacity 1s ease-in';
+                this.el.songTitleElement.style.opacity = '1';
             }, titleRevealTime * MS_PER_SECOND));
             
             // Icono se maneja más abajo
-            this.dom.currentIconImg.style.transition = '';
-            this.dom.currentIconImg.style.opacity = '0';
+            this.el.currentIconImg.style.transition = '';
+            this.el.currentIconImg.style.opacity = '0';
         }
 
-        this.dom.currentIconImg.alt = song.title;
+        this.el.currentIconImg.alt = song.title;
 
         // Preparar icono
         if (song.iconType === ICON_TYPE.IMAGE && song.icon) {
-            this.dom.currentIconImg.src = song.icon;
+            this.el.currentIconImg.src = song.icon;
         } else {
-            this.dom.currentIconImg.src = this.emojiToDataURL(song.icon, PLAYER_ICON_SIZE);
+            this.el.currentIconImg.src = this.emojiToDataURL(song.icon, PLAYER_ICON_SIZE);
         }
 
         // Revelar icono después del tiempo configurado (solo si el juego ha iniciado)
         if (gameStarted) {
             this.playerRevealTimers.push(setTimeout(() => {
-                this.dom.currentIconImg.style.transition = 'opacity 1s ease-in';
-                this.dom.currentIconImg.style.opacity = '1';
+                this.el.currentIconImg.style.transition = 'opacity 1s ease-in';
+                this.el.currentIconImg.style.opacity = '1';
             }, iconRevealTime * MS_PER_SECOND));
         }
     }
@@ -149,29 +153,29 @@ export class UIManager {
      */
     updateControls(playing, gameStarted, hasSongLoaded = true, noSongsLeft = false) {
         if (playing) {
-            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span>';
-            this.dom.pauseBtn.setAttribute('aria-label', TEXT.player.pauseLabel);
-            this.dom.stopBtn.disabled = false;
-            this.dom.pauseBtn.disabled = false;
-            this.dom.songIconContainer.classList.add('playing');
+            this.el.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span>';
+            this.el.pauseBtn.setAttribute('aria-label', TEXT.player.pauseLabel);
+            this.el.stopBtn.disabled = false;
+            this.el.pauseBtn.disabled = false;
+            this.el.songIconContainer.classList.add('playing');
         } else {
-            this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">▶️</span>';
-            this.dom.pauseBtn.setAttribute('aria-label', TEXT.player.playLabel);
-            this.dom.stopBtn.disabled = !hasSongLoaded;
-            this.dom.pauseBtn.disabled = !hasSongLoaded;
-            this.dom.songIconContainer.classList.remove('playing');
+            this.el.pauseBtn.innerHTML = '<span aria-hidden="true">▶️</span>';
+            this.el.pauseBtn.setAttribute('aria-label', TEXT.player.playLabel);
+            this.el.stopBtn.disabled = !hasSongLoaded;
+            this.el.pauseBtn.disabled = !hasSongLoaded;
+            this.el.songIconContainer.classList.remove('playing');
         }
 
         // En partida: desactivado mientras suena o cuando ya no quedan canciones por sacar
-        this.dom.playBtn.disabled = gameStarted && (playing || noSongsLeft);
+        this.el.playBtn.disabled = gameStarted && (playing || noSongsLeft);
     }
 
     /**
      * Actualiza los contadores de canciones
      */
     updateCounters(playedCount, totalSongs) {
-        this.dom.playedCounterSpan.textContent = playedCount.toString();
-        this.dom.totalCounterSpan.textContent = totalSongs.toString();
+        this.el.playedCounterSpan.textContent = playedCount.toString();
+        this.el.totalCounterSpan.textContent = totalSongs.toString();
     }
 
     /**
@@ -190,31 +194,31 @@ export class UIManager {
     updateUIState(gameStarted, continuousMode, toggleContinuousModeCallback) {
         const isDisabled = gameStarted;
 
-        this.dom.addSongsInput.disabled = isDisabled;
-        this._setLocked(this.dom.addSongsLabel, isDisabled);
-        this.dom.addSongsLabel.style.pointerEvents = isDisabled ? 'none' : 'auto';
+        this.el.addSongsInput.disabled = isDisabled;
+        this._setLocked(this.el.addSongsLabel, isDisabled);
+        this.el.addSongsLabel.style.pointerEvents = isDisabled ? 'none' : 'auto';
 
-        this.dom.importListBtn.disabled = isDisabled;
-        this.dom.importListBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+        this.el.importListBtn.disabled = isDisabled;
+        this.el.importListBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
 
-        this.dom.clearHistoryBtn.disabled = !isDisabled;
-        this.dom.clearHistoryBtn.style.opacity = isDisabled ? '1' : '0.5';
-        this.dom.clearHistoryBtn.style.cursor = isDisabled ? 'pointer' : 'not-allowed';
+        this.el.clearHistoryBtn.disabled = !isDisabled;
+        this.el.clearHistoryBtn.style.opacity = isDisabled ? '1' : '0.5';
+        this.el.clearHistoryBtn.style.cursor = isDisabled ? 'pointer' : 'not-allowed';
 
-        this._setLocked(this.dom.shuffleAllBtn, isDisabled);
+        this._setLocked(this.el.shuffleAllBtn, isDisabled);
         if (isDisabled && continuousMode) {
             toggleContinuousModeCallback();
         }
 
         // Deshabilitar botón de configuración cuando el juego está iniciado
-        this._setLocked(this.dom.configBtn, isDisabled);
+        this._setLocked(this.el.configBtn, isDisabled);
 
         if (gameStarted) {
-            this.dom.playBtn.innerHTML = `<span aria-hidden="true">${TEXT.player.next.icon}</span> ${TEXT.player.next.text}`;
-            this.dom.playBtn.setAttribute('aria-label', TEXT.player.next.label);
+            this.el.playBtn.innerHTML = `<span aria-hidden="true">${TEXT.player.next.icon}</span> ${TEXT.player.next.text}`;
+            this.el.playBtn.setAttribute('aria-label', TEXT.player.next.label);
         } else {
-            this.dom.playBtn.innerHTML = `<span aria-hidden="true">${TEXT.player.start.icon}</span> ${TEXT.player.start.text}`;
-            this.dom.playBtn.setAttribute('aria-label', TEXT.player.start.label);
+            this.el.playBtn.innerHTML = `<span aria-hidden="true">${TEXT.player.start.icon}</span> ${TEXT.player.start.text}`;
+            this.el.playBtn.setAttribute('aria-label', TEXT.player.start.label);
         }
     }
 
@@ -243,10 +247,10 @@ export class UIManager {
 
         img.alt = song.title;
         historyItem.appendChild(img);
-        this.dom.historyGrid.appendChild(historyItem);
+        this.el.historyGrid.appendChild(historyItem);
 
         // Scroll suave al final del contenedor
-        const container = this.dom.historyGrid.parentElement;
+        const container = this.el.historyGrid.parentElement;
         container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
 
         // Revelar icono después del tiempo configurado (solo si el juego ha iniciado)

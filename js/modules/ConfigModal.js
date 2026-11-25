@@ -8,15 +8,15 @@ import {MSG, TEXT} from '../messages.js';
 export class ConfigModal {
     /**
      * @param {Object} deps
-     * @param {DOMElements} deps.dom
+     * @param {Object} deps.elements - Los elementos del modal (el.config)
      * @param {GameManager} deps.game - Donde se guardan los tiempos de revelado
      * @param {ModalManager} deps.modals
      * @param {Dialogs} deps.dialogs
      * @param {SoundEffects} deps.sounds
      * @param {Function} deps.canOpen - Devuelve false (y avisa) si ahora no se puede cambiar la configuración
      */
-    constructor({dom, game, modals, dialogs, sounds, canOpen}) {
-        this.dom = dom;
+    constructor({elements, game, modals, dialogs, sounds, canOpen}) {
+        this.el = elements;
         this.game = game;
         this.modals = modals;
         this.dialogs = dialogs;
@@ -28,11 +28,11 @@ export class ConfigModal {
      * Deja los sliders con sus valores iniciales y conecta los botones del modal
      */
     init() {
-        const dom = this.dom;
+        const el = this.el;
 
         for (const [slider, label, seconds] of [
-            [dom.titleRevealTimeSlider, dom.titleRevealValueSpan, DEFAULT_TITLE_REVEAL_TIME],
-            [dom.iconRevealTimeSlider, dom.iconRevealValueSpan, DEFAULT_ICON_REVEAL_TIME]
+            [el.titleRevealTimeSlider, el.titleRevealValueSpan, DEFAULT_TITLE_REVEAL_TIME],
+            [el.iconRevealTimeSlider, el.iconRevealValueSpan, DEFAULT_ICON_REVEAL_TIME]
         ]) {
             slider.max = MAX_REVEAL_TIME_SECONDS;
             slider.value = seconds;
@@ -44,9 +44,9 @@ export class ConfigModal {
             });
         }
 
-        dom.configBtn.addEventListener('click', () => this.open());
-        this.modals.registerWithCloseButton(dom.configModal, dom.closeConfigModalBtn);
-        dom.saveConfigBtn.addEventListener('click', () => this.save());
+        el.configBtn.addEventListener('click', () => this.open());
+        this.modals.registerWithCloseButton(el.configModal, el.closeConfigModalBtn);
+        el.saveConfigBtn.addEventListener('click', () => this.save());
     }
 
     open() {
@@ -54,18 +54,18 @@ export class ConfigModal {
             return;
         }
 
-        this.modals.openWithClick(this.dom.configModal);
+        this.modals.openWithClick(this.el.configModal);
     }
 
     save() {
-        const titleRevealTime = Number.parseInt(this.dom.titleRevealTimeSlider.value);
-        const iconRevealTime = Number.parseInt(this.dom.iconRevealTimeSlider.value);
+        const titleRevealTime = Number.parseInt(this.el.titleRevealTimeSlider.value);
+        const iconRevealTime = Number.parseInt(this.el.iconRevealTimeSlider.value);
 
         this.game.setTitleRevealTime(titleRevealTime);
         this.game.setIconRevealTime(iconRevealTime);
 
         this.sounds.play(SOUND.WIN);
         this.dialogs.showAlert(MSG.config.saved(titleRevealTime, iconRevealTime));
-        this.modals.closeWithClick(this.dom.configModal);
+        this.modals.closeWithClick(this.el.configModal);
     }
 }

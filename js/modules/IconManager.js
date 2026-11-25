@@ -8,13 +8,13 @@ import {MSG, TEXT} from '../messages.js';
 
 export class IconManager {
     /**
-     * @param {DOMElements} dom
+     * @param {Object} elements - Los elementos del modal de iconos (dom.iconPicker)
      * @param {SoundEffects} sounds
      * @param {Function} getSongs - Devuelve las canciones actuales
      * @param {ModalManager} modals - Donde se registra el modal de iconos (Escape y clic fuera)
      */
-    constructor(dom, sounds, getSongs, modals) {
-        this.dom = dom;
+    constructor(elements, sounds, getSongs, modals) {
+        this.el = elements;
         this.sounds = sounds;
         this.getSongs = getSongs;
         this.modals = modals;
@@ -28,19 +28,19 @@ export class IconManager {
      * Configura event listeners para el modal de iconos
      */
     setupEventListeners() {
-        this.dom.closeIconModalBtn.addEventListener('click', () => this.closeIconModal());
-        this.modals.registerModal(this.dom.iconModal, () => this.closeIconModal());
+        this.el.closeIconModalBtn.addEventListener('click', () => this.closeIconModal());
+        this.modals.registerModal(this.el.iconModal, () => this.closeIconModal());
 
-        this.dom.uploadCustomIconBtn.addEventListener('click', () => {
-            this.dom.customIconUploadInput.click();
+        this.el.uploadCustomIconBtn.addEventListener('click', () => {
+            this.el.customIconUploadInput.click();
         });
-        this.dom.customIconUploadInput.addEventListener('change', (e) => {
+        this.el.customIconUploadInput.addEventListener('change', (e) => {
             const songs = this.getSongs();
             this.uploadCustomIcon(e, songs);
         });
 
         // Event listener para búsqueda de iconos
-        this.dom.iconSearchInput.addEventListener('input', (e) => {
+        this.el.iconSearchInput.addEventListener('input', (e) => {
             this.filterIcons(e.target.value);
         });
     }
@@ -81,7 +81,7 @@ export class IconManager {
 
         this.currentEditingSongId = songId;
         this.onIconSelected = onIconSelected;
-        this.dom.modalSongTitle.textContent = song.title;
+        this.el.modalSongTitle.textContent = song.title;
 
         // Renderizar iconos usando DocumentFragment
         const fragment = document.createDocumentFragment();
@@ -115,13 +115,13 @@ export class IconManager {
             fragment.appendChild(iconOption);
         }
 
-        this.dom.iconPickerContainer.innerHTML = '';
-        this.dom.iconPickerContainer.appendChild(fragment);
+        this.el.iconPickerContainer.innerHTML = '';
+        this.el.iconPickerContainer.appendChild(fragment);
 
         // Abrir modal
-        this.dom.iconModal.classList.remove('hidden');
-        if (this.dom.iconModal.showModal) {
-            this.dom.iconModal.showModal();
+        this.el.iconModal.classList.remove('hidden');
+        if (this.el.iconModal.showModal) {
+            this.el.iconModal.showModal();
         }
 
         this.sounds.play(SOUND.CLICK);
@@ -134,16 +134,16 @@ export class IconManager {
      */
     closeIconModal() {
         // Cerrar modal
-        if (this.dom.iconModal.close) {
-            this.dom.iconModal.close();
+        if (this.el.iconModal.close) {
+            this.el.iconModal.close();
         }
-        this.dom.iconModal.classList.add('hidden');
+        this.el.iconModal.classList.add('hidden');
 
         this.currentEditingSongId = null;
         this.onIconSelected = null;
 
         // Limpiar búsqueda al cerrar
-        this.dom.iconSearchInput.value = '';
+        this.el.iconSearchInput.value = '';
     }
 
     /**
@@ -161,11 +161,11 @@ export class IconManager {
     filterIcons(searchText) {
         const query = this.removeAccents(searchText.toLowerCase().trim());
 
-        const iconOptions = this.dom.iconPickerContainer.querySelectorAll('.icon-option');
+        const iconOptions = this.el.iconPickerContainer.querySelectorAll('.icon-option');
         let visibleCount = 0;
 
         // Eliminar mensaje de "sin resultados" si existe
-        const noResults = this.dom.iconPickerContainer.querySelector('.icon-picker-no-results');
+        const noResults = this.el.iconPickerContainer.querySelector('.icon-picker-no-results');
         if (noResults) noResults.remove();
 
         for (const option of iconOptions) {
@@ -186,7 +186,7 @@ export class IconManager {
             const noResultsMsg = document.createElement('div');
             noResultsMsg.className = 'icon-picker-no-results';
             noResultsMsg.textContent = TEXT.icons.noResults(searchText);
-            this.dom.iconPickerContainer.appendChild(noResultsMsg);
+            this.el.iconPickerContainer.appendChild(noResultsMsg);
         }
     }
 

@@ -20,7 +20,7 @@ import {MSG, TEXT} from '../messages.js';
 export class CartonModals {
     /**
      * @param {Object} deps
-     * @param {DOMElements} deps.dom
+     * @param {Object} deps.elements - Los elementos de los tres modales (el.cartones)
      * @param {GameManager} deps.game - Cartones guardados y nombre del juego
      * @param {CartonManager} deps.cartonManager - Generar, imprimir y vista previa
      * @param {ModalManager} deps.modals
@@ -29,8 +29,8 @@ export class CartonModals {
      * @param {Function} deps.getSongs - Devuelve las canciones actuales
      * @param {Function} deps.onCartonesChanged - Se llama tras crear, añadir o borrar cartones (refresca la interfaz)
      */
-    constructor({dom, game, cartonManager, modals, dialogs, sounds, getSongs, onCartonesChanged}) {
-        this.dom = dom;
+    constructor({elements, game, cartonManager, modals, dialogs, sounds, getSongs, onCartonesChanged}) {
+        this.el = elements;
         this.game = game;
         this.cartonManager = cartonManager;
         this.modals = modals;
@@ -45,49 +45,49 @@ export class CartonModals {
      * Deja los controles con sus valores iniciales y conecta los botones de los tres modales
      */
     init() {
-        const dom = this.dom;
+        const el = this.el;
 
         // Valores iniciales: cantidad de cartones que propone la generación y colores de impresión
-        dom.cartonCountInput.max = MAX_CARTONS_GENERATED;
-        dom.cartonCountInput.value = DEFAULT_CARTON_COUNT;
-        dom.printPrimaryColorInput.value = DEFAULT_PRINT_PRIMARY_COLOR;
-        dom.printSecondaryColorInput.value = DEFAULT_PRINT_SECONDARY_COLOR;
+        el.cartonCountInput.max = MAX_CARTONS_GENERATED;
+        el.cartonCountInput.value = DEFAULT_CARTON_COUNT;
+        el.printPrimaryColorInput.value = DEFAULT_PRINT_PRIMARY_COLOR;
+        el.printSecondaryColorInput.value = DEFAULT_PRINT_SECONDARY_COLOR;
         document.querySelector('.color-preview-print')?.style.setProperty('background-color', DEFAULT_PRINT_PRIMARY_COLOR);
         document.querySelector('.color-preview-print-secondary')?.style.setProperty('background-color', DEFAULT_PRINT_SECONDARY_COLOR);
 
-        dom.generateCartonesBtn.addEventListener('click', () => this.openOptions());
+        el.generateCartonesBtn.addEventListener('click', () => this.openOptions());
 
         // Modal de opciones
-        this.modals.registerWithCloseButton(dom.cartonOptionsModal, dom.closeCartonOptionsModalBtn);
-        dom.createNewCartonesBtn.addEventListener('click', () => this.startGeneration(CARTON_MODE.NEW));
-        dom.addCartonesBtn.addEventListener('click', () => this.startGeneration(CARTON_MODE.ADD));
-        dom.printExistingCartonesBtn.addEventListener('click', () => this.printExisting());
-        dom.deleteAllCartonesBtn.addEventListener('click', () => this.deleteAll());
+        this.modals.registerWithCloseButton(el.cartonOptionsModal, el.closeCartonOptionsModalBtn);
+        el.createNewCartonesBtn.addEventListener('click', () => this.startGeneration(CARTON_MODE.NEW));
+        el.addCartonesBtn.addEventListener('click', () => this.startGeneration(CARTON_MODE.ADD));
+        el.printExistingCartonesBtn.addEventListener('click', () => this.printExisting());
+        el.deleteAllCartonesBtn.addEventListener('click', () => this.deleteAll());
 
         // Modal de generación (solo pide la cantidad)
-        this.modals.registerWithCloseButton(dom.cartonModal, dom.closeCartonModalBtn);
-        dom.generateSaveCartonesBtn.addEventListener('click', () => this.generate());
+        this.modals.registerWithCloseButton(el.cartonModal, el.closeCartonModalBtn);
+        el.generateSaveCartonesBtn.addEventListener('click', () => this.generate());
 
         // Modal de impresión (con personalización)
-        this.modals.registerWithCloseButton(dom.printModal, dom.closePrintModalBtn);
-        dom.printHtmlBtn.addEventListener('click', () => this.print(PRINT_FORMAT.HTML));
-        dom.printPdfBtn.addEventListener('click', () => this.print(PRINT_FORMAT.PDF));
-        dom.previewPrintBtn.addEventListener('click', () => this.updatePreview());
+        this.modals.registerWithCloseButton(el.printModal, el.closePrintModalBtn);
+        el.printHtmlBtn.addEventListener('click', () => this.print(PRINT_FORMAT.HTML));
+        el.printPdfBtn.addEventListener('click', () => this.print(PRINT_FORMAT.PDF));
+        el.previewPrintBtn.addEventListener('click', () => this.updatePreview());
 
         // Selector de rango: los campos Desde/Hasta solo se ven con "rango"
-        dom.printRangeRadios.forEach(radio => {
+        el.printRangeRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
                 const showRange = e.target.value === 'range';
-                dom.rangeInputsContainer.style.display = showRange ? 'block' : 'none';
+                el.rangeInputsContainer.style.display = showRange ? 'block' : 'none';
             });
         });
 
         // La vista previa sigue a los colores elegidos
-        dom.printPrimaryColorInput.addEventListener('input', (e) => {
+        el.printPrimaryColorInput.addEventListener('input', (e) => {
             document.querySelector('.color-preview-print').style.backgroundColor = e.target.value;
             this.updatePreview();
         });
-        dom.printSecondaryColorInput.addEventListener('input', (e) => {
+        el.printSecondaryColorInput.addEventListener('input', (e) => {
             document.querySelector('.color-preview-print-secondary').style.backgroundColor = e.target.value;
             this.updatePreview();
         });
@@ -123,16 +123,16 @@ export class CartonModals {
 
         // Mostrar información de cartones existentes
         if (existingCount > 0) {
-            this.dom.existingCartonesInfo.textContent = TEXT.cartones.optionsInfo(existingCount);
-            this.dom.printExistingCartonesBtn.disabled = false;
-            this.dom.deleteAllCartonesBtn.disabled = false;
+            this.el.existingCartonesInfo.textContent = TEXT.cartones.optionsInfo(existingCount);
+            this.el.printExistingCartonesBtn.disabled = false;
+            this.el.deleteAllCartonesBtn.disabled = false;
         } else {
-            this.dom.existingCartonesInfo.textContent = TEXT.cartones.noneInfo;
-            this.dom.printExistingCartonesBtn.disabled = true;
-            this.dom.deleteAllCartonesBtn.disabled = true;
+            this.el.existingCartonesInfo.textContent = TEXT.cartones.noneInfo;
+            this.el.printExistingCartonesBtn.disabled = true;
+            this.el.deleteAllCartonesBtn.disabled = true;
         }
 
-        this.modals.openWithClick(this.dom.cartonOptionsModal);
+        this.modals.openWithClick(this.el.cartonOptionsModal);
     }
 
     /**
@@ -141,8 +141,8 @@ export class CartonModals {
      */
     startGeneration(mode) {
         this.mode = mode;
-        this.modals.closeWithClick(this.dom.cartonOptionsModal);
-        this.modals.openWithClick(this.dom.cartonModal);
+        this.modals.closeWithClick(this.el.cartonOptionsModal);
+        this.modals.openWithClick(this.el.cartonModal);
     }
 
     printExisting() {
@@ -151,7 +151,7 @@ export class CartonModals {
             return;
         }
 
-        this.modals.closeWithClick(this.dom.cartonOptionsModal);
+        this.modals.closeWithClick(this.el.cartonOptionsModal);
 
         // Abrir modal de impresión con personalización
         this.openPrint();
@@ -171,7 +171,7 @@ export class CartonModals {
             this.game.clearCartones();
             this.sounds.play(SOUND.CLICK);
             this.onCartonesChanged();
-            this.modals.closeWithClick(this.dom.cartonOptionsModal);
+            this.modals.closeWithClick(this.el.cartonOptionsModal);
             this.dialogs.showAlert(MSG.cartones.deleted);
         }
     }
@@ -186,6 +186,7 @@ export class CartonModals {
 
         const result = await this.cartonManager.generateCartones(
             this.getSongs(),
+            Number.parseInt(this.el.cartonCountInput.value),
             MAX_CARTONS_GENERATED,
             MIN_SONGS_REQUIRED,
             (alert) => this.dialogs.showAlert(alert),
@@ -205,7 +206,7 @@ export class CartonModals {
             }
 
             this.onCartonesChanged();
-            this.modals.closeWithClick(this.dom.cartonModal);
+            this.modals.closeWithClick(this.el.cartonModal);
             this.mode = null;
         }
     }
@@ -218,21 +219,21 @@ export class CartonModals {
         const count = this.game.getCartonesCount();
 
         // Actualizar información
-        this.dom.printCartonesInfo.textContent = TEXT.cartones.printInfo(count);
+        this.el.printCartonesInfo.textContent = TEXT.cartones.printInfo(count);
 
         // Configurar valores de rango
-        this.dom.rangeFromInput.max = count;
-        this.dom.rangeToInput.max = count;
-        this.dom.rangeToInput.value = count;
+        this.el.rangeFromInput.max = count;
+        this.el.rangeToInput.max = count;
+        this.el.rangeToInput.value = count;
 
         // Resetear a "todos"
-        this.dom.printRangeRadios[0].checked = true;
-        this.dom.rangeInputsContainer.style.display = 'none';
+        this.el.printRangeRadios[0].checked = true;
+        this.el.rangeInputsContainer.style.display = 'none';
 
         // Generar vista previa inicial
         this.updatePreview();
 
-        this.modals.openWithClick(this.dom.printModal);
+        this.modals.openWithClick(this.el.printModal);
     }
 
     async print(format = PRINT_FORMAT.HTML) {
@@ -240,12 +241,12 @@ export class CartonModals {
 
         this.sounds.play(SOUND.START);
 
-        const result = await this.cartonManager.printCartonesWithConfig(this.game.getCartones(), gameName, format);
+        const result = await this.cartonManager.printCartonesWithConfig(this.game.getCartones(), gameName, format, this._printOptions());
 
         if (result.success) {
             this.sounds.play(SOUND.WIN);
             this.dialogs.showAlert(MSG.cartones.printed(result.count, format));
-            this.modals.closeWithClick(this.dom.printModal);
+            this.modals.closeWithClick(this.el.printModal);
         } else {
             this.dialogs.showAlert(MSG.cartones.printFailed(result.error));
         }
@@ -253,6 +254,24 @@ export class CartonModals {
 
     updatePreview() {
         const gameName = this.game.getGameName() || DEFAULT_GAME_NAME;
-        this.cartonManager.updatePrintPreview(this.getSongs(), gameName);
+        this.cartonManager.updatePrintPreview(this.getSongs(), gameName, this._printColors());
+    }
+
+    /** Colores elegidos en el modal de impresión */
+    _printColors() {
+        return {
+            primaryColor: this.el.printPrimaryColorInput.value,
+            secondaryColor: this.el.printSecondaryColorInput.value
+        };
+    }
+
+    /** Rango y colores elegidos en el modal de impresión */
+    _printOptions() {
+        return {
+            printAll: this.el.printRangeRadios[0].checked,
+            from: Number.parseInt(this.el.rangeFromInput.value),
+            to: Number.parseInt(this.el.rangeToInput.value),
+            ...this._printColors()
+        };
     }
 }

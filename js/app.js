@@ -49,18 +49,18 @@ class BingoMusical {
         this.songsFolder = DEFAULT_SONGS_FOLDER;
         this.dom = new DOMElements();
         this.sounds = new SoundEffects();
-        this.audio = new AudioManager(this.dom.audioPlayer, this.sounds);
+        this.audio = new AudioManager(this.dom.player.audioPlayer, this.sounds);
         this.audioControls = new AudioControlsView({
-            audioElement: this.dom.audioPlayer,
+            audioElement: this.dom.player.audioPlayer,
             elements: {
-                progressBar: this.dom.progressBar,
-                progressFill: this.dom.progressFill,
-                currentTimeSpan: this.dom.currentTimeSpan,
-                durationSpan: this.dom.durationSpan,
-                musicVolumeSlider: this.dom.musicVolumeSlider,
-                musicVolumeValueSpan: this.dom.musicVolumeValueSpan,
-                effectsVolumeSlider: this.dom.effectsVolumeSlider,
-                effectsVolumeValueSpan: this.dom.effectsVolumeValueSpan
+                progressBar: this.dom.player.progressBar,
+                progressFill: this.dom.player.progressFill,
+                currentTimeSpan: this.dom.player.currentTimeSpan,
+                durationSpan: this.dom.player.durationSpan,
+                musicVolumeSlider: this.dom.volume.musicVolumeSlider,
+                musicVolumeValueSpan: this.dom.volume.musicVolumeValueSpan,
+                effectsVolumeSlider: this.dom.volume.effectsVolumeSlider,
+                effectsVolumeValueSpan: this.dom.volume.effectsVolumeValueSpan
             },
             handlers: {
                 onSeek: (fraction) => this.audio.seekToFraction(fraction),
@@ -70,31 +70,31 @@ class BingoMusical {
         });
         this.playlistFile = new PlaylistFile();
         this.modal = new ModalManager(this.sounds);
-        this.dialogs = new Dialogs(this.dom, this.modal, this.sounds);
-        this.icons = new IconManager(this.dom, this.sounds, () => this.songs, this.modal);
+        this.dialogs = new Dialogs(this.dom.dialogs, this.modal, this.sounds);
+        this.icons = new IconManager(this.dom.iconPicker, this.sounds, () => this.songs, this.modal);
         this.songManager = new SongManager();
         this.game = new GameManager();
-        this.ui = new UIManager(this.dom, MIN_SONGS_REQUIRED);
+        this.ui = new UIManager(this.dom.ui, MIN_SONGS_REQUIRED);
         this.theme = new ThemeManager({
             preferences: new PreferencesStore(),
-            toggleButton: this.dom.themeToggleBtn,
-            icon: this.dom.themeIcon,
+            toggleButton: this.dom.toolbar.themeToggleBtn,
+            icon: this.dom.toolbar.themeIcon,
             onToggle: () => this.sounds.play(SOUND.CLICK)
         });
         this.fullscreen = new FullscreenManager({
-            button: this.dom.fullscreenBtn,
+            button: this.dom.toolbar.fullscreenBtn,
             onToggle: () => this.sounds.play(SOUND.CLICK)
         });
         this.dragAndDrop = new DragAndDropUploader({
-            zones: [...document.querySelectorAll('.file-label'), this.dom.songsSection],
-            fileInput: this.dom.addSongsInput,
+            zones: [...document.querySelectorAll('.file-label'), this.dom.songs.songsSection],
+            fileInput: this.dom.songs.addSongsInput,
             isEnabled: () => !this.game.isGameStarted()
         });
-        this.carton = new CartonManager(this.dom, this.sounds, this.cartonGenerator,
+        this.carton = new CartonManager(this.dom.cartones.printCartonPreview, this.sounds, this.cartonGenerator,
             new CartonExporter(new CartonHtmlRenderer())
         );
         this.configModal = new ConfigModal({
-            dom: this.dom,
+            elements: this.dom.config,
             game: this.game,
             modals: this.modal,
             dialogs: this.dialogs,
@@ -102,7 +102,7 @@ class BingoMusical {
             canOpen: () => this.checkGameNotStarted(MSG.gameStarted.changeConfig)
         });
         this.cartonModals = new CartonModals({
-            dom: this.dom,
+            elements: this.dom.cartones,
             game: this.game,
             cartonManager: this.carton,
             modals: this.modal,
@@ -120,9 +120,9 @@ class BingoMusical {
             ui: this.ui,
             songManager: this.songManager,
             filterControls: {
-                searchInput: this.dom.searchInput,
-                filterStatus: this.dom.filterStatus,
-                sortOrder: this.dom.sortOrder
+                searchInput: this.dom.songs.searchInput,
+                filterStatus: this.dom.songs.filterStatus,
+                sortOrder: this.dom.songs.sortOrder
             },
             getSongs: () => this.songs,
             getPlaybackState: () => ({
@@ -161,13 +161,13 @@ class BingoMusical {
         const dom = this.dom;
 
         // Nombre del juego
-        dom.gameNameInput.maxLength = MAX_GAME_NAME_LENGTH;
-        dom.gameNameInput.title = TEXT.gameName.editHint(MAX_GAME_NAME_LENGTH);
+        dom.game.gameNameInput.maxLength = MAX_GAME_NAME_LENGTH;
+        dom.game.gameNameInput.title = TEXT.gameName.editHint(MAX_GAME_NAME_LENGTH);
 
         // Volúmenes iniciales (los sliders van de 0 a 100)
         for (const [slider, label, volume] of [
-            [dom.musicVolumeSlider, dom.musicVolumeValueSpan, DEFAULT_MUSIC_VOLUME],
-            [dom.effectsVolumeSlider, dom.effectsVolumeValueSpan, DEFAULT_EFFECTS_VOLUME]
+            [dom.volume.musicVolumeSlider, dom.volume.musicVolumeValueSpan, DEFAULT_MUSIC_VOLUME],
+            [dom.volume.effectsVolumeSlider, dom.volume.effectsVolumeValueSpan, DEFAULT_EFFECTS_VOLUME]
         ]) {
             const percent = Math.round(volume * 100);
             slider.value = percent;
@@ -177,37 +177,37 @@ class BingoMusical {
     }
 
     _setupPlayerEventListeners() {
-        this.dom.playBtn.addEventListener('click', () => this.playRandomSong());
-        this.dom.pauseBtn.addEventListener('click', () => this.pauseSong());
-        this.dom.stopBtn.addEventListener('click', () => this.restartSong());
+        this.dom.player.playBtn.addEventListener('click', () => this.playRandomSong());
+        this.dom.player.pauseBtn.addEventListener('click', () => this.pauseSong());
+        this.dom.player.stopBtn.addEventListener('click', () => this.restartSong());
 
         // Evento cuando termina una canción
-        this.dom.audioPlayer.addEventListener('ended', () => this.onSongEnded());
+        this.dom.player.audioPlayer.addEventListener('ended', () => this.onSongEnded());
 
         // Si el navegador rechaza la reproducción, reflejar en los controles que no suena
-        this.dom.audioPlayer.addEventListener('playbackfailed', () => this.updateControls(false));
+        this.dom.player.audioPlayer.addEventListener('playbackfailed', () => this.updateControls(false));
     }
 
     _setupSongManagementEventListeners() {
         // Interceptar click en el label para verificar cartones antes de abrir selector
-        this.dom.addSongsLabel.addEventListener('click', async (e) => {
+        this.dom.songs.addSongsLabel.addEventListener('click', async (e) => {
             if (this.game.getCartonesCount() > 0) {
                 e.preventDefault();
                 if (await this.cartonModals.confirmAndClear(TEXT.cartonActions.addSongs)) {
-                    this.dom.addSongsInput.click();
+                    this.dom.songs.addSongsInput.click();
                 }
             }
         });
 
-        this.dom.addSongsInput.addEventListener('change', (e) => this.addSongs(e));
-        this.dom.clearHistoryBtn.addEventListener('click', () => this.reiniciarJuego());
-        this.dom.shuffleAllBtn.addEventListener('click', () => this.toggleContinuousMode());
+        this.dom.songs.addSongsInput.addEventListener('change', (e) => this.addSongs(e));
+        this.dom.history.clearHistoryBtn.addEventListener('click', () => this.reiniciarJuego());
+        this.dom.game.shuffleAllBtn.addEventListener('click', () => this.toggleContinuousMode());
 
         // Búsqueda, filtro y orden de la lista
         this.songList.bindFilterControls();
 
         // Event listener para eliminar todas las canciones
-        this.dom.deleteAllBtn.addEventListener('click', () => this.deleteAllSongs());
+        this.dom.songs.deleteAllBtn.addEventListener('click', () => this.deleteAllSongs());
     }
 
     // ============================================================
@@ -221,22 +221,22 @@ class BingoMusical {
         this._setupKeyboardShortcuts();
         this._setupGameNameEventListeners();
 
-        this.dom.exportListBtn.addEventListener('click', () => this.exportPlaylist());
-        this.dom.importListBtn.addEventListener('click', () => this.dom.importFileInput.click());
-        this.dom.importFileInput.addEventListener('change', (e) => this.importPlaylist(e));
-        this.dom.lineaBtn.addEventListener('click', () => this.triggerLinea());
-        this.dom.bingoBtn.addEventListener('click', () => this.triggerBingo());
-        this.dom.shortcutsHelpBtn.addEventListener('click', () => this.showKeyboardShortcutsHelp());
+        this.dom.songs.exportListBtn.addEventListener('click', () => this.exportPlaylist());
+        this.dom.songs.importListBtn.addEventListener('click', () => this.dom.songs.importFileInput.click());
+        this.dom.songs.importFileInput.addEventListener('change', (e) => this.importPlaylist(e));
+        this.dom.game.lineaBtn.addEventListener('click', () => this.triggerLinea());
+        this.dom.game.bingoBtn.addEventListener('click', () => this.triggerBingo());
+        this.dom.toolbar.shortcutsHelpBtn.addEventListener('click', () => this.showKeyboardShortcutsHelp());
     }
 
     _setupGameNameEventListeners() {
         // Actualizar el nombre del juego cuando cambia el input
-        this.dom.gameNameInput.addEventListener('input', (e) => {
+        this.dom.game.gameNameInput.addEventListener('input', (e) => {
             this.game.setGameName(e.target.value.trim());
         });
 
         // Validar al hacer blur
-        this.dom.gameNameInput.addEventListener('blur', (e) => {
+        this.dom.game.gameNameInput.addEventListener('blur', (e) => {
             const name = e.target.value.trim();
             if (name.length > MAX_GAME_NAME_LENGTH) {
                 this.dialogs.showAlert(MSG.game.nameTooLong(MAX_GAME_NAME_LENGTH));
@@ -247,13 +247,13 @@ class BingoMusical {
     }
 
     _setupCelebrationEventListeners() {
-        this.dom.continueLineaBtn.addEventListener('click', () => {
-            this.dom.lineaOverlay.classList.add('hidden');
+        this.dom.celebration.continueLineaBtn.addEventListener('click', () => {
+            this.dom.celebration.lineaOverlay.classList.add('hidden');
         });
 
-        this.dom.restartBtn.addEventListener('click', () => {
+        this.dom.celebration.restartBtn.addEventListener('click', () => {
             this.reiniciarJuego();
-            this.dom.celebrationOverlay.classList.add('hidden');
+            this.dom.celebration.celebrationOverlay.classList.add('hidden');
         });
     }
 
@@ -300,13 +300,13 @@ class BingoMusical {
             .register('l', {
                 ...SHORTCUTS.linea,
                 action: () => {
-                    if (!this.dom.lineaBtn.disabled) this.triggerLinea();
+                    if (!this.dom.game.lineaBtn.disabled) this.triggerLinea();
                 }
             })
             .register('b', {
                 ...SHORTCUTS.bingo,
                 action: () => {
-                    if (!this.dom.bingoBtn.disabled) this.triggerBingo();
+                    if (!this.dom.game.bingoBtn.disabled) this.triggerBingo();
                 }
             })
             .register('escape', {
@@ -370,7 +370,7 @@ class BingoMusical {
             canCall: () => this.game.canCallLinea(),
             complete: () => this.game.completeLinea(),
             sound: SOUND.WIN,
-            overlay: this.dom.lineaOverlay
+            overlay: this.dom.celebration.lineaOverlay
         });
     }
 
@@ -379,7 +379,7 @@ class BingoMusical {
             canCall: () => this.game.canCallBingo(),
             complete: () => this.game.completeBingo(),
             sound: SOUND.COMPLETE,
-            overlay: this.dom.celebrationOverlay
+            overlay: this.dom.celebration.celebrationOverlay
         });
     }
 
@@ -457,7 +457,7 @@ class BingoMusical {
         // Cargar el nombre del juego desde el playlist
         const gameName = playlist.name || '';
         this.game.setGameName(gameName);
-        this.dom.gameNameInput.value = gameName;
+        this.dom.game.gameNameInput.value = gameName;
 
         // Cargar cartones del playlist (o limpiar los anteriores, que apuntan a canciones ya descartadas)
         if (Array.isArray(playlist.cartones) && playlist.cartones.length > 0) {
@@ -578,12 +578,12 @@ class BingoMusical {
 
         // Deshabilitar el input del nombre si el juego ha iniciado o se generaron cartones
         const shouldDisableGameName = this.game.isGameStarted() || this.game.hasCartonesGenerated();
-        this.dom.gameNameInput.disabled = shouldDisableGameName;
+        this.dom.game.gameNameInput.disabled = shouldDisableGameName;
 
-        if (shouldDisableGameName && this.dom.gameNameInput.title !== TEXT.gameName.locked) {
-            this.dom.gameNameInput.title = TEXT.gameName.locked;
+        if (shouldDisableGameName && this.dom.game.gameNameInput.title !== TEXT.gameName.locked) {
+            this.dom.game.gameNameInput.title = TEXT.gameName.locked;
         } else if (!shouldDisableGameName) {
-            this.dom.gameNameInput.title = TEXT.gameName.editHint(MAX_GAME_NAME_LENGTH);
+            this.dom.game.gameNameInput.title = TEXT.gameName.editHint(MAX_GAME_NAME_LENGTH);
         }
     }
 
@@ -633,7 +633,7 @@ class BingoMusical {
             // Resetear el flag de cartones generados, el nombre del juego y los cartones
             this.game.clearCartones();
             this.game.setGameName('');
-            this.dom.gameNameInput.value = '';
+            this.dom.game.gameNameInput.value = '';
 
             this.refreshUI();
             this.dialogs.showAlert(MSG.songs.allDeleted);
@@ -647,7 +647,7 @@ class BingoMusical {
     }
 
     _renderContinuousModeButton(continuousMode) {
-        const btn = this.dom.shuffleAllBtn;
+        const btn = this.dom.game.shuffleAllBtn;
 
         if (continuousMode) {
             btn.innerHTML = `<span aria-hidden="true">${TEXT.player.continuousOn.icon}</span> ${TEXT.player.continuousOn.text}`;
@@ -766,7 +766,7 @@ class BingoMusical {
         this._revealCurrentSong();
         this.audio.stop();
         this.updateControls(false);
-        this.dom.songIconContainer.classList.remove('playing');
+        this.dom.player.songIconContainer.classList.remove('playing');
         this.songList.render();
     }
 
@@ -775,7 +775,7 @@ class BingoMusical {
         if (currentSongId !== null) {
             this.audio.restart();
             this.updateControls(true);
-            this.dom.songIconContainer.classList.add('playing');
+            this.dom.player.songIconContainer.classList.add('playing');
         }
     }
 
@@ -793,7 +793,7 @@ class BingoMusical {
     }
 
     onSongEnded() {
-        this.dom.songIconContainer.classList.remove('playing');
+        this.dom.player.songIconContainer.classList.remove('playing');
 
         // La canción que terminó ya no debe ocultarse en la lista
         this._revealCurrentSong();
@@ -811,7 +811,7 @@ class BingoMusical {
                 this.game.completeBingo();
                 setTimeout(() => {
                     this.sounds.play(SOUND.COMPLETE);
-                    this.dom.celebrationOverlay.classList.remove('hidden');
+                    this.dom.celebration.celebrationOverlay.classList.remove('hidden');
                 }, CELEBRATION_DELAY_MS);
             }
         }
@@ -857,20 +857,20 @@ class BingoMusical {
             this._clearListRevealTimers();
             this.songs.forEach(song => this._revealSongInList(song));
 
-            this.dom.historyGrid.innerHTML = '';
+            this.dom.history.historyGrid.innerHTML = '';
             this.refreshUI();
             this.stopSong();
 
             // resetGame ya desactiva el modo continuo: reflejarlo en el botón
             this._renderContinuousModeButton(this.game.isContinuousMode());
 
-            this.dom.currentIconImg.alt = TEXT.player.currentSongAlt;
-            this.dom.currentIconImg.src = LOGO_PATH;
+            this.dom.player.currentIconImg.alt = TEXT.player.currentSongAlt;
+            this.dom.player.currentIconImg.src = LOGO_PATH;
 
             // Restaurar opacidad de título e icono del reproductor
             this.ui.clearPlayerRevealTimers();
-            this.dom.songTitleElement.style.opacity = '1';
-            this.dom.currentIconImg.style.opacity = '1';
+            this.dom.player.songTitleElement.style.opacity = '1';
+            this.dom.player.currentIconImg.style.opacity = '1';
         }
     }
 }
