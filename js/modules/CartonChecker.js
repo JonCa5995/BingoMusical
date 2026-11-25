@@ -1,4 +1,4 @@
-import {CELL_TYPE} from '../constants.js';
+import {CELEBRATION, CELL_TYPE} from '../constants.js';
 
 export function evaluateCarton(carton, playedIds) {
     const rows = carton.rows.map(row => {
@@ -24,4 +24,18 @@ export function evaluateCarton(carton, playedIds) {
         missingForLinea: linea ? 0 : (candidates.length > 0 ? Math.min(...candidates) : null),
         missingForBingo
     };
+}
+
+export function buildCelebration({kind, ok, carton = null, result = null}) {
+    if (!carton || !result) return {kind, ok, cartonId: null, rows: []};
+
+    const onlyComplete = ok && kind === CELEBRATION.LINEA;
+    const rows = result.rows
+        .filter(row => !onlyComplete || row.complete)
+        .map(row => ({
+            complete: row.complete,
+            songs: row.songs.map(({song, played}) => ({icon: song.icon, iconType: song.iconType, played}))
+        }));
+
+    return {kind, ok, cartonId: carton.id, rows};
 }

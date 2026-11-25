@@ -1,10 +1,12 @@
 import {
     CELEBRATION,
+    CELLS_PER_ROW,
     DEFAULT_GAME_NAME,
     ICON_TYPE,
     PROJECTION_HISTORY_BASE_VMIN,
     PROJECTION_HISTORY_MIN_PX,
     PROJECTION_STATE_VERSION,
+    ROWS_PER_CARTON,
     THEME
 } from '../constants.js';
 import {TEXT} from '../messages.js';
@@ -13,10 +15,24 @@ import {isImageDataUrl} from '../utils.js';
 
 const FADE_IN = 'opacity 1s ease-in';
 
+const isValidCelebrationSong = (song) => song !== null && typeof song === 'object' && typeof song.icon === 'string'
+    && Object.values(ICON_TYPE).includes(song.iconType) && typeof song.played === 'boolean';
+
+const isValidCelebrationRow = (row) => row !== null && typeof row === 'object' && typeof row.complete === 'boolean'
+    && Array.isArray(row.songs) && row.songs.length <= CELLS_PER_ROW && row.songs.every(isValidCelebrationSong);
+
+const isValidCelebration = (celebration) => celebration == null || (
+    typeof celebration === 'object'
+    && Object.values(CELEBRATION).includes(celebration.kind)
+    && typeof celebration.ok === 'boolean'
+    && (celebration.cartonId === null || Number.isFinite(celebration.cartonId))
+    && Array.isArray(celebration.rows) && celebration.rows.length <= ROWS_PER_CARTON && celebration.rows.every(isValidCelebrationRow)
+);
+
 const isValidState = (state) => state?.type === 'state' && state.version === PROJECTION_STATE_VERSION
     && typeof state.gameName === 'string' && Number.isFinite(state.played) && Number.isFinite(state.total)
     && Array.isArray(state.history) && Number.isFinite(state.titleRevealMs) && Number.isFinite(state.iconRevealMs)
-    && (state.celebration == null || Object.values(CELEBRATION).includes(state.celebration));
+    && isValidCelebration(state.celebration);
 
 const GAP_VMIN = 1.2;
 const PROJECTION_SIDE_SHARE = 0.32;
@@ -47,7 +63,7 @@ export class ProjectionView {
         this.iconVisible = false;
         this.state = null;
         this.docked = false;
-        this.celebration = null;
+        this.celebrationKey = null;
     }
 
     start() {
@@ -107,17 +123,52 @@ export class ProjectionView {
         this.el.time.textContent = TEXT.projection.time(formatTime(currentTime), formatTime(duration));
     }
 
-    _showCelebration(kind) {
-        if (kind === this.celebration) return;
+    _showCelebration(celebration) {
+        const key = celebration === null ? null : JSON.stringify(celebration);
+        if (key === this.celebrationKey) return;
 
-        this.celebration = kind;
-        this.el.celebration.classList.toggle('hidden', kind === null);
-        if (kind === null) return;
+        this.celebrationKey = key;
+        this.el.celebration.classList.toggle('hidden', celebration === null);
+        if (celebration === null) return;
 
-        const texts = TEXT.projection.celebration[kind];
-        this.el.celebrationTitle.textContent = texts.title;
-        this.el.celebrationTitle.classList.toggle('celebration-title-linea', kind === CELEBRATION.LINEA);
-        this.el.celebrationText.textContent = texts.text;
+        const {kind, ok, cartonId, rows} = celebration;
+        const texts = TEXT.projection.celebration;
+        const title = ok ? texts[kind].title : texts.fail[kind].title;
+
+        this.el.celebrationTitle.textContent = title;
+        this.el.celebrationTitle.classList.toggle('celebration-title-linea', ok && kind === CELEBRATION.LINEA);
+        this.el.celebrationTitle.classList.toggle('celebration-title-fail', !ok);
+        this.el.celebrationText.textContent = this._celebrationText(celebration);
+        this.el.celebration.classList.toggle('has-rows', rows.length > 0);
+        this.el.celebrationRows.replaceChildren(...rows.map(row => this._celebrationRow(row, ok)));
+    }
+
+    _celebrationText({kind, ok, cartonId, rows}) {
+        const texts = TEXT.projection.celebration;
+        if (cartonId !== null && rows.length > 0) return texts.carton(cartonId);
+
+        return ok ? texts[kind].text : texts.fail[kind].text;
+    }
+
+    _celebrationRow(row, ok) {
+        const element = document.createElement('div');
+        element.className = 'celebration-row';
+
+        for (const song of row.songs) {
+            const item = document.createElement('div');
+            item.className = `celebration-song ${song.played ? 'celebration-song-ok' : 'celebration-song-missing'}`;
+
+            const mark = document.createElement('span');
+            mark.className = 'celebration-mark';
+            mark.textContent = song.played ? '✓' : '✗';
+            mark.setAttribute('role', 'img');
+            mark.setAttribute('aria-label', song.played ? TEXT.projection.celebration.played : TEXT.projection.celebration.pending);
+
+            item.append(this._iconNode(song), mark);
+            element.append(item);
+        }
+
+        return element;
     }
 
     _setPlaying(playing) {

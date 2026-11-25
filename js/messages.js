@@ -149,7 +149,17 @@ export const TEXT = {
         bingo: ({bingo, missingForBingo, total}) => bingo
             ? '🎉 BINGO: sí, han salido todas las canciones'
             : `🎉 BINGO: no, ${missingForBingo === 1 ? 'falta 1 canción' : `faltan ${missingForBingo} de ${total}`}`,
-        row: (number, row) => `Fila ${number}: ${row.songs.length - row.missing} de ${row.songs.length}${row.complete ? ' ✓ completa' : ''}`
+        row: (number, row) => `Fila ${number}: ${row.songs.length - row.missing} de ${row.songs.length}${row.complete ? ' ✓ completa' : ''}`,
+        modeTitle: {check: '🔍 Comprobar cartón', linea: '📏 Cantar LÍNEA', bingo: '🎉 Cantar BINGO', ended: '🎉 ¡BINGO!'},
+        sing: {linea: '📏 Cantar LÍNEA', bingo: '🎉 Cantar BINGO'},
+        singWithoutCarton: {linea: '📏 Cantar LÍNEA sin cartón', bingo: '🎉 Cantar BINGO sin cartón'},
+        showFailure: '❌ Mostrar el fallo en la proyección',
+        continuePlaying: '▶️ Continuar jugando',
+        restart: '🔄 Comenzar de nuevo',
+        onProjector: 'Se está mostrando en la proyección. Al cerrar esta ventana se quita.',
+        failureOnProjector: 'El fallo se está mostrando en la proyección. Al cerrar esta ventana se quita.',
+        withoutCartones: 'No hay cartones generados: puedes cantar sin comprobar ningún cartón.',
+        ended: 'Se han reproducido todas las canciones: ¡BINGO!'
     },
 
     savedGame: {
@@ -248,7 +258,14 @@ export const TEXT = {
         time: (current, total) => `${current} / ${total}`,
         celebration: {
             linea: {title: '📏 ¡LÍNEA! 📏', text: '¡Felicidades, has completado una línea!'},
-            bingo: {title: '🎉 ¡BINGO! 🎉', text: '¡Felicidades, has completado el bingo!'}
+            bingo: {title: '🎉 ¡BINGO! 🎉', text: '¡Felicidades, has completado el bingo!'},
+            fail: {
+                linea: {title: '❌ LÍNEA INCORRECTA', text: 'Este cartón todavía no tiene ninguna línea completa'},
+                bingo: {title: '❌ BINGO INCORRECTO', text: 'Este cartón todavía no tiene todas las canciones'}
+            },
+            carton: (id) => `Cartón n.º ${id}`,
+            played: 'Ha salido',
+            pending: 'Aún no ha salido'
         }
     },
     theme: {

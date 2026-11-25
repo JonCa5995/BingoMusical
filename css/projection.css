@@ -195,6 +195,79 @@ body.projection {
     font-size: 5vmin;
 }
 
+.projection-celebration.has-rows .celebration-title {
+    font-size: 11vmin;
+}
+
+.projection-celebration.has-rows .celebration-text {
+    font-size: 4vmin;
+}
+
+.celebration-title-fail {
+    background: linear-gradient(135deg, #f87171, #dc2626);
+    background-clip: text;
+    color: transparent;
+}
+
+.projection-celebration-rows {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3vmin;
+    margin-top: 4vmin;
+}
+
+.projection-celebration-rows:empty {
+    display: none;
+}
+
+.celebration-row {
+    display: flex;
+    justify-content: center;
+    gap: 3vmin;
+}
+
+.celebration-song {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 15vmin;
+    height: 15vmin;
+    background: var(--surface-color);
+    border: 0.6vmin solid var(--success-color);
+    border-radius: 2vmin;
+}
+
+.celebration-song-missing {
+    border-color: var(--danger-color);
+}
+
+.celebration-song .projection-emoji {
+    font-size: 10vmin;
+}
+
+.celebration-mark {
+    position: absolute;
+    top: -1.6vmin;
+    right: -1.6vmin;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 5.6vmin;
+    height: 5.6vmin;
+    border-radius: 50%;
+    background: var(--success-color);
+    color: #ffffff;
+    font-size: 3.6vmin;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.celebration-song-missing .celebration-mark {
+    background: var(--danger-color);
+}
+
 @media (prefers-reduced-motion: reduce) {
     .projection-logo.animated,
     .projection-logo.animated img {

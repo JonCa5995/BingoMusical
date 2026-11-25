@@ -1,6 +1,6 @@
-import test, {mock} from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
-import {installDocument, mkEl} from './helpers/fakeDom.js';
+import {installDocument} from './helpers/fakeDom.js';
 
 installDocument();
 const originalWarn = console.warn;
@@ -9,119 +9,136 @@ console.warn = () => {};
 console.error = () => {};
 
 const {BingoMusical} = await import('../js/app.js');
-const {CELEBRATION, CELEBRATION_DELAY_MS} = await import('../js/constants.js');
+const {CELEBRATION, CHECK_MODE} = await import('../js/constants.js');
 
 test.after(() => {
     console.warn = originalWarn;
     console.error = originalError;
 });
 
-const build = ({valid = true} = {}) => {
+const carton = {
+    id: 5,
+    rows: [{cells: [{type: 'song', position: 0, song: {id: 1, title: 'Uno', icon: '🎵', iconType: 'emoji'}}]}]
+};
+const result = {rows: [{songs: [{song: carton.rows[0].cells[0].song, played: true}], missing: 0, complete: true}], linea: true, bingo: false};
+
+const build = ({valid = true, enough = true} = {}) => {
     const log = [];
     const app = Object.create(BingoMusical.prototype);
-    const lineaOverlay = mkEl('aside');
-    const bingoOverlay = mkEl('aside');
-    lineaOverlay.classList.add('hidden');
-    bingoOverlay.classList.add('hidden');
 
     Object.assign(app, {
         celebration: null,
         songs: [],
-        songManager: {validateMinSongs: () => ({valid: true})},
+        songManager: {validateMinSongs: () => (enough ? {valid: true} : {valid: false, alert: 'faltan canciones'})},
         dialogs: {showAlert: (alert) => log.push(['aviso', alert])},
         sounds: {play: (sound) => log.push(['suena', sound])},
         game: {
-            canCallLinea: () => (valid ? {valid: true} : {valid: false, alert: 'no'}),
+            canCallLinea: () => (valid ? {valid: true} : {valid: false, alert: 'ya cantada'}),
             completeLinea: () => log.push('completa linea'),
-            canCallBingo: () => ({valid: true}),
+            canCallBingo: () => (valid ? {valid: true} : {valid: false, alert: 'ya cantado'}),
             completeBingo: () => log.push('completa bingo'),
             isGameStarted: () => true,
             isContinuousMode: () => false,
             isBingoCompleted: () => false,
             allSongsPlayed: () => true
         },
-        projection: {schedulePublish: () => log.push(['publica', app.celebration])},
-        dom: {celebration: {lineaOverlay, celebrationOverlay: bingoOverlay}},
+        projection: {schedulePublish: () => log.push(['publica', app.celebration?.kind ?? null, app.celebration?.ok ?? null])},
+        cartonCheck: {open: (mode) => log.push(['abre modal', mode])},
         _onGameChanged: () => log.push('cambia'),
         updateControls: () => {}
     });
 
-    return {app, log, lineaOverlay, bingoOverlay};
+    return {app, log};
 };
 
-test('cantar LÍNEA muestra la celebración en la ventana principal y la envía a la proyección tras el mismo retardo', () => {
-    mock.timers.enable({apis: ['setTimeout']});
-    try {
-        const {app, log, lineaOverlay} = build();
+test('pulsar LÍNEA abre la ventana de cartón en modo línea, sin cantar todavía', () => {
+    const {app, log} = build();
 
-        app.triggerLinea();
-        assert.equal(lineaOverlay.classList.contains('hidden'), true);
-        assert.equal(app.celebration, null);
+    app.triggerLinea();
 
-        mock.timers.tick(CELEBRATION_DELAY_MS);
-
-        assert.equal(lineaOverlay.classList.contains('hidden'), false);
-        assert.equal(app.celebration, CELEBRATION.LINEA);
-        assert.deepEqual(log.at(-1), ['publica', CELEBRATION.LINEA]);
-    } finally {
-        mock.timers.reset();
-    }
-});
-
-test('cantar BINGO envía la celebración de bingo', () => {
-    mock.timers.enable({apis: ['setTimeout']});
-    try {
-        const {app, bingoOverlay} = build();
-
-        app.triggerBingo();
-        mock.timers.tick(CELEBRATION_DELAY_MS);
-
-        assert.equal(bingoOverlay.classList.contains('hidden'), false);
-        assert.equal(app.celebration, CELEBRATION.BINGO);
-    } finally {
-        mock.timers.reset();
-    }
-});
-
-test('una llamada no válida avisa y no celebra nada, ni aquí ni en la proyección', () => {
-    mock.timers.enable({apis: ['setTimeout']});
-    try {
-        const {app, log, lineaOverlay} = build({valid: false});
-
-        app.triggerLinea();
-        mock.timers.tick(CELEBRATION_DELAY_MS * 2);
-
-        assert.equal(lineaOverlay.classList.contains('hidden'), true);
-        assert.equal(app.celebration, null);
-        assert.equal(log.some(entry => Array.isArray(entry) && entry[0] === 'publica'), false);
-        assert.equal(log[0][0], 'aviso');
-    } finally {
-        mock.timers.reset();
-    }
-});
-
-test('cerrar la celebración en la ventana principal la quita también de la proyección', () => {
-    const {app, log, lineaOverlay} = build();
-    app._showCelebration(CELEBRATION.LINEA, lineaOverlay);
-
-    app._hideCelebration(lineaOverlay);
-
-    assert.equal(lineaOverlay.classList.contains('hidden'), true);
+    assert.deepEqual(log, [['abre modal', CHECK_MODE.LINEA]]);
     assert.equal(app.celebration, null);
-    assert.deepEqual(log.at(-1), ['publica', null]);
 });
 
-test('al acabar la última canción sin cantar BINGO, el bingo automático también llega a la proyección', () => {
-    mock.timers.enable({apis: ['setTimeout']});
-    try {
-        const {app, bingoOverlay} = build();
+test('pulsar BINGO abre la ventana de cartón en modo bingo', () => {
+    const {app, log} = build();
 
-        app.onSongEnded();
-        mock.timers.tick(CELEBRATION_DELAY_MS);
+    app.triggerBingo();
 
-        assert.equal(bingoOverlay.classList.contains('hidden'), false);
-        assert.equal(app.celebration, CELEBRATION.BINGO);
-    } finally {
-        mock.timers.reset();
-    }
+    assert.deepEqual(log, [['abre modal', CHECK_MODE.BINGO]]);
+});
+
+test('si ya estaba cantada (o faltan canciones) avisa y no abre la ventana', () => {
+    const cantada = build({valid: false});
+    cantada.app.triggerLinea();
+    cantada.app.triggerBingo();
+    assert.deepEqual(cantada.log, [['aviso', 'ya cantada'], ['aviso', 'ya cantado']]);
+
+    const pocas = build({enough: false});
+    pocas.app.triggerLinea();
+    assert.deepEqual(pocas.log, [['aviso', 'faltan canciones']]);
+});
+
+test('cantar la línea con un cartón completa la línea, suena la victoria y envía las filas a la proyección', () => {
+    const {app, log} = build();
+
+    app._singFromModal({kind: CELEBRATION.LINEA, carton, result});
+
+    assert.deepEqual(log, ['completa linea', ['suena', 'win'], 'cambia']);
+    assert.equal(app.celebration.kind, 'linea');
+    assert.equal(app.celebration.ok, true);
+    assert.equal(app.celebration.cartonId, 5);
+    assert.equal(app.celebration.rows.length, 1);
+    assert.deepEqual(app.celebration.rows[0].songs, [{icon: '🎵', iconType: 'emoji', played: true}]);
+});
+
+test('cantar el bingo completa el bingo y suena el efecto de bingo', () => {
+    const {app, log} = build();
+
+    app._singFromModal({kind: CELEBRATION.BINGO, carton, result});
+
+    assert.deepEqual(log.slice(0, 2), ['completa bingo', ['suena', 'complete']]);
+    assert.equal(app.celebration.kind, 'bingo');
+});
+
+test('cantar sin cartón envía la pantalla genérica, sin filas', () => {
+    const {app} = build();
+
+    app._singFromModal({kind: CELEBRATION.LINEA, carton: null, result: null});
+
+    assert.deepEqual(app.celebration, {kind: 'linea', ok: true, cartonId: null, rows: []});
+});
+
+test('mostrar un fallo no cambia la partida: suena el error y publica la pantalla de fallo', () => {
+    const {app, log} = build();
+
+    app._showFailureFromModal({kind: CELEBRATION.LINEA, carton, result});
+
+    assert.deepEqual(log, [['suena', 'error'], ['publica', 'linea', false]]);
+    assert.equal(app.celebration.ok, false);
+    assert.equal(app.celebration.rows.length, 1);
+    assert.equal(log.includes('completa linea'), false);
+});
+
+test('quitar la pantalla la borra de la proyección, y repetirlo no vuelve a publicar', () => {
+    const {app, log} = build();
+    app._showFailureFromModal({kind: CELEBRATION.BINGO, carton, result});
+    log.length = 0;
+
+    app._dismissCelebration();
+    app._dismissCelebration();
+
+    assert.equal(app.celebration, null);
+    assert.deepEqual(log, [['publica', null, null]]);
+});
+
+test('al acabar la última canción sin cantar BINGO se canta solo y se abre la ventana de fin de canciones', () => {
+    const {app, log} = build();
+
+    app.onSongEnded();
+
+    assert.deepEqual(log.slice(0, 3), ['completa bingo', ['suena', 'complete'], 'cambia']);
+    assert.deepEqual(log.at(-1), ['abre modal', CHECK_MODE.ENDED]);
+    assert.equal(app.celebration.kind, 'bingo');
+    assert.equal(app.celebration.cartonId, null);
 });

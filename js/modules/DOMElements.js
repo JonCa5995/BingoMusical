@@ -17,14 +17,12 @@ const GROUPS = {
     game: [
         'gameNameInput', 'shuffleAllBtn', 'lineaBtn', 'bingoBtn'
     ],
-    celebration: [
-        'lineaOverlay', 'continueLineaBtn', 'celebrationOverlay', 'restartBtn'
-    ],
     toolbar: [
         'themeToggleBtn', 'themeIcon', 'fullscreenBtn', 'shortcutsHelpBtn', 'openCheckCartonBtn', 'openProjectionBtn'
     ],
     checkCarton: [
-        'checkCartonModal', 'closeCheckCartonModalBtn', 'checkCartonNumberInput', 'checkCartonSubmitBtn', 'checkCartonResult'
+        'checkCartonModal', 'closeCheckCartonModalBtn', 'checkCartonTitle', 'checkCartonNumberInput', 'checkCartonSubmitBtn', 'checkCartonResult',
+        'checkCartonActions'
     ],
     iconPicker: [
         'iconModal', 'closeIconModalBtn', 'modalSongTitle', 'iconPickerContainer', 'iconSearchInput',
@@ -155,16 +153,14 @@ const IDS = {
     alertMessage: 'alert-message',
     alertOkBtn: 'alert-ok',
 
-    lineaOverlay: 'linea-overlay',
-    continueLineaBtn: 'continue-linea-btn',
-    celebrationOverlay: 'celebration-overlay',
-    restartBtn: 'restart-btn',
 
     exportListBtn: 'export-list',
     openCheckCartonBtn: 'open-check-carton-btn',
     openProjectionBtn: 'open-projection-btn',
     checkCartonModal: 'check-carton-modal',
     closeCheckCartonModalBtn: 'close-check-carton-modal',
+    checkCartonTitle: 'check-carton-title',
+    checkCartonActions: 'check-carton-actions',
     checkCartonNumberInput: 'check-carton-number',
     checkCartonSubmitBtn: 'check-carton-submit',
     checkCartonResult: 'check-carton-result',

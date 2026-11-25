@@ -29,9 +29,10 @@ import {GameStateStore} from "./modules/GameStateStore.js";
 import {ProjectionChannel, buildProjectionProgress, buildProjectionState} from "./modules/ProjectionChannel.js";
 import {registerServiceWorker} from "./modules/ServiceWorkerRegistrar.js";
 import {deserializeCartones} from "./modules/CartonSerializer.js";
+import {buildCelebration} from "./modules/CartonChecker.js";
 import {
     CELEBRATION,
-    CELEBRATION_DELAY_MS,
+    CHECK_MODE,
     CONTINUOUS_NEXT_SONG_DELAY_MS,
     DEFAULT_SONGS_FOLDER,
     GAME_FILE_TYPE,
@@ -160,7 +161,13 @@ export class BingoMusical {
             game: this.game,
             modals: this.modal,
             dialogs: this.dialogs,
-            sounds: this.sounds
+            sounds: this.sounds,
+            callbacks: {
+                onSing: (call) => this._singFromModal(call),
+                onShowFailure: (call) => this._showFailureFromModal(call),
+                onDismiss: () => this._dismissCelebration(),
+                onRestart: () => this.reiniciarJuego()
+            }
         });
     }
 
@@ -335,6 +342,7 @@ export class BingoMusical {
     }
 
     _renderRestoredGame({playedSongs, currentSong}) {
+        this._dismissCelebration();
         if (this.audio.hasSongLoaded()) {
             this.stopSong();
         }
@@ -397,7 +405,6 @@ export class BingoMusical {
     setupEventListeners() {
         this._setupPlayerEventListeners();
         this._setupSongManagementEventListeners();
-        this._setupCelebrationEventListeners();
         this._setupKeyboardShortcuts();
         this._setupGameNameEventListeners();
 
@@ -433,25 +440,29 @@ export class BingoMusical {
         });
     }
 
-    _setupCelebrationEventListeners() {
-        this.dom.celebration.continueLineaBtn.addEventListener('click', () => {
-            this._hideCelebration(this.dom.celebration.lineaOverlay);
-        });
+    _singFromModal({kind, carton, result}) {
+        const isLinea = kind === CELEBRATION.LINEA;
 
-        this.dom.celebration.restartBtn.addEventListener('click', () => {
-            this.reiniciarJuego();
-            this._hideCelebration(this.dom.celebration.celebrationOverlay);
-        });
+        if (isLinea) {
+            this.game.completeLinea();
+        } else {
+            this.game.completeBingo();
+        }
+
+        this.sounds.play(isLinea ? SOUND.WIN : SOUND.COMPLETE);
+        this.celebration = buildCelebration({kind, ok: true, carton, result});
+        this._onGameChanged();
     }
 
-    _showCelebration(kind, overlay) {
-        overlay.classList.remove('hidden');
-        this.celebration = kind;
+    _showFailureFromModal({kind, carton, result}) {
+        this.sounds.play(SOUND.ERROR);
+        this.celebration = buildCelebration({kind, ok: false, carton, result});
         this.projection.schedulePublish();
     }
 
-    _hideCelebration(overlay) {
-        overlay.classList.add('hidden');
+    _dismissCelebration() {
+        if (this.celebration === null) return;
+
         this.celebration = null;
         this.projection.schedulePublish();
     }
@@ -574,26 +585,14 @@ export class BingoMusical {
     // ============================================================
 
     triggerLinea() {
-        this._callGame({
-            canCall: () => this.game.canCallLinea(),
-            complete: () => this.game.completeLinea(),
-            sound: SOUND.WIN,
-            kind: CELEBRATION.LINEA,
-            overlay: this.dom.celebration.lineaOverlay
-        });
+        this._openCall(CHECK_MODE.LINEA, () => this.game.canCallLinea());
     }
 
     triggerBingo() {
-        this._callGame({
-            canCall: () => this.game.canCallBingo(),
-            complete: () => this.game.completeBingo(),
-            sound: SOUND.COMPLETE,
-            kind: CELEBRATION.BINGO,
-            overlay: this.dom.celebration.celebrationOverlay
-        });
+        this._openCall(CHECK_MODE.BINGO, () => this.game.canCallBingo());
     }
 
-    _callGame({canCall, complete, sound, kind, overlay}) {
+    _openCall(mode, canCall) {
         if (!this._ensureEnoughSongs()) return;
 
         const check = canCall();
@@ -602,10 +601,7 @@ export class BingoMusical {
             return;
         }
 
-        complete();
-        this._onGameChanged();
-        this.sounds.play(sound);
-        setTimeout(() => this._showCelebration(kind, overlay), CELEBRATION_DELAY_MS);
+        this.cartonCheck.open(mode);
     }
 
     _ensureEnoughSongs() {
@@ -974,12 +970,8 @@ export class BingoMusical {
 
         if (this.game.isGameStarted()) {
             if (this.game.allSongsPlayed(this.songs) && !this.game.isBingoCompleted()) {
-                this.game.completeBingo();
-                this._onGameChanged();
-                setTimeout(() => {
-                    this.sounds.play(SOUND.COMPLETE);
-                    this._showCelebration(CELEBRATION.BINGO, this.dom.celebration.celebrationOverlay);
-                }, CELEBRATION_DELAY_MS);
+                this._singFromModal({kind: CELEBRATION.BINGO, carton: null, result: null});
+                this.cartonCheck.open(CHECK_MODE.ENDED);
             }
         }
 
@@ -1012,6 +1004,7 @@ export class BingoMusical {
         const confirmed = await this.dialogs.showConfirm(MSG.game.confirmRestart);
 
         if (confirmed) {
+            this._dismissCelebration();
             this.game.resetGame();
             this.songs = this.songManager.resetPlayedStatus(this.songs);
 

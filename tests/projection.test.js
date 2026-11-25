@@ -31,7 +31,7 @@ const makeElements = () => {
     const elements = {
         header: spreadEl(), logo: spreadEl(), logoSlot: spreadEl(SLOT_RECT), gameName: spreadEl(), status: spreadEl(), icon: spreadEl(ICON_RECT), title: spreadEl(),
         counter: spreadEl(), history: spreadEl(), progressBar: spreadEl(), progressFill: spreadEl(), time: spreadEl(),
-        celebration: spreadEl(), celebrationTitle: spreadEl(), celebrationText: spreadEl()
+        celebration: spreadEl(), celebrationTitle: spreadEl(), celebrationText: spreadEl(), celebrationRows: spreadEl()
     };
     elements.celebration.classList.add('hidden');
     return elements;
@@ -545,63 +545,181 @@ test('la proyección avisa de que sigue abierta y de que se cierra', () => {
     assert.deepEqual(channel.sent, [{type: 'alive'}, {type: 'bye'}]);
 });
 
-test('buildProjectionState incluye la celebración activa y por defecto ninguna', () => {
-    const {songs, game} = makeGame({songCount: 26, played: 3});
-
-    assert.equal(buildProjectionState({songs, game, theme: 'dark', startedAt: null}).celebration, null);
-    assert.equal(buildProjectionState({songs, game, theme: 'dark', startedAt: null, celebration: 'bingo'}).celebration, 'bingo');
+const celebrationOf = (overrides = {}) => ({
+    kind: 'linea', ok: true, cartonId: 17,
+    rows: [{complete: true, songs: [
+        {icon: '🎵', iconType: 'emoji', played: true}, {icon: '🎸', iconType: 'emoji', played: true},
+        {icon: '🥁', iconType: 'emoji', played: true}, {icon: 'data:image/png;base64,AAAA', iconType: 'image', played: true}
+    ]}],
+    ...overrides
 });
 
-test('la proyección muestra la celebración de LÍNEA con su texto y el estilo verde, y la oculta al terminar', () => {
+const failedRow = (flags) => ({complete: flags.every(Boolean), songs: flags.map((played, index) => ({icon: '🎵' + index, iconType: 'emoji', played}))});
+
+test('buildProjectionState incluye la celebración activa y por defecto ninguna', () => {
+    const {songs, game} = makeGame({songCount: 26, played: 3});
+    const celebration = celebrationOf();
+
+    assert.equal(buildProjectionState({songs, game, theme: 'dark', startedAt: null}).celebration, null);
+    assert.deepEqual(buildProjectionState({songs, game, theme: 'dark', startedAt: null, celebration}).celebration, celebration);
+});
+
+test('LÍNEA correcta: título verde, cartón, y una fila con todos sus iconos marcados con tick verde', () => {
     const {view, el} = buildView();
     view.start();
 
-    send(view, stateFor({celebration: 'linea'}));
+    send(view, stateFor({celebration: celebrationOf()}));
 
     assert.equal(el.celebration.classList.contains('hidden'), false);
+    assert.equal(el.celebration.classList.contains('has-rows'), true);
     assert.equal(el.celebrationTitle.textContent, TEXT.projection.celebration.linea.title);
-    assert.equal(el.celebrationText.textContent, TEXT.projection.celebration.linea.text);
     assert.equal(el.celebrationTitle.classList.contains('celebration-title-linea'), true);
+    assert.equal(el.celebrationTitle.classList.contains('celebration-title-fail'), false);
+    assert.equal(el.celebrationText.textContent, TEXT.projection.celebration.carton(17));
+    assert.equal(el.celebrationRows.children.length, 1);
+
+    const songs = el.celebrationRows.children[0].children;
+    assert.equal(songs.length, 4);
+    assert.ok(songs.every(song => song.className.includes('celebration-song-ok')));
+    assert.ok(songs.every(song => song.children[1].textContent === '✓'));
+    assert.equal(songs[0].children[0].textContent, '🎵');
+    assert.equal(songs[3].children[0].tag, 'img');
+});
+
+test('LÍNEA con varias filas completas las muestra todas', () => {
+    const {view, el} = buildView();
+    view.start();
+    const rows = celebrationOf().rows;
+
+    send(view, stateFor({celebration: celebrationOf({rows: [rows[0], rows[0]]})}));
+
+    assert.equal(el.celebrationRows.children.length, 2);
+});
+
+test('BINGO correcto: título de bingo y las tres filas con tick verde en todos los iconos', () => {
+    const {view, el} = buildView();
+    view.start();
+    const full = [failedRow([true, true, true, true]), failedRow([true, true, true, true]), failedRow([true, true, true, true])];
+
+    send(view, stateFor({celebration: celebrationOf({kind: 'bingo', rows: full, cartonId: 3})}));
+
+    assert.equal(el.celebrationTitle.textContent, TEXT.projection.celebration.bingo.title);
+    assert.equal(el.celebrationTitle.classList.contains('celebration-title-linea'), false);
+    assert.equal(el.celebrationRows.children.length, 3);
+    assert.ok(el.celebrationRows.children.every(row => row.children.every(song => song.children[1].textContent === '✓')));
+    assert.equal(el.celebrationText.textContent, TEXT.projection.celebration.carton(3));
+});
+
+test('fallo: título de incorrecto en rojo, el cartón entero, ticks verdes en lo que ha salido y cruces rojas en lo que falta', () => {
+    const {view, el} = buildView();
+    view.start();
+    const rows = [failedRow([true, true, false, false]), failedRow([true, false, false, false]), failedRow([false, false, false, false])];
+
+    send(view, stateFor({celebration: celebrationOf({kind: 'linea', ok: false, rows, cartonId: 9})}));
+
+    assert.equal(el.celebrationTitle.textContent, TEXT.projection.celebration.fail.linea.title);
+    assert.equal(el.celebrationTitle.classList.contains('celebration-title-fail'), true);
+    assert.equal(el.celebrationTitle.classList.contains('celebration-title-linea'), false);
+    assert.equal(el.celebrationRows.children.length, 3);
+    const marks = el.celebrationRows.children.flatMap(row => row.children.map(song => song.children[1].textContent));
+    assert.equal(marks.filter(mark => mark === '✓').length, 3);
+    assert.equal(marks.filter(mark => mark === '✗').length, 9);
+    assert.ok(el.celebrationRows.children[2].children.every(song => song.className.includes('celebration-song-missing')));
+});
+
+test('fallo de BINGO usa su propio título', () => {
+    const {view, el} = buildView();
+    view.start();
+
+    send(view, stateFor({celebration: celebrationOf({kind: 'bingo', ok: false, rows: [failedRow([true, false])], cartonId: 2})}));
+
+    assert.equal(el.celebrationTitle.textContent, TEXT.projection.celebration.fail.bingo.title);
+});
+
+test('sin cartón (genérica) muestra el texto de felicitación y ninguna fila', () => {
+    const {view, el} = buildView();
+    view.start();
+
+    send(view, stateFor({celebration: {kind: 'bingo', ok: true, cartonId: null, rows: []}}));
+
+    assert.equal(el.celebrationText.textContent, TEXT.projection.celebration.bingo.text);
+    assert.equal(el.celebrationRows.children.length, 0);
+    assert.equal(el.celebration.classList.contains('has-rows'), false);
+});
+
+test('la pantalla se oculta cuando la celebración vuelve a ser null y se puede mostrar otra después', () => {
+    const {view, el} = buildView();
+    view.start();
+    send(view, stateFor({celebration: celebrationOf()}));
 
     send(view, stateFor({celebration: null}));
     assert.equal(el.celebration.classList.contains('hidden'), true);
-});
 
-test('la proyección muestra la celebración de BINGO sin el estilo de línea', () => {
-    const {view, el} = buildView();
-    view.start();
-    send(view, stateFor({celebration: 'linea'}));
-
-    send(view, stateFor({celebration: 'bingo'}));
-
-    assert.equal(el.celebrationTitle.textContent, TEXT.projection.celebration.bingo.title);
-    assert.equal(el.celebrationText.textContent, TEXT.projection.celebration.bingo.text);
-    assert.equal(el.celebrationTitle.classList.contains('celebration-title-linea'), false);
+    send(view, stateFor({celebration: celebrationOf({kind: 'bingo', ok: false, rows: [failedRow([false])]})}));
     assert.equal(el.celebration.classList.contains('hidden'), false);
+    assert.equal(el.celebrationTitle.textContent, TEXT.projection.celebration.fail.bingo.title);
 });
 
-test('mientras dura la celebración, los estados repetidos no vuelven a pintarla', () => {
+test('mientras la celebración no cambia, los estados repetidos no vuelven a pintarla', () => {
     const {view, el} = buildView();
     view.start();
-    send(view, stateFor({celebration: 'bingo'}));
+    send(view, stateFor({celebration: celebrationOf()}));
     el.celebrationTitle.textContent = 'marca';
+    const rowsBefore = el.celebrationRows.children[0];
 
-    send(view, stateFor({celebration: 'bingo', played: 5}));
+    send(view, stateFor({celebration: celebrationOf(), played: 5}));
 
     assert.equal(el.celebrationTitle.textContent, 'marca');
+    assert.equal(el.celebrationRows.children[0], rowsBefore);
 });
 
-test('un estado sin el campo celebration (versión anterior de la app) no muestra nada, y uno con valor desconocido se ignora', () => {
+test('un estado sin el campo celebration (versión anterior de la app) no muestra nada', () => {
     const {view, el} = buildView();
     view.start();
     const old = stateFor();
     delete old.celebration;
 
     send(view, old);
-    assert.equal(el.celebration.classList.contains('hidden'), true);
 
-    send(view, stateFor({celebration: 'fuegos', played: 9}));
-    assert.equal(el.counter.textContent, TEXT.projection.counter(2, 20));
+    assert.equal(el.celebration.classList.contains('hidden'), true);
+});
+
+test('un estado con una celebración mal formada se ignora entero', () => {
+    const bad = [
+        'linea',
+        {kind: 'fuegos', ok: true, cartonId: null, rows: []},
+        {kind: 'linea', ok: 'si', cartonId: null, rows: []},
+        {kind: 'linea', ok: true, cartonId: 'x', rows: []},
+        {kind: 'linea', ok: true, cartonId: 1, rows: 'no'},
+        {kind: 'linea', ok: true, cartonId: 1, rows: [failedRow([true]), failedRow([true]), failedRow([true]), failedRow([true])]},
+        {kind: 'linea', ok: true, cartonId: 1, rows: [{complete: true, songs: Array.from({length: 9}, () => ({icon: 'a', iconType: 'emoji', played: true}))}]},
+        {kind: 'linea', ok: true, cartonId: 1, rows: [{complete: true, songs: [{icon: 5, iconType: 'emoji', played: true}]}]},
+        {kind: 'linea', ok: true, cartonId: 1, rows: [{complete: true, songs: [{icon: 'a', iconType: 'otro', played: true}]}]},
+        {kind: 'linea', ok: true, cartonId: 1, rows: [{complete: true, songs: [{icon: 'a', iconType: 'emoji', played: 'si'}]}]},
+        {kind: 'linea', ok: true, cartonId: 1, rows: [{complete: 'si', songs: []}]},
+        {kind: 'linea', ok: true, cartonId: 1, rows: [null]}
+    ];
+
+    for (const celebration of bad) {
+        const {view, el} = buildView();
+        view.start();
+
+        send(view, stateFor({celebration, played: 9}));
+
+        assert.equal(el.celebration.classList.contains('hidden'), true, JSON.stringify(celebration));
+        assert.equal(el.counter.textContent, '', JSON.stringify(celebration));
+    }
+});
+
+test('un icono de imagen que no es data:image no se pinta en la celebración', () => {
+    const {view, el} = buildView();
+    view.start();
+    const rows = [{complete: true, songs: [{icon: 'https://malo.example/x.png', iconType: 'image', played: true}]}];
+
+    send(view, stateFor({celebration: celebrationOf({rows})}));
+
+    assert.equal(el.celebrationRows.children[0].children[0].children[0].tag, 'span');
+    assert.equal(el.celebrationRows.children[0].children[0].children[0].textContent, '');
 });
 
 const VIEWPORT = {width: 1920, height: 1080};

@@ -25,17 +25,24 @@ const build = ({played = 0, cartones = 3} = {}) => {
 
     const elements = {
         checkCartonModal: mkDialog(), closeCheckCartonModalBtn: mkEl('button'), checkCartonNumberInput: Object.assign(mkEl('input'), {focus() { elements.focused = true; }}),
-        checkCartonSubmitBtn: mkEl('button'), checkCartonResult: mkEl('div')
+        checkCartonSubmitBtn: mkEl('button'), checkCartonResult: mkEl('div'), checkCartonTitle: mkEl('h2'), checkCartonActions: mkEl('div')
     };
+    const calls = [];
     const log = [];
     const modal = new CartonCheckModal({
         elements, openButton: mkEl('button'), game,
-        modals: {registerWithCloseButton() {}, openWithClick: () => log.push('abre')},
+        modals: {registerModal: (element, onClose) => { elements.onClose = onClose; }, openWithClick: () => log.push('abre'), closeWithClick: () => log.push('cierra')},
         dialogs: {showAlert: (alert) => log.push(['aviso', alert])},
-        sounds: {play: (name) => log.push(['sonido', name])}
+        sounds: {play: (name) => log.push(['sonido', name])},
+        callbacks: {
+            onSing: ({kind, carton, result}) => calls.push(['canta', kind, carton?.id ?? null, result === null ? null : result.linea]),
+            onShowFailure: ({kind, carton}) => calls.push(['fallo', kind, carton.id]),
+            onDismiss: () => calls.push(['quita']),
+            onRestart: async () => { calls.push(['reinicia']); }
+        }
     });
     modal.init();
-    return {modal, elements, log, game, generated, songs};
+    return {modal, elements, log, game, generated, songs, calls};
 };
 
 const type = (elements, value) => { elements.checkCartonNumberInput.value = String(value); };
@@ -194,4 +201,294 @@ test('el estado se mide con las canciones del historial, no con una copia', () =
     modal.check();
 
     assert.ok(elements.checkCartonResult.children[2].className.includes('check-ok'));
+});
+
+const labels = (elements) => elements.checkCartonActions.children.filter(child => child.tag === 'button').map(button => button.textContent);
+const click = (elements, index) => elements.checkCartonActions.children.filter(child => child.tag === 'button')[index].fire('click');
+const playRow = (game, songs, carton, rowIndex) => {
+    const ids = new Set(carton.rows[rowIndex].cells.filter(cell => cell.song).map(cell => cell.song.id));
+    songs.filter(song => ids.has(song.id)).forEach(song => game.markSongAsPlayed(song));
+};
+const playAllOf = (game, songs, carton) => carton.rows.forEach((row, index) => playRow(game, songs, carton, index));
+
+test('abrir en modo línea pone su título y deja el campo listo, sin botones hasta comprobar', () => {
+    const {modal, elements} = build();
+
+    modal.open('linea');
+
+    assert.equal(elements.checkCartonTitle.textContent, TEXT.checkCarton.modeTitle.linea);
+    assert.equal(elements.checkCartonNumberInput.disabled, false);
+    assert.deepEqual(labels(elements), []);
+});
+
+test('comprobar con una primera línea ofrece cantarla; al pulsarlo canta con ese cartón y deja continuar', () => {
+    const {modal, elements, calls, game, songs, generated} = build();
+    playRow(game, songs, generated[0], 0);
+
+    modal.open();
+    type(elements, 1);
+    modal.check();
+
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.sing.linea]);
+    click(elements, 0);
+
+    assert.deepEqual(calls, [['canta', 'linea', 1, true]]);
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.continuePlaying]);
+    assert.equal(elements.checkCartonActions.children[0].textContent, TEXT.checkCarton.onProjector);
+    assert.equal(elements.checkCartonResult.children.at(-1).textContent.includes(TEXT.checkCarton.onProjector), false);
+});
+
+test('con línea y bingo a la vez se ofrecen las dos, y cantar bingo deja continuar y comenzar de nuevo', () => {
+    const {modal, elements, calls, game, songs, generated} = build();
+    playAllOf(game, songs, generated[0]);
+
+    modal.open();
+    type(elements, 1);
+    modal.check();
+
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.sing.linea, TEXT.checkCarton.sing.bingo]);
+    click(elements, 1);
+
+    assert.deepEqual(calls, [['canta', 'bingo', 1, true]]);
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.continuePlaying, TEXT.checkCarton.restart]);
+});
+
+test('si la línea ya se cantó, no se ofrece otra vez; el bingo sí si lo hay', () => {
+    const {modal, elements, game, songs, generated} = build();
+    playAllOf(game, songs, generated[0]);
+    game.completeLinea();
+
+    modal.open();
+    type(elements, 1);
+    modal.check();
+
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.sing.bingo]);
+});
+
+test('si la línea y el bingo ya se cantaron, no hay botones de cantar', () => {
+    const {modal, elements, game, songs, generated} = build();
+    playAllOf(game, songs, generated[0]);
+    game.completeLinea();
+    game.completeBingo();
+
+    modal.open();
+    type(elements, 1);
+    modal.check();
+
+    assert.deepEqual(labels(elements), []);
+});
+
+test('al comprobar sin línea no hay botones: el modo comprobar nunca ofrece el fallo', () => {
+    const {modal, elements} = build({played: 2});
+
+    modal.open();
+    type(elements, 1);
+    modal.check();
+
+    assert.deepEqual(labels(elements), []);
+});
+
+test('con muy pocas canciones reproducidas no se ofrece cantar aunque el cartón las tenga', () => {
+    const {modal, elements, game, songs, generated} = build();
+    const first = generated[0].rows[0].cells.filter(cell => cell.song).slice(0, 2).map(cell => cell.song.id);
+    songs.filter(song => first.includes(song.id)).forEach(song => game.markSongAsPlayed(song));
+
+    modal.open();
+    type(elements, 1);
+    modal.check();
+
+    assert.deepEqual(labels(elements), []);
+});
+
+test('en modo línea, un cartón sin línea ofrece mostrar el fallo; al pulsarlo se envía y se puede continuar', () => {
+    const {modal, elements, calls} = build({played: 3});
+
+    modal.open('linea');
+    type(elements, 2);
+    modal.check();
+
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.showFailure]);
+    click(elements, 0);
+
+    assert.deepEqual(calls, [['fallo', 'linea', 2]]);
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.continuePlaying]);
+    assert.equal(elements.checkCartonActions.children[0].textContent, TEXT.checkCarton.failureOnProjector);
+});
+
+test('en modo línea, un cartón con línea ofrece solo cantar la línea aunque ya tenga el bingo', () => {
+    const {modal, elements, game, songs, generated} = build();
+    playAllOf(game, songs, generated[0]);
+
+    modal.open('linea');
+    type(elements, 1);
+    modal.check();
+
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.sing.linea]);
+});
+
+test('en modo bingo, con línea pero sin bingo ofrece el fallo; con bingo ofrece cantarlo', () => {
+    const {modal, elements, calls, game, songs, generated} = build();
+    playRow(game, songs, generated[0], 0);
+    playRow(game, songs, generated[0], 1);
+    playRow(game, songs, generated[0], 2);
+
+    modal.open('bingo');
+    type(elements, 2);
+    modal.check();
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.showFailure]);
+    click(elements, 0);
+    assert.deepEqual(calls, [['fallo', 'bingo', 2]]);
+
+    modal.open('bingo');
+    type(elements, 1);
+    modal.check();
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.sing.bingo]);
+});
+
+test('cerrar la ventana después de cantar quita la pantalla de la proyección, una sola vez', () => {
+    const {modal, elements, calls, game, songs, generated} = build();
+    playRow(game, songs, generated[0], 0);
+    modal.open();
+    type(elements, 1);
+    modal.check();
+    click(elements, 0);
+
+    elements.checkCartonModal.fire('close');
+    elements.checkCartonModal.fire('close');
+
+    assert.deepEqual(calls.filter(call => call[0] === 'quita'), [['quita']]);
+});
+
+test('comprobar otro cartón después de cantar quita la pantalla anterior', () => {
+    const {modal, elements, calls, game, songs, generated} = build();
+    playRow(game, songs, generated[0], 0);
+    modal.open();
+    type(elements, 1);
+    modal.check();
+    click(elements, 0);
+
+    type(elements, 2);
+    modal.check();
+
+    assert.deepEqual(calls.filter(call => call[0] === 'quita'), [['quita']]);
+});
+
+test('cerrar la ventana sin haber mostrado nada no toca la proyección', () => {
+    const {modal, elements, calls} = build({played: 2});
+    modal.open();
+    type(elements, 1);
+    modal.check();
+
+    elements.checkCartonModal.fire('close');
+
+    assert.deepEqual(calls, []);
+});
+
+test('«Continuar jugando» cierra la ventana y quita la pantalla', () => {
+    const {modal, elements, calls, log, game, songs, generated} = build();
+    playRow(game, songs, generated[0], 0);
+    modal.open();
+    type(elements, 1);
+    modal.check();
+    click(elements, 0);
+
+    click(elements, 0);
+
+    assert.ok(log.includes('cierra'));
+    assert.deepEqual(calls.at(-1), ['quita']);
+});
+
+test('«Comenzar de nuevo» reinicia la partida y luego cierra la ventana', async () => {
+    const {modal, elements, calls, log, game, songs, generated} = build();
+    playAllOf(game, songs, generated[0]);
+    modal.open('bingo');
+    type(elements, 1);
+    modal.check();
+    click(elements, 0);
+
+    click(elements, 1);
+    await new Promise(resolve => setImmediate(resolve));
+
+    assert.deepEqual(calls.filter(call => call[0] === 'reinicia'), [['reinicia']]);
+    assert.ok(log.includes('cierra'));
+    assert.deepEqual(calls.at(-1), ['quita']);
+});
+
+test('sin cartones, cantar LÍNEA abre la ventana con un único botón para cantar sin cartón', () => {
+    const {modal, elements, calls, log} = build({cartones: 0});
+
+    modal.open('linea');
+
+    assert.ok(log.includes('abre'));
+    assert.equal(elements.checkCartonNumberInput.disabled, true);
+    assert.equal(elements.checkCartonSubmitBtn.disabled, true);
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.singWithoutCarton.linea]);
+
+    click(elements, 0);
+    assert.deepEqual(calls, [['canta', 'linea', null, null]]);
+});
+
+test('sin cartones, cantar BINGO ofrece cantar sin cartón y comprobar sigue avisando', () => {
+    const {modal, elements, log} = build({cartones: 0});
+
+    modal.open('bingo');
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.singWithoutCarton.bingo]);
+
+    log.length = 0;
+    modal.open('check');
+    assert.deepEqual(log, [['aviso', MSG.checkCarton.noCartones]]);
+});
+
+test('el aviso de fin de canciones muestra el bingo con continuar y comenzar de nuevo, y cerrarlo quita la pantalla', () => {
+    const {modal, elements, calls} = build({cartones: 0});
+
+    modal.open('ended');
+
+    assert.equal(elements.checkCartonTitle.textContent, TEXT.checkCarton.modeTitle.ended);
+    assert.equal(elements.checkCartonNumberInput.disabled, true);
+    assert.deepEqual(labels(elements), [TEXT.checkCarton.continuePlaying, TEXT.checkCarton.restart]);
+
+    elements.checkCartonModal.fire('close');
+    assert.deepEqual(calls, [['quita']]);
+});
+
+test('reabrir la ventana empieza limpia: sin resultado, sin botones y con el campo vacío', () => {
+    const {modal, elements, game, songs, generated} = build();
+    playRow(game, songs, generated[0], 0);
+    modal.open();
+    type(elements, 1);
+    modal.check();
+
+    modal.open('bingo');
+
+    assert.equal(elements.checkCartonResult.children.length, 0);
+    assert.deepEqual(labels(elements), []);
+    assert.equal(elements.checkCartonNumberInput.value, '');
+});
+
+test('Esc, clic fuera o la X cierran la ventana a través del mismo cierre y quitan la pantalla de la proyección al instante', () => {
+    const {modal, elements, calls, log, game, songs, generated} = build();
+    playRow(game, songs, generated[0], 0);
+    modal.open();
+    type(elements, 1);
+    modal.check();
+    click(elements, 0);
+
+    elements.onClose();
+
+    assert.ok(log.includes('cierra'));
+    assert.deepEqual(calls.at(-1), ['quita']);
+});
+
+test('el botón X de la ventana la cierra y quita la pantalla', () => {
+    const {modal, elements, calls, game, songs, generated} = build();
+    playRow(game, songs, generated[0], 0);
+    modal.open();
+    type(elements, 1);
+    modal.check();
+    click(elements, 0);
+
+    elements.closeCheckCartonModalBtn.fire('click');
+
+    assert.deepEqual(calls.at(-1), ['quita']);
 });

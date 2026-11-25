@@ -9,6 +9,7 @@ const view = new ProjectionView({
         celebration: byId('projection-celebration'),
         celebrationTitle: byId('projection-celebration-title'),
         celebrationText: byId('projection-celebration-text'),
+        celebrationRows: byId('projection-celebration-rows'),
         logo: byId('projection-logo'),
         logoSlot: byId('projection-logo-slot'),
         gameName: byId('projection-game-name'),

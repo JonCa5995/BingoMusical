@@ -85,11 +85,6 @@
     background: var(--button-secondary-bg);
 }
 
-.btn-large {
-    padding: 1rem 2rem;
-    font-size: 1.25rem;
-}
-
 .btn-icon {
     display: flex;
     align-items: center;

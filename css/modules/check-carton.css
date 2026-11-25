@@ -103,3 +103,19 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+.check-carton-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.check-actions-status {
+    flex-basis: 100%;
+    margin: 0;
+}
+
+.check-carton-actions:empty {
+    display: none;
+}

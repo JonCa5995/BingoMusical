@@ -40,7 +40,6 @@ export const MAX_CLIP_SECONDS = 120;
 
 // Esperas de la interfaz (en milisegundos)
 export const SEARCH_DEBOUNCE_MS = 300;             // tras la última tecla, antes de filtrar la lista
-export const CELEBRATION_DELAY_MS = 500;           // entre cantar LÍNEA/BINGO y mostrar la celebración
 export const IMPORT_MESSAGE_DELAY_MS = 2000;       // entre el aviso de duplicados y el mensaje final de importar
 export const CONTINUOUS_NEXT_SONG_DELAY_MS = 1000; // pausa entre canciones en modo automático
 export const PRINT_DIALOG_DELAY_MS = 250;          // para que cargue el documento antes de abrir el diálogo de impresión
@@ -160,6 +159,14 @@ export const ALERT_KIND = Object.freeze({
 export const CELEBRATION = Object.freeze({
     LINEA: 'linea',
     BINGO: 'bingo'
+});
+
+/** Para qué se abre la ventana de cartón: comprobar, cantar LÍNEA, cantar BINGO o avisar de que se acabaron las canciones */
+export const CHECK_MODE = Object.freeze({
+    CHECK: 'check',
+    LINEA: 'linea',
+    BINGO: 'bingo',
+    ENDED: 'ended'
 });
 
 export const SOUND = Object.freeze({

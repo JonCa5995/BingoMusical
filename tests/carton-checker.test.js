@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {evaluateCarton} from '../js/modules/CartonChecker.js';
+import {buildCelebration, evaluateCarton} from '../js/modules/CartonChecker.js';
 import {BingoCartonGenerator} from '../js/bingoCartonGenerator.js';
 import {CELL_TYPE} from '../js/constants.js';
 import {makeSongs, seedRandom} from './helpers/seed.js';
@@ -106,4 +106,77 @@ test('funciona con cartones reales generados y cuadra con el estado de reproducc
     } finally {
         seed.restore();
     }
+});
+
+const richCarton = () => ({
+    id: 7,
+    rows: [
+        {cells: [songCell(1), songCell(2), songCell(3), songCell(4)].map((cell, i) => ({...cell, song: {...cell.song, icon: '🎵' + i, iconType: 'emoji'}}))},
+        {cells: [songCell(5), songCell(6), songCell(7), songCell(8)].map(cell => ({...cell, song: {...cell.song, icon: 'data:image/png;base64,AAAA', iconType: 'image'}}))},
+        {cells: [songCell(9), decorative(1), songCell(10), songCell(11)].map(cell => cell.song ? {...cell, song: {...cell.song, icon: '🎸', iconType: 'emoji'}} : cell)}
+    ]
+});
+
+test('buildCelebration de una línea correcta incluye solo las filas completas, con los iconos y su estado', () => {
+    const cartonWithLine = richCarton();
+    const result = evaluateCarton(cartonWithLine, new Set([1, 2, 3, 4, 9]));
+
+    const celebration = buildCelebration({kind: 'linea', ok: true, carton: cartonWithLine, result});
+
+    assert.equal(celebration.kind, 'linea');
+    assert.equal(celebration.ok, true);
+    assert.equal(celebration.cartonId, 7);
+    assert.equal(celebration.rows.length, 1);
+    assert.deepEqual(celebration.rows[0].songs, [0, 1, 2, 3].map(i => ({icon: '🎵' + i, iconType: 'emoji', played: true})));
+    assert.equal(celebration.rows[0].complete, true);
+});
+
+test('buildCelebration de una línea correcta con varias filas completas las incluye todas', () => {
+    const cartonWithLines = richCarton();
+    const result = evaluateCarton(cartonWithLines, new Set([1, 2, 3, 4, 5, 6, 7, 8]));
+
+    const celebration = buildCelebration({kind: 'linea', ok: true, carton: cartonWithLines, result});
+
+    assert.equal(celebration.rows.length, 2);
+    assert.ok(celebration.rows.every(row => row.complete));
+});
+
+test('buildCelebration de un bingo correcto incluye las tres filas, todas con sus iconos como salidos', () => {
+    const full = richCarton();
+    const result = evaluateCarton(full, new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]));
+
+    const celebration = buildCelebration({kind: 'bingo', ok: true, carton: full, result});
+
+    assert.equal(celebration.rows.length, 3);
+    assert.ok(celebration.rows.every(row => row.complete && row.songs.every(song => song.played)));
+    assert.equal(celebration.rows[1].songs[0].iconType, 'image');
+    assert.equal(celebration.rows[2].songs.length, 3);
+});
+
+test('buildCelebration de un fallo incluye las tres filas con lo que ha salido y lo que no', () => {
+    const partial = richCarton();
+    const result = evaluateCarton(partial, new Set([1, 2, 5]));
+
+    const celebration = buildCelebration({kind: 'linea', ok: false, carton: partial, result});
+
+    assert.equal(celebration.ok, false);
+    assert.equal(celebration.rows.length, 3);
+    assert.deepEqual(celebration.rows[0].songs.map(song => song.played), [true, true, false, false]);
+    assert.deepEqual(celebration.rows[1].songs.map(song => song.played), [true, false, false, false]);
+    assert.equal(celebration.rows.some(row => row.complete), false);
+});
+
+test('buildCelebration sin cartón devuelve la pantalla genérica, sin filas', () => {
+    assert.deepEqual(buildCelebration({kind: 'bingo', ok: true}), {kind: 'bingo', ok: true, cartonId: null, rows: []});
+    assert.deepEqual(buildCelebration({kind: 'linea', ok: true, carton: null, result: null}), {kind: 'linea', ok: true, cartonId: null, rows: []});
+});
+
+test('buildCelebration solo lleva datos simples: sin títulos ni objetos de canción', () => {
+    const full = richCarton();
+    const result = evaluateCarton(full, new Set([1, 2, 3, 4]));
+
+    const celebration = buildCelebration({kind: 'linea', ok: true, carton: full, result});
+
+    assert.deepEqual(Object.keys(celebration.rows[0].songs[0]).sort(), ['icon', 'iconType', 'played']);
+    assert.doesNotThrow(() => structuredClone(celebration));
 });
