@@ -9,13 +9,13 @@ import {DECORATIVE_ICON_HTML} from './CartonHtmlRenderer.js';
 export class CartonManager {
     /**
      * @param {DOMElements} dom
-     * @param {AudioManager} audio
+     * @param {SoundEffects} sounds - Efectos de sonido de cada acción
      * @param {BingoCartonGenerator} cartonGenerator - Genera los datos de los cartones
      * @param {CartonExporter} cartonExporter - Entrega los cartones (HTML/PDF)
      */
-    constructor(dom, audio, cartonGenerator, cartonExporter) {
+    constructor(dom, sounds, cartonGenerator, cartonExporter) {
         this.dom = dom;
-        this.audio = audio;
+        this.sounds = sounds;
         this.cartonGenerator = cartonGenerator;
 
         // Exportadores por formato: añadir uno nuevo no requiere modificar printCartonesWithConfig
@@ -176,14 +176,14 @@ export class CartonManager {
             return {success: false};
         }
 
-        this.audio.playEffect('start');
+        this.sounds.play('start');
 
         try {
             // Generar cartones pasando los existentes si estamos en modo añadir
             const cartonesToPass = mode === 'add' ? existingCartones : [];
             const cartones = this.cartonGenerator.generateCartones(songs, count, cartonesToPass);
 
-            this.audio.playEffect('win');
+            this.sounds.play('win');
             return {success: true, cartones};
         } catch (error) {
             showAlertCallback(`Error al generar cartones: ${error.message}`, 'Error');

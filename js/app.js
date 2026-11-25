@@ -2,13 +2,18 @@
 import {BingoCartonGenerator} from "./bingoCartonGenerator.js";
 import {DOMElements} from "./modules/DOMElements.js";
 import {AudioManager} from "./modules/AudioManager.js";
-import {StorageManager} from "./modules/StorageManager.js";
+import {SoundEffects} from "./modules/SoundEffects.js";
+import {AudioControlsView} from "./modules/AudioControlsView.js";
+import {PlaylistFile} from "./modules/PlaylistFile.js";
+import {PreferencesStore} from "./modules/PreferencesStore.js";
+import {ThemeManager} from "./modules/ThemeManager.js";
+import {FullscreenManager} from "./modules/FullscreenManager.js";
+import {DragAndDropUploader} from "./modules/DragAndDropUploader.js";
 import {IconManager} from "./modules/IconManager.js";
 import {SongManager} from "./modules/SongManager.js";
 import {GameManager} from "./modules/GameManager.js";
 import {UIManager} from "./modules/UIManager.js";
 import {ModalManager} from "./modules/ModalManager.js";
-import {SettingsManager} from "./modules/SettingsManager.js";
 import {CartonManager} from "./modules/CartonManager.js";
 import {KeyboardShortcuts} from "./modules/KeyboardShortcuts.js";
 import {CartonHtmlRenderer} from "./modules/CartonHtmlRenderer.js";
@@ -32,15 +37,48 @@ class BingoMusical {
         this.cartonGenerator = new BingoCartonGenerator();
         this.songsFolder = DEFAULT_SONGS_FOLDER;
         this.dom = new DOMElements();
-        this.audio = new AudioManager(this.dom);
-        this.storage = new StorageManager();
-        this.icons = new IconManager(this.dom, this.audio, () => this.songs);
+        this.sounds = new SoundEffects();
+        this.audio = new AudioManager(this.dom.audioPlayer, this.sounds);
+        this.audioControls = new AudioControlsView({
+            audioElement: this.dom.audioPlayer,
+            elements: {
+                progressBar: this.dom.progressBar,
+                progressFill: this.dom.progressFill,
+                currentTimeSpan: this.dom.currentTimeSpan,
+                durationSpan: this.dom.durationSpan,
+                musicVolumeSlider: this.dom.musicVolumeSlider,
+                musicVolumeValueSpan: this.dom.musicVolumeValueSpan,
+                effectsVolumeSlider: this.dom.effectsVolumeSlider,
+                effectsVolumeValueSpan: this.dom.effectsVolumeValueSpan
+            },
+            handlers: {
+                onSeek: (fraction) => this.audio.seekToFraction(fraction),
+                onMusicVolume: (volume) => this.audio.setVolume(volume),
+                onEffectsVolume: (volume) => this.sounds.setVolume(volume)
+            }
+        });
+        this.playlistFile = new PlaylistFile();
+        this.icons = new IconManager(this.dom, this.sounds, () => this.songs);
         this.songManager = new SongManager();
         this.game = new GameManager();
         this.ui = new UIManager(this.dom, MIN_SONGS_REQUIRED);
-        this.modal = new ModalManager(this.dom, this.audio);
-        this.settings = new SettingsManager(this.dom, this.audio, this.storage);
-        this.carton = new CartonManager(this.dom, this.audio, this.cartonGenerator,
+        this.modal = new ModalManager(this.dom, this.sounds);
+        this.theme = new ThemeManager({
+            preferences: new PreferencesStore(),
+            toggleButton: this.dom.themeToggleBtn,
+            icon: this.dom.themeIcon,
+            onToggle: () => this.sounds.play('click')
+        });
+        this.fullscreen = new FullscreenManager({
+            button: this.dom.fullscreenBtn,
+            onToggle: () => this.sounds.play('click')
+        });
+        this.dragAndDrop = new DragAndDropUploader({
+            zones: [...document.querySelectorAll('.file-label'), this.dom.songsSection],
+            fileInput: this.dom.addSongsInput,
+            isEnabled: () => !this.game.isGameStarted()
+        });
+        this.carton = new CartonManager(this.dom, this.sounds, this.cartonGenerator,
             new CartonExporter(new CartonHtmlRenderer())
         );
         this.importer = new PlaylistImporter({
@@ -73,8 +111,10 @@ class BingoMusical {
 
     init() {
         this.setupEventListeners();
-        this.setupDragAndDrop();
-        this.settings.loadThemePreference();
+        this.audioControls.bind();
+        this.dragAndDrop.init();
+        this.theme.init();
+        this.fullscreen.init();
         this.renderSongsList();
         this.updateCounters();
         this.updateControls(false);
@@ -90,9 +130,6 @@ class BingoMusical {
 
         // Si el navegador rechaza la reproducción, reflejar en los controles que no suena
         this.dom.audioPlayer.addEventListener('playbackfailed', () => this.updateControls(false));
-
-        // Clic en barra de progreso
-        this.dom.progressBar.addEventListener('click', (e) => this.audio.seekTo(e));
     }
 
     _setupSongManagementEventListeners() {
@@ -174,7 +211,6 @@ class BingoMusical {
         this._setupConfigEventListeners();
         this._setupModalEventListeners();
         this._setupCelebrationEventListeners();
-        this._setupFullscreenEventListeners();
         this._setupKeyboardShortcuts();
         this._setupGameNameEventListeners();
 
@@ -183,9 +219,7 @@ class BingoMusical {
         this.dom.importFileInput.addEventListener('change', (e) => this.importPlaylist(e));
         this.dom.lineaBtn.addEventListener('click', () => this.triggerLinea());
         this.dom.bingoBtn.addEventListener('click', () => this.triggerBingo());
-        this.dom.fullscreenBtn.addEventListener('click', () => this.settings.toggleFullscreen());
         this.dom.shortcutsHelpBtn.addEventListener('click', () => this.showKeyboardShortcutsHelp());
-        this.dom.themeToggleBtn.addEventListener('click', () => this.settings.toggleTheme());
     }
 
     _setupGameNameEventListeners() {
@@ -244,10 +278,6 @@ class BingoMusical {
         });
     }
 
-    _setupFullscreenEventListeners() {
-        document.addEventListener('fullscreenchange', () => this.settings.onFullscreenChange());
-    }
-
     checkOpenModals() {
         return this.modal.checkOpenModals();
     }
@@ -296,7 +326,7 @@ class BingoMusical {
             })
             .register('f', {
                 icon: '⛶', label: 'F', description: 'Pantalla completa',
-                action: () => this.settings.toggleFullscreen()
+                action: () => this.fullscreen.toggle()
             })
             .register('l', {
                 icon: '📏', label: 'L', description: 'Cantar LÍNEA',
@@ -351,17 +381,6 @@ class BingoMusical {
 
     closeConfirmModal(result) {
         this.modal.closeConfirmModal(result);
-    }
-
-    // ============================================================
-    // CONFIGURACIÓN Y DRAG & DROP
-    // ============================================================
-
-    setupDragAndDrop() {
-        this.settings.setupDragAndDrop(
-            () => this.game.isGameStarted(),
-            null
-        );
     }
 
     // ============================================================
@@ -445,7 +464,7 @@ class BingoMusical {
         }
 
         this.game.completeLinea();
-        this.audio.playEffect('win');
+        this.sounds.play('win');
         setTimeout(() => this.dom.lineaOverlay.classList.remove('hidden'), 500);
     }
 
@@ -464,7 +483,7 @@ class BingoMusical {
         }
 
         this.game.completeBingo();
-        this.audio.playEffect('complete');
+        this.sounds.play('complete');
         setTimeout(() => this.dom.celebrationOverlay.classList.remove('hidden'), 500);
     }
 
@@ -477,12 +496,12 @@ class BingoMusical {
             return;
         }
 
-        this.audio.playEffect('click');
+        this.sounds.play('click');
         this.modal.openModal(this.dom.configModal);
     }
 
     closeConfigModal() {
-        this.audio.playEffect('click');
+        this.sounds.play('click');
         this.modal.closeModal(this.dom.configModal);
     }
 
@@ -493,7 +512,7 @@ class BingoMusical {
         this.game.setTitleRevealTime(titleRevealTime);
         this.game.setIconRevealTime(iconRevealTime);
 
-        this.audio.playEffect('win');
+        this.sounds.play('win');
         this.showAlert(
             `Configuración guardada:\n\n` +
             `• Tiempo para revelar título: ${titleRevealTime} segundos\n` +
@@ -510,10 +529,10 @@ class BingoMusical {
     exportPlaylist() {
         const gameName = this.game.getGameName() || 'Bingo Musical';
         const cartones = this.game.getCartones();
-        const result = this.storage.exportPlaylist(this.songs, this.songsFolder, gameName, cartones);
+        const result = this.playlistFile.export(this.songs, this.songsFolder, gameName, cartones);
 
         if (result.success) {
-            this.audio.playEffect('click');
+            this.sounds.play('click');
             this.showAlert(result.message, 'Exportación Exitosa');
         } else {
             this.showAlert(result.error, 'Error al Exportar');
@@ -529,8 +548,8 @@ class BingoMusical {
             return;
         }
 
-        // Usar StorageManager para leer el archivo
-        const result = await this.storage.importPlaylist(file);
+        // Leer y validar el archivo JSON
+        const result = await this.playlistFile.read(file);
 
         if (!result.success) {
             this.showAlert(`Error al importar la lista: ${result.error}`, 'Error de Importación');
@@ -562,7 +581,7 @@ class BingoMusical {
 
         // Show duplicate warning first, if any
         if (duplicates.length > 0) {
-            this.audio.playEffect('error');
+            this.sounds.play('error');
             const message = `Se omitieron las siguientes canciones duplicadas:\n\n- ${duplicates.join('\n- ')}`;
             this.showAlert(message, 'Canciones Duplicadas Omitidas');
         }
@@ -572,11 +591,11 @@ class BingoMusical {
             let message;
             let messageTitle;
             if (this.songs.length === 0) {
-                this.audio.playEffect('error');
+                this.sounds.play('error');
                 message = `Se han importado 0 canciones.\n\nRevisa que los archivos de audio estén en: ${this.songsFolder}\ny que los nombres coincidan con los títulos.`;
                 messageTitle = 'Error al Importar';
             } else {
-                this.audio.playEffect('win');
+                this.sounds.play('win');
                 message = `Lista importada con ${this.songs.length} canciones.\n\nLos archivos de audio deben estar en: ${this.songsFolder}`;
                 messageTitle = 'Importación Exitosa';
             }
@@ -637,7 +656,7 @@ class BingoMusical {
 
         if (result.newSongs.length > 0) {
             this.songs.push(...result.newSongs);
-            this.audio.playEffect('click');
+            this.sounds.play('click');
             this.refreshUI();
         }
 
@@ -659,7 +678,7 @@ class BingoMusical {
         }
 
         this.songs = this.songManager.deleteSong(this.songs, songId);
-        this.audio.playEffect('click');
+        this.sounds.play('click');
         this.refreshUI();
     }
 
@@ -698,7 +717,7 @@ class BingoMusical {
     onSongClick(song) {
         // Fuera de partida, pulsar una canción la escucha
         if (song.file && !this.game.isGameStarted()) {
-            this.audio.playEffect('click');
+            this.sounds.play('click');
             this.playSong(song.id);
         }
     }
@@ -734,7 +753,7 @@ class BingoMusical {
 
         if (confirmed) {
             this.songs = this.songManager.deleteAllSongs();
-            this.audio.playEffect('click');
+            this.sounds.play('click');
 
             // Resetear el flag de cartones generados, el nombre del juego y los cartones
             this.game.clearCartones();
@@ -748,7 +767,7 @@ class BingoMusical {
 
     toggleContinuousMode() {
         const continuousMode = this.game.toggleContinuousMode();
-        if (continuousMode) this.audio.playEffect('start');
+        if (continuousMode) this.sounds.play('start');
         this._renderContinuousModeButton(continuousMode);
     }
 
@@ -821,7 +840,7 @@ class BingoMusical {
             if (this.game.markSongAsPlayed(song)) {
                 this.addToHistory(song);
                 this.updateCounters();
-                this.audio.playEffect('win');
+                this.sounds.play('win');
             }
 
             // Always re-render the list to show the current playing song
@@ -898,7 +917,7 @@ class BingoMusical {
     }
 
     updateControls(playing) {
-        const hasSongLoaded = Boolean(this.dom.audioPlayer.src);
+        const hasSongLoaded = this.audio.hasSongLoaded();
         const noSongsLeft = this.game.allSongsPlayed(this.songs);
         this.ui.updateControls(playing, this.game.isGameStarted(), hasSongLoaded, noSongsLeft);
     }
@@ -921,7 +940,7 @@ class BingoMusical {
                 // All songs have been played, trigger BINGO automatically
                 this.game.completeBingo();
                 setTimeout(() => {
-                    this.audio.playEffect('complete');
+                    this.sounds.play('complete');
                     this.dom.celebrationOverlay.classList.remove('hidden');
                 }, 500);
             }
@@ -950,13 +969,13 @@ class BingoMusical {
 
         // Agregar evento click para reproducir
         historyItem.addEventListener('click', () => {
-            this.audio.playEffect('click');
+            this.sounds.play('click');
             this.playSong(song.id);
         });
     }
 
     async reiniciarJuego() {
-        this.audio.playEffect('click');
+        this.sounds.play('click');
 
         const confirmed = await this.showConfirm(
             '¿Estás seguro de que quieres reiniciar el juego? Esto limpiará el historial y el progreso actual.',
@@ -1009,12 +1028,12 @@ class BingoMusical {
         }
 
         // Abrir modal de opciones
-        this.audio.playEffect('click');
+        this.sounds.play('click');
         this.modal.openModal(this.dom.cartonOptionsModal);
     }
 
     closeCartonOptionsModal() {
-        this.audio.playEffect('click');
+        this.sounds.play('click');
         this.modal.closeModal(this.dom.cartonOptionsModal);
     }
 
@@ -1059,7 +1078,7 @@ class BingoMusical {
 
         if (confirmed) {
             this.game.clearCartones();
-            this.audio.playEffect('click');
+            this.sounds.play('click');
             this.updateUIState();
             this.closeCartonOptionsModal();
             this.showAlert('Todos los cartones han sido eliminados.', 'Cartones Eliminados');
@@ -1068,12 +1087,12 @@ class BingoMusical {
 
     openCartonGenerationModal() {
         // Modal simplificado - solo cantidad
-        this.audio.playEffect('click');
+        this.sounds.play('click');
         this.modal.openModal(this.dom.cartonModal);
     }
 
     closeCartonModal() {
-        this.audio.playEffect('click');
+        this.sounds.play('click');
         this.modal.closeModal(this.dom.cartonModal);
     }
 
@@ -1132,12 +1151,12 @@ class BingoMusical {
         // Generar vista previa inicial
         this.updatePrintPreview();
 
-        this.audio.playEffect('click');
+        this.sounds.play('click');
         this.modal.openModal(this.dom.printModal);
     }
 
     closePrintModal() {
-        this.audio.playEffect('click');
+        this.sounds.play('click');
         this.modal.closeModal(this.dom.printModal);
     }
 
@@ -1145,12 +1164,12 @@ class BingoMusical {
         const gameName = this.game.getGameName() || 'Bingo Musical';
         const existingCartones = this.game.getCartones();
 
-        this.audio.playEffect('start');
+        this.sounds.play('start');
 
         const result = await this.carton.printCartonesWithConfig(existingCartones, gameName, format);
 
         if (result.success) {
-            this.audio.playEffect('win');
+            this.sounds.play('win');
             this.showAlert(
                 `${result.count} cartón(es) descargado(s) en ${format.toUpperCase()} exitosamente.`,
                 'Cartones Impresos'

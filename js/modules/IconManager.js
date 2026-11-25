@@ -2,17 +2,17 @@
  * IconManager Module
  * Gestiona la selección y personalización de iconos para las canciones
  */
-import { iconKeywords, availableIcons } from './IconDictionary.js';
+import {availableIcons, iconKeywords} from './IconDictionary.js';
 
 export class IconManager {
-    constructor(dom, audio, getSongs) {
+    constructor(dom, sounds, getSongs) {
         this.dom = dom;
-        this.audio = audio;
+        this.sounds = sounds;
         this.getSongs = getSongs; // Función para obtener las canciones actuales
         this.availableIcons = availableIcons;
         this.iconKeywords = iconKeywords;
         this.currentEditingSongId = null;
-        
+
         this.setupEventListeners();
     }
 
@@ -56,9 +56,9 @@ export class IconManager {
      * Verifica si un icono está en uso
      */
     isIconUsed(icon, songs) {
-        return songs.some(s => 
-            s.icon === icon && 
-            s.iconType === 'emoji' && 
+        return songs.some(s =>
+            s.icon === icon &&
+            s.iconType === 'emoji' &&
             s.id !== this.currentEditingSongId
         );
     }
@@ -68,11 +68,11 @@ export class IconManager {
      */
     openIconPicker(songId, songs, onIconSelected) {
         const song = songs.find(s => s.id === songId);
-        if (!song) return { success: false, error: 'Canción no encontrada' };
+        if (!song) return {success: false, error: 'Canción no encontrada'};
 
         if (song.played) {
-            return { 
-                success: false, 
+            return {
+                success: false,
                 error: 'No puedes cambiar el icono de una canción que ya fue reproducida.',
                 title: 'Canción Ya Reproducida'
             };
@@ -126,10 +126,10 @@ export class IconManager {
         if (this.dom.iconModal.showModal) {
             this.dom.iconModal.showModal();
         }
-        
-        this.audio.playEffect('click');
 
-        return { success: true };
+        this.sounds.play('click');
+
+        return {success: true};
     }
 
     /**
@@ -205,7 +205,7 @@ export class IconManager {
         song.icon = icon;
         song.iconType = iconType;
 
-        this.audio.playEffect('click');
+        this.sounds.play('click');
 
         // Actualizar visualización de iconos seleccionados
         for (const opt of document.querySelectorAll('.icon-option')) {
@@ -239,9 +239,9 @@ export class IconManager {
 
         const handleUpdate = () => {
             song.iconType = 'image';
-            this.audio.playEffect('click');
+            this.sounds.play('click');
             this.closeIconModal();
-            
+
             // Usar la referencia guardada del callback
             if (callback) {
                 callback();

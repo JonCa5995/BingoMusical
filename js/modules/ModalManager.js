@@ -3,9 +3,9 @@
  * Gestiona todos los modales de la aplicación (alertas, confirmaciones, cartones)
  */
 export class ModalManager {
-    constructor(dom, audio) {
+    constructor(dom, sounds) {
         this.dom = dom;
-        this.audio = audio;
+        this.sounds = sounds;
         this.confirmCallback = null;
         this.modals = [];
 
@@ -42,7 +42,7 @@ export class ModalManager {
         this.openModal(this.dom.alertModal);
 
         const isError = /error|inválido|insuficientes/i.test(title);
-        this.audio.playEffect(isError ? 'error' : 'click');
+        this.sounds.play(isError ? 'error' : 'click');
     }
 
     /**
@@ -62,7 +62,7 @@ export class ModalManager {
             this.openModal(this.dom.confirmModal);
 
             this.confirmCallback = resolve;
-            this.audio.playEffect('click');
+            this.sounds.play('click');
         });
     }
 
@@ -97,8 +97,8 @@ export class ModalManager {
      * @param {number} [options.priority=0] - Con varios abiertos, Escape cierra el de mayor prioridad
      * @param {boolean} [options.closeOnOutsideClick=true] - Cerrar al hacer clic fuera del contenido
      */
-    registerModal(element, onClose, { priority = 0, closeOnOutsideClick = true } = {}) {
-        this.modals.push({ element, onClose, priority });
+    registerModal(element, onClose, {priority = 0, closeOnOutsideClick = true} = {}) {
+        this.modals.push({element, onClose, priority});
         // Mantener ordenado de mayor a menor prioridad
         this.modals.sort((a, b) => b.priority - a.priority);
 
@@ -114,7 +114,7 @@ export class ModalManager {
      * así que tienen prioridad para Escape.
      */
     _registerOwnModals() {
-        const options = { priority: 10, closeOnOutsideClick: false };
+        const options = {priority: 10, closeOnOutsideClick: false};
         this.registerModal(this.dom.confirmModal, () => this.closeConfirmModal(false), options);
         this.registerModal(this.dom.alertModal, () => this.closeAlertModal(), options);
     }
@@ -123,14 +123,14 @@ export class ModalManager {
      * Verifica si algún modal registrado está abierto
      */
     checkOpenModals() {
-        return this.modals.some(({ element }) => this.isModalOpen(element));
+        return this.modals.some(({element}) => this.isModalOpen(element));
     }
 
     /**
      * Cierra con Escape el modal abierto de mayor prioridad
      */
     closeModalsOnEscape() {
-        const topModal = this.modals.find(({ element }) => this.isModalOpen(element));
+        const topModal = this.modals.find(({element}) => this.isModalOpen(element));
         topModal?.onClose();
     }
 }
