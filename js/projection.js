@@ -26,7 +26,10 @@ const view = new ProjectionView({
 
 view.start();
 
-window.addEventListener('resize', () => view.syncLogo(false));
+window.addEventListener('resize', () => {
+    view.syncLogo(false);
+    view.syncHistory();
+});
 
 setInterval(() => view.sendAlive(), PROJECTION_ALIVE_MS);
 window.addEventListener('pagehide', () => view.sendBye());

@@ -4,7 +4,6 @@ import {
     PROJECTION_CHANNEL,
     PROJECTION_DOCK_MS,
     PROJECTION_FEATURES,
-    PROJECTION_HISTORY_LIMIT,
     PROJECTION_PAGE,
     PROJECTION_STATE_VERSION,
     PROJECTION_WINDOW_NAME
@@ -29,7 +28,7 @@ export function buildProjectionState({songs, game, theme, startedAt, revealed, c
         titleRevealMs: game.getTitleRevealTime() * MS_PER_SECOND,
         iconRevealMs: game.getIconRevealTime() * MS_PER_SECOND,
         revealed: Boolean(revealed) || !gameStarted,
-        history: history.slice(-PROJECTION_HISTORY_LIMIT).map(({id, icon, iconType}) => ({id, icon, iconType}))
+        history: history.map(({id, icon, iconType}) => ({id, icon, iconType}))
     };
 }
 

@@ -28,22 +28,24 @@
     <img class="logo-color" src="icon.png" alt="">
   </div>
 
-  <main class="projection-main" aria-live="polite">
-    <p id="projection-status" class="projection-status"></p>
-    <div id="projection-icon" class="projection-icon"></div>
-    <h2 id="projection-title" class="projection-title"></h2>
-    <div class="projection-player">
-      <div id="projection-progress" class="projection-progress" role="progressbar" aria-label="Progreso de la canción" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-        <div id="projection-progress-fill" class="projection-progress-fill"></div>
+  <div class="projection-body">
+    <main class="projection-main" aria-live="polite">
+      <p id="projection-status" class="projection-status"></p>
+      <div id="projection-icon" class="projection-icon"></div>
+      <h2 id="projection-title" class="projection-title"></h2>
+      <div class="projection-player">
+        <div id="projection-progress" class="projection-progress" role="progressbar" aria-label="Progreso de la canción" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div id="projection-progress-fill" class="projection-progress-fill"></div>
+        </div>
+        <p id="projection-time" class="projection-time">0:00 / 0:00</p>
       </div>
-      <p id="projection-time" class="projection-time">0:00 / 0:00</p>
-    </div>
-  </main>
+    </main>
 
-  <footer class="projection-footer">
-    <div id="projection-history" class="projection-history" role="group" aria-label="Últimas canciones"></div>
-    <p class="projection-hint">Doble clic para pantalla completa</p>
-  </footer>
+    <section class="projection-side" aria-label="Canciones reproducidas">
+      <div id="projection-history" class="projection-history" role="group" aria-label="Canciones reproducidas"></div>
+      <p class="projection-hint">Doble clic para pantalla completa</p>
+    </section>
+  </div>
 
   <aside id="projection-celebration" class="celebration-overlay projection-celebration hidden" role="status" aria-labelledby="projection-celebration-title">
     <article class="celebration-content">

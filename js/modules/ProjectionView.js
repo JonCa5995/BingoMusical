@@ -1,4 +1,12 @@
-import {CELEBRATION, DEFAULT_GAME_NAME, ICON_TYPE, PROJECTION_STATE_VERSION, THEME} from '../constants.js';
+import {
+    CELEBRATION,
+    DEFAULT_GAME_NAME,
+    ICON_TYPE,
+    PROJECTION_HISTORY_BASE_VMIN,
+    PROJECTION_HISTORY_MIN_PX,
+    PROJECTION_STATE_VERSION,
+    THEME
+} from '../constants.js';
 import {TEXT} from '../messages.js';
 import {formatTime} from './AudioControlsView.js';
 import {isImageDataUrl} from '../utils.js';
@@ -10,12 +18,30 @@ const isValidState = (state) => state?.type === 'state' && state.version === PRO
     && Array.isArray(state.history) && Number.isFinite(state.titleRevealMs) && Number.isFinite(state.iconRevealMs)
     && (state.celebration == null || Object.values(CELEBRATION).includes(state.celebration));
 
+const GAP_VMIN = 1.2;
+const PROJECTION_SIDE_SHARE = 0.32;
+const PROJECTION_SIDE_HEIGHT_SHARE = 0.8;
+
+export function fitHistorySize({count, box, viewport}) {
+    const vmin = Math.min(viewport.width, viewport.height) / 100;
+    const gap = vmin * GAP_VMIN;
+
+    for (let size = Math.floor(vmin * PROJECTION_HISTORY_BASE_VMIN); size > PROJECTION_HISTORY_MIN_PX; size--) {
+        const columns = Math.floor((box.width + gap) / (size + gap));
+        const rows = Math.floor((box.height + gap) / (size + gap));
+        if (columns * rows >= count) return size;
+    }
+
+    return PROJECTION_HISTORY_MIN_PX;
+}
+
 export class ProjectionView {
-    constructor({elements, channel, root = document.documentElement, now = () => Date.now(), timers = {set: (fn, delay) => setTimeout(fn, delay), clear: (id) => clearTimeout(id)}}) {
+    constructor({elements, channel, root = document.documentElement, now = () => Date.now(), viewport = () => ({width: globalThis.innerWidth, height: globalThis.innerHeight}), timers = {set: (fn, delay) => setTimeout(fn, delay), clear: (id) => clearTimeout(id)}}) {
         this.el = elements;
         this.channel = channel;
         this.root = root;
         this.now = now;
+        this.viewport = viewport;
         this.timers = timers;
         this.pendingTimers = [];
         this.iconVisible = false;
@@ -200,7 +226,18 @@ export class ProjectionView {
                 return item;
             });
 
+        const viewport = this.viewport();
+        const box = {
+            width: this.el.history.clientWidth || viewport.width * PROJECTION_SIDE_SHARE,
+            height: this.el.history.clientHeight || viewport.height * PROJECTION_SIDE_HEIGHT_SHARE
+        };
+        const size = fitHistorySize({count: items.length, box, viewport});
+        this.el.history.style.setProperty('--history-size', `${size}px`);
         this.el.history.replaceChildren(...items);
+    }
+
+    syncHistory() {
+        if (this.state) this._renderHistory();
     }
 
     _clearTimers() {

@@ -54,7 +54,8 @@ export const PROJECTION_CHANNEL = 'bingo-musical-projection';
 export const PROJECTION_PAGE = 'projection.html';
 export const PROJECTION_WINDOW_NAME = 'bingo-projection';
 export const PROJECTION_FEATURES = 'popup,width=1280,height=720';
-export const PROJECTION_HISTORY_LIMIT = 12;
+export const PROJECTION_HISTORY_BASE_VMIN = 10;      // tamaño de cada icono de las canciones ya reproducidas
+export const PROJECTION_HISTORY_MIN_PX = 24;         // tamaño mínimo cuando hay tantas canciones que hay que encogerlos
 export const PROJECTION_STATE_VERSION = 1;
 export const PROJECTION_DOCK_MS = 1000;           // lo que tarda el logo en acoplarse; la primera canción espera ese tiempo
 export const PROJECTION_ALIVE_MS = 1000;          // cada cuánto avisa una ventana de proyección abierta

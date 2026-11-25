@@ -2,8 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {ProjectionChannel, buildProjectionProgress, buildProjectionState} from '../js/modules/ProjectionChannel.js';
-import {ProjectionView} from '../js/modules/ProjectionView.js';
-import {DEFAULT_GAME_NAME, PROJECTION_DOCK_MS, PROJECTION_HISTORY_LIMIT, PROJECTION_PAGE, PROJECTION_STATE_VERSION} from '../js/constants.js';
+import {ProjectionView, fitHistorySize} from '../js/modules/ProjectionView.js';
+import {
+    DEFAULT_GAME_NAME,
+    PROJECTION_DOCK_MS,
+    PROJECTION_HISTORY_BASE_VMIN,
+    PROJECTION_HISTORY_MIN_PX,
+    PROJECTION_PAGE,
+    PROJECTION_STATE_VERSION
+} from '../js/constants.js';
 import {TEXT} from '../js/messages.js';
 import {installDocument, mkEl} from './helpers/fakeDom.js';
 import {makeGame} from './helpers/snapshot.js';
@@ -57,13 +64,13 @@ test('buildProjectionState resume la partida sin exponer nada más de lo necesar
     assert.deepEqual(Object.keys(state.history[0]).sort(), ['icon', 'iconType', 'id']);
 });
 
-test('buildProjectionState limita el historial a las últimas canciones', () => {
+test('buildProjectionState incluye todas las canciones reproducidas, no solo las últimas', () => {
     const {songs, game} = makeGame({songCount: 40, played: 30});
 
     const state = buildProjectionState({songs, game, theme: 'dark', startedAt: null});
 
     assert.equal(state.played, 30);
-    assert.equal(state.history.length, PROJECTION_HISTORY_LIMIT);
+    assert.equal(state.history.length, 30);
     assert.equal(state.history.at(-1).id, songs[29].id);
 });
 
@@ -595,4 +602,104 @@ test('un estado sin el campo celebration (versión anterior de la app) no muestr
 
     send(view, stateFor({celebration: 'fuegos', played: 9}));
     assert.equal(el.counter.textContent, TEXT.projection.counter(2, 20));
+});
+
+const VIEWPORT = {width: 1920, height: 1080};
+const SIDE_BOX = {width: 480, height: 940};
+
+test('fitHistorySize: con pocas canciones usa el tamaño base (10 % del lado menor, 1,25 veces el anterior)', () => {
+    assert.equal(fitHistorySize({count: 6, box: SIDE_BOX, viewport: VIEWPORT}), Math.floor(10.8 * PROJECTION_HISTORY_BASE_VMIN));
+    assert.equal(fitHistorySize({count: 6, box: SIDE_BOX, viewport: VIEWPORT}), 108);
+});
+
+test('fitHistorySize: encoge los iconos lo justo para que quepan todos en la barra lateral', () => {
+    const gap = 10.8 * 1.2;
+
+    for (const count of [12, 28, 40, 75, 120, 250]) {
+        const size = fitHistorySize({count, box: SIDE_BOX, viewport: VIEWPORT});
+        const columns = Math.floor((SIDE_BOX.width + gap) / (size + gap));
+        const rows = Math.floor((SIDE_BOX.height + gap) / (size + gap));
+
+        assert.ok(columns * rows >= count || size === PROJECTION_HISTORY_MIN_PX, `caben ${count}`);
+        assert.ok(size >= PROJECTION_HISTORY_MIN_PX && size <= 108);
+    }
+});
+
+test('fitHistorySize: es lo más grande posible, un píxel más no cabría', () => {
+    const gap = 10.8 * 1.2;
+    const count = 60;
+    const size = fitHistorySize({count, box: SIDE_BOX, viewport: VIEWPORT});
+    const bigger = size + 1;
+    const fits = Math.floor((SIDE_BOX.width + gap) / (bigger + gap)) * Math.floor((SIDE_BOX.height + gap) / (bigger + gap)) >= count;
+
+    assert.equal(fits, false);
+});
+
+test('fitHistorySize: cuantas más canciones, iconos iguales o más pequeños, y nunca por debajo del mínimo', () => {
+    let previous = Infinity;
+    for (const count of [0, 10, 30, 60, 100, 200, 5000]) {
+        const size = fitHistorySize({count, box: SIDE_BOX, viewport: VIEWPORT});
+        assert.ok(size <= previous);
+        assert.ok(size >= PROJECTION_HISTORY_MIN_PX);
+        previous = size;
+    }
+    assert.equal(fitHistorySize({count: 5000, box: SIDE_BOX, viewport: VIEWPORT}), PROJECTION_HISTORY_MIN_PX);
+});
+
+test('fitHistorySize: sin canciones, o con una caja minúscula, no falla', () => {
+    assert.equal(fitHistorySize({count: 0, box: SIDE_BOX, viewport: VIEWPORT}), 108);
+    assert.equal(fitHistorySize({count: 3, box: {width: 10, height: 10}, viewport: {width: 10, height: 10}}), PROJECTION_HISTORY_MIN_PX);
+});
+
+const buildSized = (viewport) => {
+    const el = makeElements();
+    el.history.clientWidth = viewport.boxWidth;
+    el.history.clientHeight = viewport.boxHeight;
+    const holder = {viewport: {width: viewport.width, height: viewport.height}};
+    const view = new ProjectionView({
+        elements: el, channel: fakeChannel(), root: {dataset: {}}, now: () => 10_000,
+        viewport: () => holder.viewport, timers: {set: () => 0, clear: () => {}}
+    });
+    view.start();
+    return {el, view, holder};
+};
+
+test('la proyección pinta todas las canciones reproducidas, de la más reciente a la más antigua, ajustadas a la barra lateral', () => {
+    const {el, view} = buildSized({width: 1920, height: 1080, boxWidth: 480, boxHeight: 940});
+    const history = Array.from({length: 40}, (_, index) => ({id: index + 1, icon: '🎵', iconType: 'emoji'}));
+
+    send(view, stateFor({revealed: true, current: {id: 40, title: 'Cuarenta', icon: '🎵', iconType: 'emoji'}, played: 40, history}));
+
+    assert.equal(el.history.children.length, 40);
+    const size = Number.parseInt(el.history.style['--history-size'], 10);
+    assert.ok(size > 60 && size <= 108, String(size));
+});
+
+test('al cambiar el tamaño de la ventana, syncHistory recalcula el tamaño de los iconos', () => {
+    const {el, view, holder} = buildSized({width: 1920, height: 1080, boxWidth: 480, boxHeight: 940});
+    const history = Array.from({length: 30}, (_, index) => ({id: index + 1, icon: '🎵', iconType: 'emoji'}));
+    send(view, stateFor({revealed: true, played: 30, history}));
+    const before = Number.parseInt(el.history.style['--history-size'], 10);
+
+    holder.viewport = {width: 960, height: 540};
+    el.history.clientWidth = 240;
+    el.history.clientHeight = 470;
+    view.syncHistory();
+
+    assert.ok(Number.parseInt(el.history.style['--history-size'], 10) < before);
+});
+
+test('sin medidas del navegador (la caja aún mide cero) se estima a partir del tamaño de la ventana', () => {
+    const {el, view} = buildSized({width: 1920, height: 1080, boxWidth: 0, boxHeight: 0});
+    const history = Array.from({length: 10}, (_, index) => ({id: index + 1, icon: '🎵', iconType: 'emoji'}));
+
+    send(view, stateFor({revealed: true, played: 10, history}));
+
+    assert.ok(Number.parseInt(el.history.style['--history-size'], 10) >= PROJECTION_HISTORY_MIN_PX);
+});
+
+test('syncHistory antes de recibir ningún estado no hace nada', () => {
+    const {view} = buildView();
+
+    view.syncHistory();
 });

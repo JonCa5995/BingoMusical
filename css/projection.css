@@ -1,5 +1,5 @@
 body.projection {
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     background: var(--background-color);
@@ -101,15 +101,22 @@ body.projection {
     color: var(--text-muted);
 }
 
-.projection-main {
+.projection-body {
     flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 36vw;
+    min-height: 0;
+}
+
+.projection-main {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 3vmin;
+    gap: 1.5vmin;
+    min-width: 0;
     min-height: 0;
-    padding: 2vmin;
+    padding: 2vmin 3vmin;
+    overflow: hidden;
     text-align: center;
 }
 
@@ -124,8 +131,11 @@ body.projection {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48vmin;
-    height: 48vmin;
+    flex: 1 1 0;
+    aspect-ratio: 1;
+    min-height: 0;
+    max-width: 100%;
+    container-type: size;
     border-radius: var(--border-radius);
     overflow: hidden;
 }
@@ -202,7 +212,7 @@ body.projection {
 }
 
 .projection-emoji {
-    font-size: 34vmin;
+    font-size: 70cqmin;
     line-height: 1;
 }
 
@@ -213,15 +223,16 @@ body.projection {
 }
 
 .projection-title {
+    width: 100%;
     min-height: 1.1em;
-    font-size: 8vmin;
+    font-size: 4.5vmin;
     line-height: 1.1;
-    max-width: 92vw;
     overflow-wrap: anywhere;
+    text-wrap: balance;
 }
 
 .projection-player {
-    width: min(70vw, 120vmin);
+    width: 100%;
     display: flex;
     align-items: center;
     gap: 2vmin;
@@ -251,36 +262,55 @@ body.projection {
     text-align: right;
 }
 
-.projection-footer {
-    padding: 1.5vmin 3vmin;
-    border-top: 2px solid var(--border-color);
+.projection-side {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    padding: 2vmin;
+    border-left: 2px solid var(--border-color);
 }
 
 .projection-history {
-    display: flex;
-    flex-wrap: wrap;
+    --history-size: 10vmin;
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, var(--history-size));
+    grid-auto-rows: var(--history-size);
+    align-content: start;
+    justify-content: center;
     gap: 1.2vmin;
-    min-height: 9vmin;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .projection-history-item {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 8vmin;
-    height: 8vmin;
-    font-size: 6vmin;
     background: var(--surface-color);
     border-radius: 1vmin;
 }
 
 .projection-history-item .projection-emoji {
-    font-size: 6vmin;
+    font-size: calc(var(--history-size) * 0.72);
 }
 
 .projection-hint {
     margin-top: 1vmin;
-    font-size: 1.8vmin;
+    font-size: 1.6vmin;
     color: var(--text-muted);
-    text-align: right;
+    text-align: center;
+}
+
+@media (max-aspect-ratio: 1/1) {
+    .projection-body {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr) 30vh;
+    }
+
+    .projection-side {
+        border-left: 0;
+        border-top: 2px solid var(--border-color);
+    }
 }
