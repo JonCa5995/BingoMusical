@@ -1,6 +1,7 @@
-import {ICON_TYPE, PROJECTION_STATE_VERSION, THEME} from '../constants.js';
+import {DEFAULT_GAME_NAME, ICON_TYPE, PROJECTION_STATE_VERSION, THEME} from '../constants.js';
 import {TEXT} from '../messages.js';
-import {gameNameOrDefault, isImageDataUrl} from '../utils.js';
+import {formatTime} from './AudioControlsView.js';
+import {isImageDataUrl} from '../utils.js';
 
 const FADE_IN = 'opacity 1s ease-in';
 
@@ -18,27 +19,94 @@ export class ProjectionView {
         this.pendingTimers = [];
         this.iconVisible = false;
         this.state = null;
+        this.docked = false;
     }
 
     start() {
-        this.channel.onmessage = (event) => this.handle(event.data);
+        this.channel.onmessage = (event) => this.receive(event.data);
         this.channel.postMessage({type: 'hello'});
         this.renderWaiting();
+        this.syncLogo(false);
+    }
+
+    syncLogo(animate) {
+        const target = (this.docked ? this.el.logoSlot : this.el.icon);
+        this.el.header.classList.toggle('docked', this.docked);
+        const rect = target.getBoundingClientRect();
+        const logo = this.el.logo;
+
+        logo.classList.toggle('animated', animate);
+        logo.classList.toggle('docked', this.docked);
+        Object.assign(logo.style, {left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`});
+    }
+
+    receive(message) {
+        if (message?.type === 'progress') {
+            this.handleProgress(message);
+        } else if (message?.type === 'dock') {
+            this.handleDock(message);
+        } else {
+            this.handle(message);
+        }
+    }
+
+    handleDock(message) {
+        if (message.version !== PROJECTION_STATE_VERSION || this.docked) return;
+
+        this.docked = true;
+        this.syncLogo(true);
+    }
+
+    sendAlive() {
+        this.channel.postMessage({type: 'alive'});
+    }
+
+    sendBye() {
+        this.channel.postMessage({type: 'bye'});
+    }
+
+    handleProgress(progress) {
+        if (progress.version !== PROJECTION_STATE_VERSION || !Number.isFinite(progress.currentTime) || !Number.isFinite(progress.duration)) return;
+
+        const percent = progress.duration > 0 ? Math.min(100, (progress.currentTime / progress.duration) * 100) : 0;
+        this._showProgress(percent, progress.currentTime, progress.duration);
+        this._setPlaying(progress.playing);
+    }
+
+    _showProgress(percent, currentTime, duration) {
+        this.el.progressFill.style.width = `${percent}%`;
+        this.el.progressBar.setAttribute('aria-valuenow', String(Math.round(percent)));
+        this.el.time.textContent = TEXT.projection.time(formatTime(currentTime), formatTime(duration));
+    }
+
+    _setPlaying(playing) {
+        this.el.icon.classList.toggle('playing', Boolean(playing) && Boolean(this.state?.current));
     }
 
     handle(state) {
         if (!isValidState(state)) return;
 
+        const previous = this.state;
+        const songChanged = previous?.current?.id !== state.current?.id;
         this.state = state;
         this._clearTimers();
+        if (songChanged) this._showProgress(0, 0, 0);
 
         if (Object.values(THEME).includes(state.theme)) this.root.dataset.theme = state.theme;
-        this.el.gameName.textContent = gameNameOrDefault(state.gameName);
+        const named = Boolean(state.gameName) && state.gameName !== DEFAULT_GAME_NAME;
+        this.el.gameName.textContent = named ? state.gameName : '';
+        this.el.gameName.hidden = !named;
         this.el.counter.textContent = TEXT.projection.counter(state.played, state.total);
+
+        const animate = previous !== null;
+        this.docked = Boolean(state.current);
+        this.el.icon.classList.toggle('has-song', this.docked);
+        if (!state.current) this._setPlaying(false);
 
         if (!state.current) {
             this.renderWaiting();
             this._renderHistory();
+            this.syncLogo(animate);
             return;
         }
 
@@ -46,9 +114,10 @@ export class ProjectionView {
         this.el.title.textContent = state.current.title;
         this._renderIcon(state.current);
         this._reveal(this.el.title, state.titleRevealMs, state, () => {});
-        this._reveal(this.el.icon, state.iconRevealMs, state, () => { this.iconVisible = true; this._renderHistory(); });
+        this._reveal(this.el.icon.children[0], state.iconRevealMs, state, () => { this.iconVisible = true; this._renderHistory(); });
         this.iconVisible = this._isRevealedNow(state.iconRevealMs, state);
         this._renderHistory();
+        this.syncLogo(animate);
     }
 
     renderWaiting() {

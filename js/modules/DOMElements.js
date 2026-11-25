@@ -1,7 +1,7 @@
 const GROUPS = {
     player: [
         'audioPlayer', 'playBtn', 'pauseBtn', 'stopBtn', 'progressBar', 'progressFill', 'currentTimeSpan',
-        'durationSpan', 'songTitleElement', 'currentIconImg', 'songIconContainer'
+        'durationSpan', 'songTitleElement', 'currentIconImg'
     ],
     volume: [
         'musicVolumeSlider', 'musicVolumeValueSpan', 'effectsVolumeSlider', 'effectsVolumeValueSpan'
@@ -49,7 +49,7 @@ const GROUPS = {
         'rangeInputsContainer', 'rangeFromInput', 'rangeToInput'
     ],
     ui: [
-        'songsListElement', 'songTitleElement', 'currentIconImg', 'pauseBtn', 'stopBtn', 'songIconContainer',
+        'songsListElement', 'songTitleElement', 'currentIconImg', 'pauseBtn', 'stopBtn',
         'playBtn', 'playedCounterSpan', 'totalCounterSpan', 'addSongsInput', 'addSongsLabel', 'importListBtn',
         'clearHistoryBtn', 'shuffleAllBtn', 'configBtn', 'historyGrid'
     ]
@@ -182,7 +182,6 @@ const IDS = {
 
 const SELECTORS = {
     progressBar: '.progress-bar',
-    songIconContainer: '.song-icon',
     addSongsLabel: 'label[for="add-songs"]',
     songsSection: '.songs-section',
     iconPickerContainer: '.icon-picker'

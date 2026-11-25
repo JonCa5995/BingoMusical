@@ -244,7 +244,8 @@ export const TEXT = {
 
     projection: {
         waiting: 'Esperando la primera canción…',
-        counter: (played, total) => `${played} de ${total} canciones`
+        counter: (played, total) => `${played} de ${total} canciones`,
+        time: (current, total) => `${current} / ${total}`
     },
     theme: {
         toLight: 'Cambiar a tema claro',

@@ -1,21 +1,29 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {ProjectionChannel, buildProjectionState} from '../js/modules/ProjectionChannel.js';
+import {ProjectionChannel, buildProjectionProgress, buildProjectionState} from '../js/modules/ProjectionChannel.js';
 import {ProjectionView} from '../js/modules/ProjectionView.js';
-import {PROJECTION_HISTORY_LIMIT, PROJECTION_PAGE, PROJECTION_STATE_VERSION} from '../js/constants.js';
+import {DEFAULT_GAME_NAME, PROJECTION_DOCK_MS, PROJECTION_HISTORY_LIMIT, PROJECTION_PAGE, PROJECTION_STATE_VERSION} from '../js/constants.js';
 import {TEXT} from '../js/messages.js';
-import {gameNameOrDefault} from '../js/utils.js';
 import {installDocument, mkEl} from './helpers/fakeDom.js';
 import {makeGame} from './helpers/snapshot.js';
 
 installDocument();
 
-const spreadEl = () => {
+const spreadEl = (rect = {left: 0, top: 0, width: 0, height: 0}) => {
     const el = mkEl();
     el.replaceChildren = (...children) => { el.children = children; };
+    el.getBoundingClientRect = () => rect;
     return el;
 };
+
+const ICON_RECT = {left: 400, top: 200, width: 300, height: 300};
+const SLOT_RECT = {left: 20, top: 10, width: 60, height: 60};
+
+const makeElements = () => ({
+    header: spreadEl(), logo: spreadEl(), logoSlot: spreadEl(SLOT_RECT), gameName: spreadEl(), status: spreadEl(), icon: spreadEl(ICON_RECT), title: spreadEl(),
+    counter: spreadEl(), history: spreadEl(), progressBar: spreadEl(), progressFill: spreadEl(), time: spreadEl()
+});
 
 const fakeChannel = () => {
     const channel = {sent: [], postMessage(message) { channel.sent.push(message); }, onmessage: null};
@@ -100,7 +108,7 @@ test('ProjectionChannel abre la ventana de proyección', () => {
 });
 
 const buildView = ({now = 10_000} = {}) => {
-    const el = {gameName: spreadEl(), status: spreadEl(), icon: spreadEl(), title: spreadEl(), counter: spreadEl(), history: spreadEl()};
+    const el = makeElements();
     const channel = fakeChannel();
     const root = {dataset: {}};
     const timers = [];
@@ -142,7 +150,7 @@ test('aplica tema, nombre y contador, y respeta los tiempos de revelado de títu
     assert.equal(el.counter.textContent, TEXT.projection.counter(2, 20));
     assert.equal(el.title.textContent, 'Canción dos');
     assert.equal(el.title.style.opacity, '0');
-    assert.equal(el.icon.style.opacity, '0');
+    assert.equal(el.icon.children[0].style.opacity, '0');
     assert.deepEqual(timers.map(timer => timer.delay).sort((a, b) => a - b), [2000, 5000]);
     assert.equal(el.history.children.length, 1);
 });
@@ -154,7 +162,7 @@ test('al cumplirse el tiempo se revela el icono y entra en las últimas cancione
 
     timers.find(timer => timer.delay === 2000).fn();
 
-    assert.equal(el.icon.style.opacity, '1');
+    assert.equal(el.icon.children[0].style.opacity, '1');
     assert.equal(el.history.children.length, 2);
 });
 
@@ -164,7 +172,7 @@ test('una ventana abierta a mitad de canción solo espera lo que falta', () => {
 
     send(view, stateFor());
 
-    assert.equal(el.icon.style.opacity, '1');
+    assert.equal(el.icon.children[0].style.opacity, '1');
     assert.equal(el.title.style.opacity, '0');
     assert.deepEqual(timers.map(timer => timer.delay), [2000]);
 });
@@ -176,7 +184,7 @@ test('con la canción ya revelada o fuera de partida se muestra todo de inmediat
     send(view, stateFor({revealed: true}));
 
     assert.equal(el.title.style.opacity, '1');
-    assert.equal(el.icon.style.opacity, '1');
+    assert.equal(el.icon.children[0].style.opacity, '1');
     assert.equal(timers.length, 0);
 });
 
@@ -228,14 +236,20 @@ test('los iconos de imagen solo se pintan si son data:image válidos; si no, que
     assert.equal(el.icon.children[0].textContent, '');
 });
 
-test('sin nombre de partida muestra el nombre por defecto, nunca un título vacío', () => {
+test('con nombre de partida lo muestra en la cabecera; sin nombre o con el de la aplicación, lo oculta', () => {
     const {view, el} = buildView();
     view.start();
 
-    send(view, stateFor({gameName: ''}));
+    send(view, stateFor({gameName: 'Noche de Bingo'}));
+    assert.equal(el.gameName.textContent, 'Noche de Bingo');
+    assert.equal(el.gameName.hidden, false);
 
-    assert.equal(el.gameName.textContent, gameNameOrDefault(''));
-    assert.ok(el.gameName.textContent.length > 0);
+    send(view, stateFor({gameName: ''}));
+    assert.equal(el.gameName.textContent, '');
+    assert.equal(el.gameName.hidden, true);
+
+    send(view, stateFor({gameName: DEFAULT_GAME_NAME}));
+    assert.equal(el.gameName.hidden, true);
 });
 
 test('un tema desconocido se ignora', () => {
@@ -254,7 +268,7 @@ test('la página de proyección usa el mismo canal que la aplicación', () => {
 });
 
 test('los temporizadores por defecto funcionan sin contexto (setTimeout real)', async () => {
-    const el = {gameName: spreadEl(), status: spreadEl(), icon: spreadEl(), title: spreadEl(), counter: spreadEl(), history: spreadEl()};
+    const el = makeElements();
     const view = new ProjectionView({elements: el, channel: fakeChannel(), root: {dataset: {}}, now: () => 0});
 
     view.handle(stateFor({startedAt: 0, titleRevealMs: 20, iconRevealMs: 20}));
@@ -263,4 +277,258 @@ test('los temporizadores por defecto funcionan sin contexto (setTimeout real)', 
 
     assert.equal(el.title.style.opacity, '1');
     view.renderWaiting();
+});
+
+test('buildProjectionProgress limpia valores no válidos y devuelve el estado de reproducción', () => {
+    assert.deepEqual(buildProjectionProgress({timeline: {currentTime: 12.5, duration: 200}, playing: true}),
+        {type: 'progress', version: PROJECTION_STATE_VERSION, currentTime: 12.5, duration: 200, playing: true});
+
+    const empty = buildProjectionProgress({timeline: {currentTime: NaN, duration: Infinity}, playing: false});
+    assert.equal(empty.currentTime, 0);
+    assert.equal(empty.duration, 0);
+    assert.equal(empty.playing, false);
+});
+
+test('ProjectionChannel manda el progreso al pedir el estado y cuando se le pide, y no manda nada sin progreso', () => {
+    const channel = fakeChannel();
+    const progress = {type: 'progress', currentTime: 3};
+    const projection = new ProjectionChannel({getState: () => ({n: 1}), getProgress: () => progress, createChannel: () => channel, openWindow: () => {}});
+
+    channel.onmessage({data: {type: 'hello'}});
+    assert.deepEqual(channel.sent, [{n: 1}, progress]);
+
+    projection.publishProgress();
+    assert.equal(channel.sent.length, 3);
+
+    const quiet = fakeChannel();
+    new ProjectionChannel({getState: () => ({}), createChannel: () => quiet, openWindow: () => {}}).publishProgress();
+    assert.deepEqual(quiet.sent, []);
+});
+
+const progressMessage = (overrides = {}) => ({type: 'progress', version: PROJECTION_STATE_VERSION, currentTime: 30, duration: 120, playing: true, ...overrides});
+
+test('la barra de progreso muestra el porcentaje, el tiempo y el valor accesible', () => {
+    const {view, el} = buildView();
+    view.start();
+
+    send(view, progressMessage());
+
+    assert.equal(el.progressFill.style.width, '25%');
+    assert.equal(el.progressBar.getAttribute('aria-valuenow'), '25');
+    assert.equal(el.time.textContent, TEXT.projection.time('0:30', '2:00'));
+});
+
+test('el progreso nunca pasa del 100 % ni divide por cero', () => {
+    const {view, el} = buildView();
+    view.start();
+
+    send(view, progressMessage({currentTime: 500, duration: 120}));
+    assert.equal(el.progressFill.style.width, '100%');
+
+    send(view, progressMessage({currentTime: 5, duration: 0}));
+    assert.equal(el.progressFill.style.width, '0%');
+    assert.equal(el.time.textContent, TEXT.projection.time('0:05', '0:00'));
+});
+
+test('ignora mensajes de progreso inválidos o de otra versión', () => {
+    const {view, el} = buildView();
+    view.start();
+    send(view, progressMessage());
+
+    for (const bad of [progressMessage({version: 99}), progressMessage({currentTime: 'x'}), progressMessage({duration: NaN})]) {
+        send(view, bad);
+    }
+
+    assert.equal(el.progressFill.style.width, '25%');
+});
+
+test('al cambiar de canción la barra vuelve a cero, y con la misma canción no se toca', () => {
+    const {view, el} = buildView();
+    view.start();
+    send(view, stateFor());
+    send(view, progressMessage());
+
+    send(view, stateFor({played: 3}));
+    assert.equal(el.progressFill.style.width, '25%');
+
+    send(view, stateFor({current: {id: 9, title: 'Nueva', icon: '🥁', iconType: 'emoji'}}));
+    assert.equal(el.progressFill.style.width, '0%');
+    assert.equal(el.time.textContent, TEXT.projection.time('0:00', '0:00'));
+});
+
+const logoBox = (el) => ({left: el.logo.style.left, top: el.logo.style.top, width: el.logo.style.width, height: el.logo.style.height});
+
+test('sin canción el logo ocupa el sitio del icono, sin animación y con la cabecera sin hueco para él', () => {
+    const {view, el} = buildView();
+
+    view.start();
+
+    assert.deepEqual(logoBox(el), {left: '400px', top: '200px', width: '300px', height: '300px'});
+    assert.equal(el.logo.classList.contains('animated'), false);
+    assert.equal(el.header.classList.contains('docked'), false);
+    assert.equal(el.logo.classList.contains('docked'), false);
+});
+
+test('al sonar la primera canción el logo se acopla junto al título, animado, y la cabecera le hace hueco', () => {
+    const {view, el} = buildView();
+    view.start();
+    send(view, stateFor({current: null, played: 0, history: []}));
+
+    send(view, stateFor());
+
+    assert.deepEqual(logoBox(el), {left: '20px', top: '10px', width: '60px', height: '60px'});
+    assert.equal(el.logo.classList.contains('animated'), true);
+    assert.equal(el.header.classList.contains('docked'), true);
+    assert.equal(el.logo.classList.contains('docked'), true);
+});
+
+test('una proyección abierta con la partida ya en marcha coloca el logo acoplado sin animar', () => {
+    const {view, el} = buildView();
+    view.start();
+
+    send(view, stateFor());
+
+    assert.deepEqual(logoBox(el), {left: '20px', top: '10px', width: '60px', height: '60px'});
+    assert.equal(el.logo.classList.contains('animated'), false);
+});
+
+test('si la partida vuelve a quedarse sin canción, el logo regresa al centro animado', () => {
+    const {view, el} = buildView();
+    view.start();
+    send(view, stateFor({current: null, played: 0, history: []}));
+    send(view, stateFor());
+
+    send(view, stateFor({current: null, played: 0, history: []}));
+
+    assert.deepEqual(logoBox(el), {left: '400px', top: '200px', width: '300px', height: '300px'});
+    assert.equal(el.logo.classList.contains('animated'), true);
+    assert.equal(el.header.classList.contains('docked'), false);
+    assert.equal(el.logo.classList.contains('docked'), false);
+});
+
+test('syncLogo(false) recoloca el logo sin animar, por ejemplo al cambiar el tamaño de la ventana', () => {
+    const {view, el} = buildView();
+    view.start();
+    send(view, stateFor({current: null, played: 0, history: []}));
+    send(view, stateFor());
+
+    view.syncLogo(false);
+
+    assert.equal(el.logo.classList.contains('animated'), false);
+    assert.equal(logoBox(el).width, '60px');
+});
+
+test('el icono recibe la caja del reproductor y el pulso solo mientras suena la canción actual', () => {
+    const {view, el} = buildView();
+    view.start();
+    assert.equal(el.icon.classList.contains('has-song'), false);
+
+    send(view, stateFor());
+    assert.equal(el.icon.classList.contains('has-song'), true);
+    assert.equal(el.icon.classList.contains('playing'), false);
+
+    send(view, progressMessage({playing: true}));
+    assert.equal(el.icon.classList.contains('playing'), true);
+
+    send(view, progressMessage({playing: false}));
+    assert.equal(el.icon.classList.contains('playing'), false);
+
+    send(view, progressMessage({playing: true}));
+    send(view, stateFor({current: null, played: 0, history: []}));
+    assert.equal(el.icon.classList.contains('playing'), false);
+    assert.equal(el.icon.classList.contains('has-song'), false);
+});
+
+test('sin canción actual un progreso con playing=true no activa el pulso', () => {
+    const {view, el} = buildView();
+    view.start();
+
+    send(view, progressMessage({playing: true}));
+
+    assert.equal(el.icon.classList.contains('playing'), false);
+});
+
+test('ProjectionChannel sabe si hay una ventana de proyección escuchando: hello y alive, bye y caducidad', () => {
+    const channel = fakeChannel();
+    let now = 1000;
+    const projection = new ProjectionChannel({getState: () => ({}), createChannel: () => channel, openWindow: () => {}, now: () => now});
+    assert.equal(projection.hasListener(), false);
+
+    channel.onmessage({data: {type: 'hello'}});
+    assert.equal(projection.hasListener(), true);
+
+    now += 2500;
+    assert.equal(projection.hasListener(), true);
+    channel.onmessage({data: {type: 'alive'}});
+    now += 2500;
+    assert.equal(projection.hasListener(), true);
+
+    now += 1000;
+    assert.equal(projection.hasListener(), false);
+
+    channel.onmessage({data: {type: 'alive'}});
+    assert.equal(projection.hasListener(), true);
+    channel.onmessage({data: {type: 'bye'}});
+    assert.equal(projection.hasListener(), false);
+});
+
+test('ProjectionChannel ignora mensajes desconocidos al decidir si hay escucha', () => {
+    const channel = fakeChannel();
+    const projection = new ProjectionChannel({getState: () => ({}), createChannel: () => channel, openWindow: () => {}});
+
+    channel.onmessage({data: {type: 'otra cosa'}});
+    channel.onmessage({data: null});
+
+    assert.equal(projection.hasListener(), false);
+});
+
+test('dockLogo avisa a la proyección y espera lo que tarda el logo en acoplarse', async () => {
+    const channel = fakeChannel();
+    const waits = [];
+    const projection = new ProjectionChannel({getState: () => ({}), createChannel: () => channel, openWindow: () => {}, wait: (ms) => { waits.push(ms); return Promise.resolve(); }});
+
+    await projection.dockLogo();
+
+    assert.deepEqual(channel.sent, [{type: 'dock', version: PROJECTION_STATE_VERSION}]);
+    assert.deepEqual(waits, [PROJECTION_DOCK_MS]);
+});
+
+test('la proyección acopla el logo al recibir dock, animado, y lo ignora si ya está acoplado o es de otra versión', () => {
+    const {view, el} = buildView();
+    view.start();
+
+    send(view, {type: 'dock', version: 99});
+    assert.equal(el.logo.classList.contains('docked'), false);
+
+    send(view, {type: 'dock', version: PROJECTION_STATE_VERSION});
+    assert.equal(el.logo.classList.contains('docked'), true);
+    assert.equal(el.logo.classList.contains('animated'), true);
+    assert.equal(el.header.classList.contains('docked'), true);
+    assert.deepEqual(logoBox(el), {left: '20px', top: '10px', width: '60px', height: '60px'});
+
+    el.logo.classList.remove('animated');
+    send(view, {type: 'dock', version: PROJECTION_STATE_VERSION});
+    assert.equal(el.logo.classList.contains('animated'), false);
+});
+
+test('tras dock, el estado con la primera canción no vuelve a mover el logo', () => {
+    const {view, el} = buildView();
+    view.start();
+    send(view, stateFor({current: null, played: 0, history: []}));
+    send(view, {type: 'dock', version: PROJECTION_STATE_VERSION});
+    const before = logoBox(el);
+
+    send(view, stateFor());
+
+    assert.deepEqual(logoBox(el), before);
+    assert.equal(el.logo.classList.contains('docked'), true);
+});
+
+test('la proyección avisa de que sigue abierta y de que se cierra', () => {
+    const {view, channel} = buildView();
+
+    view.sendAlive();
+    view.sendBye();
+
+    assert.deepEqual(channel.sent, [{type: 'alive'}, {type: 'bye'}]);
 });

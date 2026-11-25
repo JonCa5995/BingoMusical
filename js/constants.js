@@ -56,6 +56,9 @@ export const PROJECTION_WINDOW_NAME = 'bingo-projection';
 export const PROJECTION_FEATURES = 'popup,width=1280,height=720';
 export const PROJECTION_HISTORY_LIMIT = 12;
 export const PROJECTION_STATE_VERSION = 1;
+export const PROJECTION_DOCK_MS = 1000;           // lo que tarda el logo en acoplarse; la primera canción espera ese tiempo
+export const PROJECTION_ALIVE_MS = 1000;          // cada cuánto avisa una ventana de proyección abierta
+export const PROJECTION_ALIVE_TIMEOUT_MS = 3000;  // sin avisos durante este tiempo se da por cerrada
 
 // Aplicación instalable sin conexión
 export const SERVICE_WORKER_FILE = 'sw.js';

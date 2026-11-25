@@ -117,13 +117,11 @@ export class UIManager {
             this.el.pauseBtn.setAttribute('aria-label', TEXT.player.pauseLabel);
             this.el.stopBtn.disabled = false;
             this.el.pauseBtn.disabled = false;
-            this.el.songIconContainer.classList.add('playing');
         } else {
             this.el.pauseBtn.innerHTML = '<span aria-hidden="true">▶️</span>';
             this.el.pauseBtn.setAttribute('aria-label', TEXT.player.playLabel);
             this.el.stopBtn.disabled = !hasSongLoaded;
             this.el.pauseBtn.disabled = !hasSongLoaded;
-            this.el.songIconContainer.classList.remove('playing');
         }
 
         this.el.playBtn.disabled = gameStarted && (playing || noSongsLeft);

@@ -26,7 +26,7 @@ import {PlaylistImporter} from "./modules/PlaylistImporter.js";
 import {linkAudioFiles} from "./modules/AudioLinker.js";
 import {SavedGameController} from "./modules/SavedGameController.js";
 import {GameStateStore} from "./modules/GameStateStore.js";
-import {ProjectionChannel, buildProjectionState} from "./modules/ProjectionChannel.js";
+import {ProjectionChannel, buildProjectionProgress, buildProjectionState} from "./modules/ProjectionChannel.js";
 import {registerServiceWorker} from "./modules/ServiceWorkerRegistrar.js";
 import {deserializeCartones} from "./modules/CartonSerializer.js";
 import {
@@ -44,7 +44,7 @@ import {
 import {MSG, SHORTCUTS, TEXT} from "./messages.js";
 import {gameNameOrDefault, iconTextHtml} from "./utils.js";
 
-class BingoMusical {
+export class BingoMusical {
     constructor() {
         this.preferences = new PreferencesStore();
         this.settings = this.preferences.loadSettings();
@@ -194,14 +194,23 @@ class BingoMusical {
 
     _createProjection() {
         this.songStartedAt = null;
+        this.waitingForProjection = false;
         this.projection = new ProjectionChannel({
             getState: () => buildProjectionState({
                 songs: this.songs,
                 game: this.game,
                 theme: this.theme.getCurrent(),
                 startedAt: this.songStartedAt
+            }),
+            getProgress: () => buildProjectionProgress({
+                timeline: this.audio.getTimeline(),
+                playing: !this.dom.player.audioPlayer.paused
             })
         });
+
+        for (const type of ['timeupdate', 'play', 'pause', 'seeked', 'loadedmetadata', 'ended']) {
+            this.dom.player.audioPlayer.addEventListener(type, () => this.projection.publishProgress());
+        }
     }
 
     _onGameChanged() {
@@ -878,6 +887,25 @@ class BingoMusical {
             return;
         }
 
+        if (this.game.getCurrentSong() === null && this.projection.hasListener()) {
+            this._startFirstSongAfterProjection(song);
+            return;
+        }
+
+        this._startSong(song);
+    }
+
+    _startFirstSongAfterProjection(song) {
+        if (this.waitingForProjection) return;
+
+        this.waitingForProjection = true;
+        this.projection.dockLogo().finally(() => {
+            this.waitingForProjection = false;
+            this._startSong(song);
+        });
+    }
+
+    _startSong(song) {
         this._revealCurrentSong();
 
         song.hideTitle = true;
@@ -946,7 +974,6 @@ class BingoMusical {
         this._revealCurrentSong();
         this.audio.stop();
         this.updateControls(false);
-        this.dom.player.songIconContainer.classList.remove('playing');
         this.songList.render();
     }
 
@@ -955,7 +982,6 @@ class BingoMusical {
         if (currentSongId !== null) {
             this.audio.restart();
             this.updateControls(true);
-            this.dom.player.songIconContainer.classList.add('playing');
         }
     }
 
@@ -973,8 +999,6 @@ class BingoMusical {
     }
 
     onSongEnded() {
-        this.dom.player.songIconContainer.classList.remove('playing');
-
         this._revealCurrentSong();
 
         if (this.game.isContinuousMode() && !this.game.isGameStarted()) {

@@ -10,16 +10,90 @@ body.projection {
 
 .projection-header {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 1rem;
     padding: 1.5vmin 3vmin;
     border-bottom: 2px solid var(--border-color);
 }
 
-.projection-game-name {
+.projection-brand {
+    display: flex;
+    align-items: center;
+    gap: 1.5vmin;
+    min-width: 0;
+}
+
+.projection-logo-slot {
+    display: none;
+    flex-shrink: 0;
+    width: 6vmin;
+    height: 6vmin;
+}
+
+.projection-header.docked .projection-logo-slot {
+    display: block;
+}
+
+.projection-app-title {
     font-size: 4vmin;
     color: var(--primary-color);
+}
+
+.projection-game-name {
+    padding-left: 1.5vmin;
+    border-left: 2px solid var(--border-color);
+    font-size: 3.4vmin;
+    font-weight: 600;
+    color: var(--text-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.projection-logo {
+    position: fixed;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.projection-logo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.logo-gray {
+    opacity: 0.45;
+}
+
+:root:not([data-theme="light"]) .logo-gray {
+    filter: invert(1);
+}
+
+.logo-color {
+    opacity: 0;
+    border-radius: 1vmin;
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+}
+
+.projection-logo.docked .logo-gray {
+    opacity: 0;
+}
+
+.projection-logo.docked .logo-color {
+    opacity: 1;
+}
+
+.projection-logo.animated {
+    transition: left 0.9s cubic-bezier(0.4, 0, 0.2, 1), top 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+        width 0.9s cubic-bezier(0.4, 0, 0.2, 1), height 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.projection-logo.animated img {
+    transition: opacity 0.9s ease-in-out;
 }
 
 .projection-counter {
@@ -40,16 +114,63 @@ body.projection {
 }
 
 .projection-status {
+    min-height: 1.2em;
     font-size: 5vmin;
     color: var(--text-muted);
 }
 
 .projection-icon {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 48vmin;
     height: 48vmin;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.projection-icon.has-song {
+    background: var(--background-color);
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+}
+
+.projection-icon > * {
+    position: relative;
+    z-index: 2;
+}
+
+.projection-icon.playing::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: var(--border-radius);
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, transparent 70%);
+    animation: projectionPulse 2s ease-out infinite;
+}
+
+@keyframes projectionPulse {
+    0% {
+        transform: scale(0.9);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.3);
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .projection-logo.animated,
+    .projection-logo.animated img {
+        transition: none;
+    }
+
+    .projection-icon.playing::before {
+        animation: none;
+        opacity: 0.6;
+    }
 }
 
 .projection-emoji {
@@ -64,10 +185,42 @@ body.projection {
 }
 
 .projection-title {
+    min-height: 1.1em;
     font-size: 8vmin;
     line-height: 1.1;
     max-width: 92vw;
     overflow-wrap: anywhere;
+}
+
+.projection-player {
+    width: min(70vw, 120vmin);
+    display: flex;
+    align-items: center;
+    gap: 2vmin;
+}
+
+.projection-progress {
+    flex: 1;
+    height: 1.6vmin;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 1vmin;
+    overflow: hidden;
+}
+
+.projection-progress-fill {
+    width: 0;
+    height: 100%;
+    background: var(--gradient-primary);
+    transition: width 0.25s linear;
+}
+
+.projection-time {
+    min-width: 14vmin;
+    font-size: 2.6vmin;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    text-align: right;
 }
 
 .projection-footer {

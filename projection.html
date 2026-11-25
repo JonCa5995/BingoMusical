@@ -12,15 +12,30 @@
 </head>
 
 <body class="projection">
-  <header class="projection-header">
-    <h1 id="projection-game-name" class="projection-game-name">Bingo Musical</h1>
+  <header id="projection-header" class="projection-header">
+    <div class="projection-brand">
+      <span id="projection-logo-slot" class="projection-logo-slot" aria-hidden="true"></span>
+      <h1 class="projection-app-title">Bingo Musical</h1>
+      <span id="projection-game-name" class="projection-game-name" hidden></span>
+    </div>
     <p id="projection-counter" class="projection-counter"></p>
   </header>
+
+  <div id="projection-logo" class="projection-logo" aria-hidden="true">
+    <img class="logo-gray" src="img/icon-decorative.svg" alt="">
+    <img class="logo-color" src="icon.png" alt="">
+  </div>
 
   <main class="projection-main" aria-live="polite">
     <p id="projection-status" class="projection-status"></p>
     <div id="projection-icon" class="projection-icon"></div>
     <h2 id="projection-title" class="projection-title"></h2>
+    <div class="projection-player">
+      <div id="projection-progress" class="projection-progress" role="progressbar" aria-label="Progreso de la canción" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div id="projection-progress-fill" class="projection-progress-fill"></div>
+      </div>
+      <p id="projection-time" class="projection-time">0:00 / 0:00</p>
+    </div>
   </main>
 
   <footer class="projection-footer">
