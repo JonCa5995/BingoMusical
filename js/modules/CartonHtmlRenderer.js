@@ -3,13 +3,12 @@ import {
     CELL_TYPE,
     CELLS_PER_ROW,
     DECORATIVE_ICON_PATH,
-    DEFAULT_GAME_NAME,
     DEFAULT_PRINT_PRIMARY_COLOR,
     DEFAULT_PRINT_SECONDARY_COLOR,
     ICON_TYPE,
     ROWS_PER_CARTON
 } from '../constants.js';
-import {escapeHTML} from '../utils.js';
+import {escapeHTML, gameNameOrDefault} from '../utils.js';
 import {TEXT} from '../messages.js';
 
 export const DECORATIVE_ICON_HTML = `<img class="image-icon" src="${DECORATIVE_ICON_PATH}" alt="${TEXT.document.decorativeAlt}">`;
@@ -23,7 +22,7 @@ export class CartonHtmlRenderer {
     }
 
     _generateHTMLHeader(count, config = {}) {
-        const gameName = escapeHTML(config.gameName || DEFAULT_GAME_NAME);
+        const gameName = escapeHTML(gameNameOrDefault(config.gameName));
         return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -78,7 +77,7 @@ export class CartonHtmlRenderer {
     }
 
     _generateCartonHTML(carton, config = {}) {
-        const gameName = escapeHTML(config.gameName || DEFAULT_GAME_NAME);
+        const gameName = escapeHTML(gameNameOrDefault(config.gameName));
         const rowsHTML = carton.rows.map(row =>
             row.cells.map(cell => this._generateCellHTML(cell)).join('')
         ).join('\n        \n');

@@ -27,7 +27,6 @@ import {
     CELEBRATION_DELAY_MS,
     CONTINUOUS_NEXT_SONG_DELAY_MS,
     DEFAULT_EFFECTS_VOLUME,
-    DEFAULT_GAME_NAME,
     DEFAULT_MUSIC_VOLUME,
     DEFAULT_SONGS_FOLDER,
     IMPORT_MESSAGE_DELAY_MS,
@@ -38,6 +37,7 @@ import {
     SOUND
 } from "./constants.js";
 import {MSG, SHORTCUTS, TEXT} from "./messages.js";
+import {gameNameOrDefault, iconTextHtml} from "./utils.js";
 
 class BingoMusical {
     constructor() {
@@ -348,6 +348,18 @@ class BingoMusical {
         return true;
     }
 
+    async _canChangeSongs(startedMessage, cartonAction) {
+        if (!this.checkGameNotStarted(startedMessage)) {
+            return false;
+        }
+        return this.cartonModals.confirmAndClear(cartonAction);
+    }
+
+    _setGameName(name) {
+        this.game.setGameName(name);
+        this.dom.game.gameNameInput.value = name;
+    }
+
     clearFileInput(event) {
         event.target.value = '';
     }
@@ -407,7 +419,7 @@ class BingoMusical {
     // ============================================================
 
     exportPlaylist() {
-        const gameName = this.game.getGameName() || DEFAULT_GAME_NAME;
+        const gameName = gameNameOrDefault(this.game.getGameName());
         const cartones = this.game.getCartones();
         const result = this.playlistFile.export(this.songs, this.songsFolder, gameName, cartones);
 
@@ -446,9 +458,7 @@ class BingoMusical {
         const {songs, duplicates} = await this.importer.loadSongs(playlist.songs);
         this.songs = songs;
 
-        const gameName = playlist.name || '';
-        this.game.setGameName(gameName);
-        this.dom.game.gameNameInput.value = gameName;
+        this._setGameName(playlist.name || '');
 
         this._loadImportedCartones(playlist.cartones);
         this.refreshUI();
@@ -486,11 +496,7 @@ class BingoMusical {
     // ============================================================
 
     async openIconPicker(songId) {
-        if (!this.checkGameNotStarted(MSG.gameStarted.changeIcons)) {
-            return;
-        }
-
-        if (!await this.cartonModals.confirmAndClear(TEXT.cartonActions.changeIcon)) {
+        if (!await this._canChangeSongs(MSG.gameStarted.changeIcons, TEXT.cartonActions.changeIcon)) {
             return;
         }
 
@@ -511,12 +517,7 @@ class BingoMusical {
         const files = Array.from(event.target.files);
         if (files.length === 0) return;
 
-        if (!this.checkGameNotStarted(MSG.gameStarted.addSongs)) {
-            this.clearFileInput(event);
-            return;
-        }
-
-        if (!await this.cartonModals.confirmAndClear(TEXT.cartonActions.addSongs)) {
+        if (!await this._canChangeSongs(MSG.gameStarted.addSongs, TEXT.cartonActions.addSongs)) {
             this.clearFileInput(event);
             return;
         }
@@ -541,11 +542,7 @@ class BingoMusical {
     }
 
     async deleteSong(songId) {
-        if (!this.checkGameNotStarted(MSG.gameStarted.deleteSong)) {
-            return;
-        }
-
-        if (!await this.cartonModals.confirmAndClear(TEXT.cartonActions.deleteSong)) {
+        if (!await this._canChangeSongs(MSG.gameStarted.deleteSong, TEXT.cartonActions.deleteSong)) {
             return;
         }
 
@@ -616,8 +613,7 @@ class BingoMusical {
             this.sounds.play(SOUND.CLICK);
 
             this.game.clearCartones();
-            this.game.setGameName('');
-            this.dom.game.gameNameInput.value = '';
+            this._setGameName('');
 
             this.refreshUI();
             this.dialogs.showAlert(MSG.songs.allDeleted);
@@ -633,15 +629,9 @@ class BingoMusical {
     _renderContinuousModeButton(continuousMode) {
         const btn = this.dom.game.shuffleAllBtn;
 
-        if (continuousMode) {
-            btn.innerHTML = `<span aria-hidden="true">${TEXT.player.continuousOn.icon}</span> ${TEXT.player.continuousOn.text}`;
-            btn.style.background = 'var(--danger-color)';
-            btn.setAttribute('aria-pressed', 'true');
-        } else {
-            btn.innerHTML = `<span aria-hidden="true">${TEXT.player.continuousOff.icon}</span> ${TEXT.player.continuousOff.text}`;
-            btn.style.background = 'var(--text-muted)';
-            btn.setAttribute('aria-pressed', 'false');
-        }
+        btn.innerHTML = iconTextHtml(continuousMode ? TEXT.player.continuousOn : TEXT.player.continuousOff);
+        btn.style.background = continuousMode ? 'var(--danger-color)' : 'var(--text-muted)';
+        btn.setAttribute('aria-pressed', continuousMode ? 'true' : 'false');
     }
 
     // ============================================================

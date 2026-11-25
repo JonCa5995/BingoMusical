@@ -1,6 +1,6 @@
-import {downloadFile, slugify} from '../utils.js';
+import {downloadFile, gameNameOrDefault, slugify} from '../utils.js';
 import {serializeCartones} from './CartonSerializer.js';
-import {DEFAULT_GAME_NAME, DEFAULT_PLAYLIST_NAME, ICON_TYPE} from '../constants.js';
+import {DEFAULT_PLAYLIST_NAME, ICON_TYPE} from '../constants.js';
 import {TEXT} from '../messages.js';
 
 export class PlaylistFile {
@@ -32,7 +32,7 @@ export class PlaylistFile {
         try {
             const playlist = this.build(songs, gameName, cartones);
             const date = this.now().toISOString().split('T')[0];
-            const fileName = `${slugify(gameName || DEFAULT_GAME_NAME)}-${date}.json`;
+            const fileName = `${slugify(gameNameOrDefault(gameName))}-${date}.json`;
 
             this.download(
                 JSON.stringify(playlist, null, 2),
@@ -47,7 +47,7 @@ export class PlaylistFile {
 
             return {
                 success: true,
-                message: TEXT.playlist.exported(gameName || DEFAULT_GAME_NAME, cartonesInfo, songsFolder)
+                message: TEXT.playlist.exported(gameNameOrDefault(gameName), cartonesInfo, songsFolder)
             };
         } catch (error) {
             console.error('Error al exportar playlist:', error);

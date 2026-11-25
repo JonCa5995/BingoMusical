@@ -1,6 +1,6 @@
-import { escapeHTML } from '../utils.js';
-import { ICON_TYPE, MS_PER_SECOND, PLAYER_ICON_SIZE, HISTORY_ICON_SIZE } from '../constants.js';
-import { TEXT } from '../messages.js';
+import {escapeHTML, iconTextHtml} from '../utils.js';
+import {HISTORY_ICON_SIZE, ICON_TYPE, MS_PER_SECOND, PLAYER_ICON_SIZE} from '../constants.js';
+import {TEXT} from '../messages.js';
 
 export class UIManager {
     constructor(elements, minSongsRequired) {
@@ -40,7 +40,7 @@ export class UIManager {
     }
 
     _createEmptyMessage(kind) {
-        const { title, text, minSongsWarning: warning } = TEXT.list[kind];
+        const {title, text, minSongsWarning: warning} = TEXT.list[kind];
         const minSongsWarning = warning
             ? `\n            <p role="alert" style="font-size:0.85rem;margin-top:1rem;color:var(--warning-color);"><strong>${warning(this.MIN_SONGS_REQUIRED)}</strong></p>`
             : '';
@@ -161,13 +161,9 @@ export class UIManager {
 
         this._setLocked(this.el.configBtn, isDisabled);
 
-        if (gameStarted) {
-            this.el.playBtn.innerHTML = `<span aria-hidden="true">${TEXT.player.next.icon}</span> ${TEXT.player.next.text}`;
-            this.el.playBtn.setAttribute('aria-label', TEXT.player.next.label);
-        } else {
-            this.el.playBtn.innerHTML = `<span aria-hidden="true">${TEXT.player.start.icon}</span> ${TEXT.player.start.text}`;
-            this.el.playBtn.setAttribute('aria-label', TEXT.player.start.label);
-        }
+        const playLabel = gameStarted ? TEXT.player.next : TEXT.player.start;
+        this.el.playBtn.innerHTML = iconTextHtml(playLabel);
+        this.el.playBtn.setAttribute('aria-label', playLabel.label);
     }
 
     addToHistory(song, iconRevealTime = 0, gameStarted = false) {
@@ -178,7 +174,7 @@ export class UIManager {
         historyItem.setAttribute('aria-label', TEXT.player.playedHistoryLabel(song.title));
 
         const img = document.createElement('img');
-        
+
         if (gameStarted) {
             img.style.opacity = '0';
         }
@@ -190,7 +186,7 @@ export class UIManager {
         this.el.historyGrid.appendChild(historyItem);
 
         const container = this.el.historyGrid.parentElement;
-        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        container.scrollTo({top: container.scrollHeight, behavior: 'smooth'});
 
         if (gameStarted) {
             this._fadeInAfter(img, iconRevealTime);

@@ -1,7 +1,6 @@
 import {
     CARTON_MODE,
     DEFAULT_CARTON_COUNT,
-    DEFAULT_GAME_NAME,
     DEFAULT_PRINT_PRIMARY_COLOR,
     DEFAULT_PRINT_SECONDARY_COLOR,
     MAX_CARTONS_GENERATED,
@@ -10,6 +9,7 @@ import {
     SOUND
 } from '../constants.js';
 import {MSG, TEXT} from '../messages.js';
+import {gameNameOrDefault} from '../utils.js';
 
 export class CartonModals {
     constructor({elements, game, cartonManager, modals, dialogs, sounds, getSongs, onCartonesChanged}) {
@@ -212,7 +212,7 @@ export class CartonModals {
     }
 
     async print(format = PRINT_FORMAT.HTML) {
-        const gameName = this.game.getGameName() || DEFAULT_GAME_NAME;
+        const gameName = gameNameOrDefault(this.game.getGameName());
 
         this.sounds.play(SOUND.START);
 
@@ -228,7 +228,7 @@ export class CartonModals {
     }
 
     updatePreview() {
-        const gameName = this.game.getGameName() || DEFAULT_GAME_NAME;
+        const gameName = gameNameOrDefault(this.game.getGameName());
         this.cartonManager.updatePrintPreview(this.getSongs(), gameName, this._printColors());
     }
 

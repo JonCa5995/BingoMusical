@@ -68,24 +68,24 @@ export class GameManager {
         return this.continuousMode;
     }
 
-    getRandomUnplayedSong(songs) {
-        const unplayedSongs = songs.filter(song => !song.played && song.file);
+    _unplayedSongs(songs) {
+        return songs.filter(song => !song.played && song.file);
+    }
 
-        if (unplayedSongs.length === 0) {
+    _pickRandom(list) {
+        if (list.length === 0) {
             return null;
         }
 
-        return unplayedSongs[Math.floor(Math.random() * unplayedSongs.length)];
+        return list[Math.floor(Math.random() * list.length)];
+    }
+
+    getRandomUnplayedSong(songs) {
+        return this._pickRandom(this._unplayedSongs(songs));
     }
 
     getRandomSong(songs) {
-        const availableSongs = songs.filter(song => song.file);
-
-        if (availableSongs.length === 0) {
-            return null;
-        }
-
-        return availableSongs[Math.floor(Math.random() * availableSongs.length)];
+        return this._pickRandom(songs.filter(song => song.file));
     }
 
     markSongAsPlayed(song) {
@@ -98,16 +98,20 @@ export class GameManager {
         return false;
     }
 
-    canCallLinea() {
-        if (this.lineaCompleted) {
-            return {valid: false, alert: MSG.game.lineaAlreadyCalled};
+    _canCall(completed, alreadyAlert, needed, needsAlert) {
+        if (completed) {
+            return {valid: false, alert: alreadyAlert};
         }
 
-        if (this.playedSongs.length < MIN_SONGS_FOR_LINEA) {
-            return {valid: false, alert: MSG.game.lineaNeedsSongs(MIN_SONGS_FOR_LINEA)};
+        if (this.playedSongs.length < needed) {
+            return {valid: false, alert: needsAlert(needed)};
         }
 
         return {valid: true};
+    }
+
+    canCallLinea() {
+        return this._canCall(this.lineaCompleted, MSG.game.lineaAlreadyCalled, MIN_SONGS_FOR_LINEA, MSG.game.lineaNeedsSongs);
     }
 
     completeLinea() {
@@ -115,15 +119,7 @@ export class GameManager {
     }
 
     canCallBingo() {
-        if (this.bingoCompleted) {
-            return {valid: false, alert: MSG.game.bingoAlreadyCalled};
-        }
-
-        if (this.playedSongs.length < MIN_SONGS_FOR_BINGO) {
-            return {valid: false, alert: MSG.game.bingoNeedsSongs(MIN_SONGS_FOR_BINGO)};
-        }
-
-        return {valid: true};
+        return this._canCall(this.bingoCompleted, MSG.game.bingoAlreadyCalled, MIN_SONGS_FOR_BINGO, MSG.game.bingoNeedsSongs);
     }
 
     completeBingo() {
@@ -135,8 +131,7 @@ export class GameManager {
     }
 
     allSongsPlayed(songs) {
-        const unplayedSongs = songs.filter(song => !song.played && song.file);
-        return unplayedSongs.length === 0;
+        return this._unplayedSongs(songs).length === 0;
     }
 
     resetGame() {

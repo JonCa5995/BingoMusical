@@ -1,5 +1,5 @@
-import {CELL_TYPE, DEFAULT_GAME_NAME, ICON_TYPE, PRINT_FORMAT, SOUND} from '../constants.js';
-import {escapeHTML} from '../utils.js';
+import {CELL_TYPE, ICON_TYPE, PRINT_FORMAT, SOUND} from '../constants.js';
+import {escapeHTML, gameNameOrDefault} from '../utils.js';
 import {DECORATIVE_ICON_HTML} from './CartonHtmlRenderer.js';
 import {MSG, TEXT} from '../messages.js';
 
@@ -36,7 +36,7 @@ export class CartonManager {
 
     generatePreviewHTML(carton, config, gameName = '') {
         const {primaryColor, secondaryColor} = config;
-        const displayName = escapeHTML(gameName || DEFAULT_GAME_NAME);
+        const displayName = escapeHTML(gameNameOrDefault(gameName));
 
         const cellsHTML = carton.rows.flatMap(row =>
             row.cells.map(cell => {
@@ -90,7 +90,7 @@ export class CartonManager {
                 return {success: false, error: TEXT.cartones.unsupportedFormat(format)};
             }
 
-            await exporter(cartonesToPrint, {primaryColor, secondaryColor, gameName: gameName || DEFAULT_GAME_NAME});
+            await exporter(cartonesToPrint, {primaryColor, secondaryColor, gameName: gameNameOrDefault(gameName)});
 
             return {success: true, count: cartonesToPrint.length};
         } catch (error) {

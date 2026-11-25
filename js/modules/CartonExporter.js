@@ -1,5 +1,5 @@
-import {DEFAULT_GAME_NAME, PRINT_DIALOG_DELAY_MS} from '../constants.js';
-import {downloadFile, slugify} from '../utils.js';
+import {PRINT_DIALOG_DELAY_MS} from '../constants.js';
+import {downloadFile, gameNameOrDefault, slugify} from '../utils.js';
 import {TEXT} from '../messages.js';
 
 export class CartonExporter {
@@ -9,7 +9,7 @@ export class CartonExporter {
     }
 
     downloadAsHTML(cartones, config = {}) {
-        const gameName = config.gameName || DEFAULT_GAME_NAME;
+        const gameName = gameNameOrDefault(config.gameName);
         const html = this.renderer.generatePrintableHTML(cartones, config);
 
         downloadFile(
