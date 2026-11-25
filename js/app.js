@@ -62,6 +62,7 @@ class BingoMusical {
         this.audio = new AudioManager(this.dom.player.audioPlayer, this.sounds);
         this.audioControls = new AudioControlsView({
             audioElement: this.dom.player.audioPlayer,
+            getTimeline: () => this.audio.getTimeline(),
             elements: {
                 progressBar: this.dom.player.progressBar,
                 progressFill: this.dom.player.progressFill,
@@ -201,6 +202,7 @@ class BingoMusical {
 
         this.game.setTitleRevealTime(settings.titleRevealTime);
         this.game.setIconRevealTime(settings.iconRevealTime);
+        this.game.setClip(settings.clipSeconds, settings.randomClipStart);
 
         if (settings.gameName) {
             this._setGameName(settings.gameName);
@@ -214,6 +216,8 @@ class BingoMusical {
             effectsVolume: this.sounds.volume,
             titleRevealTime: this.game.getTitleRevealTime(),
             iconRevealTime: this.game.getIconRevealTime(),
+            clipSeconds: this.game.getClip().seconds,
+            randomClipStart: this.game.getClip().randomStart,
             gameName: this.game.getGameName(),
             ...this.cartonModals.getSettings()
         };
@@ -233,6 +237,13 @@ class BingoMusical {
             this.game.setTitleRevealTime(values.titleRevealTime ?? this.game.getTitleRevealTime());
             this.game.setIconRevealTime(values.iconRevealTime ?? this.game.getIconRevealTime());
             this.configModal.setRevealTimes(this.game.getTitleRevealTime(), this.game.getIconRevealTime());
+        }
+
+        if ('clipSeconds' in values || 'randomClipStart' in values) {
+            const clip = this.game.getClip();
+
+            this.game.setClip(values.clipSeconds ?? clip.seconds, values.randomClipStart ?? clip.randomStart);
+            this.configModal.setClip(this.game.getClip());
         }
 
         if ('gameName' in values) {
@@ -729,7 +740,7 @@ class BingoMusical {
         song.hideTitle = true;
         song.hideIcon = true;
 
-        this.audio.play(song.file, () => this._onSongStarted(song));
+        this.audio.play(song.file, () => this._onSongStarted(song), this.game.getClip());
     }
 
     _onSongStarted(song) {

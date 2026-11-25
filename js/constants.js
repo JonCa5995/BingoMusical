@@ -34,6 +34,10 @@ export const DEFAULT_TITLE_REVEAL_TIME = 5;
 export const DEFAULT_ICON_REVEAL_TIME = 10;
 export const MAX_REVEAL_TIME_SECONDS = 30;
 
+// Fragmento de canción: 0 segundos significa canción completa
+export const DEFAULT_CLIP_SECONDS = 0;
+export const MAX_CLIP_SECONDS = 120;
+
 // Esperas de la interfaz (en milisegundos)
 export const SEARCH_DEBOUNCE_MS = 300;             // tras la última tecla, antes de filtrar la lista
 export const CELEBRATION_DELAY_MS = 500;           // entre cantar LÍNEA/BINGO y mostrar la celebración

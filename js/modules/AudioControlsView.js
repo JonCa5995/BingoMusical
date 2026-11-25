@@ -1,8 +1,9 @@
 export class AudioControlsView {
-    constructor({audioElement, elements, handlers}) {
+    constructor({audioElement, elements, handlers, getTimeline}) {
         this.audioElement = audioElement;
         this.el = elements;
         this.handlers = handlers;
+        this.getTimeline = getTimeline ?? (() => ({currentTime: audioElement.currentTime, duration: audioElement.duration}));
     }
 
     bind() {
@@ -40,7 +41,7 @@ export class AudioControlsView {
     }
 
     updateProgress() {
-        const {currentTime, duration} = this.audioElement;
+        const {currentTime, duration} = this.getTimeline();
         const progress = (currentTime / duration) * 100;
         if (!Number.isFinite(progress)) return;
 
@@ -52,7 +53,7 @@ export class AudioControlsView {
     }
 
     updateDuration() {
-        const duration = this.audioElement.duration;
+        const {duration} = this.getTimeline();
         this.el.durationSpan.textContent = formatTime(duration);
         this.el.durationSpan.setAttribute('datetime', `PT${Number.isFinite(duration) ? Math.floor(duration) : 0}S`);
     }

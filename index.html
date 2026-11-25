@@ -331,6 +331,30 @@
         </div>
 
         <div class="config-group">
+          <label class="config-label" for="clip-seconds">
+            ✂️ Duración del fragmento:
+            <span class="config-value" id="clip-seconds-value">Canción completa</span>
+          </label>
+          <input id="clip-seconds"
+                 class="config-slider"
+                 type="range"
+                 min="0"
+                 max="120"
+                 value="0"
+                 step="1"
+                 aria-describedby="clip-hint clip-warning"
+          >
+          <small id="clip-hint" class="config-hint">
+            Reproduce solo los primeros segundos de cada canción. Con 0 suena la canción completa
+          </small>
+          <label class="radio-option" for="random-clip-start">
+            <input id="random-clip-start" type="checkbox">
+            <span>Empezar en un punto aleatorio de la canción</span>
+          </label>
+          <small id="clip-warning" class="config-hint" role="status"></small>
+        </div>
+
+        <div class="config-group">
           <span class="config-label">💾 Ajustes del juego</span>
           <div class="settings-file-actions">
             <button id="export-settings-btn" class="btn btn-secondary btn-icon" type="button">

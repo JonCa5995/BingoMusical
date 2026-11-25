@@ -50,11 +50,12 @@ export const MSG = {
     },
 
     config: {
-        saved: (titleSeconds, iconSeconds) => msg(
+        saved: (titleSeconds, iconSeconds, clip) => msg(
             'Configuración Guardada',
             `Configuración guardada:\n\n` +
             `• Tiempo para revelar título: ${titleSeconds} segundos\n` +
-            `• Tiempo para revelar icono: ${iconSeconds} segundos`
+            `• Tiempo para revelar icono: ${iconSeconds} segundos` +
+            (clip?.seconds > 0 ? `\n• Fragmento de ${clip.seconds} segundos${clip.randomStart ? ' (inicio aleatorio)' : ''}` : '')
         )
     },
 
@@ -112,7 +113,9 @@ export const TEXT = {
             gameName: 'Nombre del juego',
             printPrimaryColor: 'Color principal de impresión',
             printSecondaryColor: 'Color secundario de impresión',
-            cartonCount: 'Cantidad de cartones'
+            cartonCount: 'Cantidad de cartones',
+            clipSeconds: 'Duración del fragmento',
+            randomClipStart: 'Inicio aleatorio del fragmento'
         },
         downloadLabel: 'Descargar los ajustes del juego en formato JSON',
         invalidJson: 'El archivo no es un JSON válido.',
@@ -127,6 +130,8 @@ export const TEXT = {
     },
 
     seconds: (count) => `${count} segundos`,
+    clipSeconds: (count) => count === 0 ? 'Canción completa' : `${count} segundos`,
+    clipWarning: (clip, reveal) => `El fragmento (${clip} s) no supera el mayor tiempo de revelado (${reveal} s): el título o el icono se revelarán al terminar.`,
 
     gameName: {
         locked: 'Nombre del juego bloqueado (juego iniciado o cartones generados)',

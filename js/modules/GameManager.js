@@ -1,4 +1,5 @@
 import {
+    DEFAULT_CLIP_SECONDS,
     DEFAULT_ICON_REVEAL_TIME,
     DEFAULT_TITLE_REVEAL_TIME,
     MIN_SONGS_FOR_BINGO,
@@ -15,6 +16,8 @@ export class GameManager {
     continuousMode = false;
     titleRevealTime = DEFAULT_TITLE_REVEAL_TIME;
     iconRevealTime = DEFAULT_ICON_REVEAL_TIME;
+    clipSeconds = DEFAULT_CLIP_SECONDS;
+    randomClipStart = false;
     gameName = '';
     cartones = [];
 
@@ -165,6 +168,15 @@ export class GameManager {
 
     setIconRevealTime(seconds) {
         this.iconRevealTime = seconds;
+    }
+
+    setClip(seconds, randomStart) {
+        this.clipSeconds = seconds;
+        this.randomClipStart = randomStart;
+    }
+
+    getClip() {
+        return {seconds: this.clipSeconds, randomStart: this.randomClipStart};
     }
 
     getTitleRevealTime() {

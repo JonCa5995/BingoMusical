@@ -1,4 +1,4 @@
-import {MAX_REVEAL_TIME_SECONDS, SOUND} from '../constants.js';
+import {MAX_CLIP_SECONDS, MAX_REVEAL_TIME_SECONDS, SOUND} from '../constants.js';
 import {MSG, TEXT} from '../messages.js';
 import {downloadFile} from '../utils.js';
 import {buildSettingsFile, parseSettingsFile} from './SettingsFile.js';
@@ -30,8 +30,13 @@ export class ConfigModal {
 
             slider.addEventListener('input', (e) => {
                 label.textContent = TEXT.seconds(e.target.value);
+                this._refreshClipHint();
             });
         }
+
+        el.clipSecondsSlider.max = MAX_CLIP_SECONDS;
+        this.setClip(this.game.getClip());
+        el.clipSecondsSlider.addEventListener('input', () => this._refreshClip());
 
         el.configBtn.addEventListener('click', () => this.open());
         this.modals.registerWithCloseButton(el.configModal, el.closeConfigModalBtn);
@@ -46,9 +51,31 @@ export class ConfigModal {
         label.textContent = TEXT.seconds(seconds);
     }
 
+    setClip({seconds, randomStart}) {
+        this.el.clipSecondsSlider.value = seconds;
+        this.el.randomClipStartCheckbox.checked = randomStart;
+        this._refreshClip();
+    }
+
+    _refreshClip() {
+        const seconds = Number.parseInt(this.el.clipSecondsSlider.value);
+
+        this.el.clipSecondsValueSpan.textContent = TEXT.clipSeconds(seconds);
+        this.el.randomClipStartCheckbox.disabled = seconds === 0;
+        this._refreshClipHint();
+    }
+
+    _refreshClipHint() {
+        const clip = Number.parseInt(this.el.clipSecondsSlider.value);
+        const reveal = Math.max(Number.parseInt(this.el.titleRevealTimeSlider.value), Number.parseInt(this.el.iconRevealTimeSlider.value));
+
+        this.el.clipWarning.textContent = clip > 0 && clip <= reveal ? TEXT.clipWarning(clip, reveal) : '';
+    }
+
     setRevealTimes(titleRevealTime, iconRevealTime) {
         this._showSeconds(this.el.titleRevealTimeSlider, this.el.titleRevealValueSpan, titleRevealTime);
         this._showSeconds(this.el.iconRevealTimeSlider, this.el.iconRevealValueSpan, iconRevealTime);
+        this._refreshClipHint();
     }
 
     exportSettings() {
@@ -93,13 +120,16 @@ export class ConfigModal {
     save() {
         const titleRevealTime = Number.parseInt(this.el.titleRevealTimeSlider.value);
         const iconRevealTime = Number.parseInt(this.el.iconRevealTimeSlider.value);
+        const clipSeconds = Number.parseInt(this.el.clipSecondsSlider.value);
+        const randomClipStart = this.el.randomClipStartCheckbox.checked;
 
         this.game.setTitleRevealTime(titleRevealTime);
         this.game.setIconRevealTime(iconRevealTime);
-        this.onSaved({titleRevealTime, iconRevealTime});
+        this.game.setClip(clipSeconds, randomClipStart);
+        this.onSaved({titleRevealTime, iconRevealTime, clipSeconds, randomClipStart});
 
         this.sounds.play(SOUND.WIN);
-        this.dialogs.showAlert(MSG.config.saved(titleRevealTime, iconRevealTime));
+        this.dialogs.showAlert(MSG.config.saved(titleRevealTime, iconRevealTime, this.game.getClip()));
         this.modals.closeWithClick(this.el.configModal);
     }
 }

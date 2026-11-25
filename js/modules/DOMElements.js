@@ -29,7 +29,7 @@ const GROUPS = {
     config: [
         'configBtn', 'configModal', 'closeConfigModalBtn', 'saveConfigBtn', 'titleRevealTimeSlider',
         'titleRevealValueSpan', 'iconRevealTimeSlider', 'iconRevealValueSpan', 'exportSettingsBtn', 'importSettingsBtn',
-        'importSettingsInput'
+        'importSettingsInput', 'clipSecondsSlider', 'clipSecondsValueSpan', 'randomClipStartCheckbox', 'clipWarning'
     ],
     dialogs: [
         'confirmModal', 'confirmTitle', 'confirmMessage', 'confirmCancelBtn', 'confirmAcceptBtn', 'alertModal',
@@ -128,6 +128,10 @@ const IDS = {
     iconRevealTimeSlider: 'icon-reveal-time',
     iconRevealValueSpan: 'icon-reveal-value',
     saveConfigBtn: 'save-config-btn',
+    clipSecondsSlider: 'clip-seconds',
+    clipSecondsValueSpan: 'clip-seconds-value',
+    randomClipStartCheckbox: 'random-clip-start',
+    clipWarning: 'clip-warning',
     exportSettingsBtn: 'export-settings-btn',
     importSettingsBtn: 'import-settings-btn',
     importSettingsInput: 'import-settings-input',

@@ -1,5 +1,6 @@
 import {
     DEFAULT_CARTON_COUNT,
+    DEFAULT_CLIP_SECONDS,
     DEFAULT_EFFECTS_VOLUME,
     DEFAULT_ICON_REVEAL_TIME,
     DEFAULT_MUSIC_VOLUME,
@@ -7,6 +8,7 @@ import {
     DEFAULT_PRINT_SECONDARY_COLOR,
     DEFAULT_TITLE_REVEAL_TIME,
     MAX_CARTONS_GENERATED,
+    MAX_CLIP_SECONDS,
     MAX_GAME_NAME_LENGTH,
     MAX_REVEAL_TIME_SECONDS,
     THEME
@@ -18,6 +20,7 @@ const volume = (value) => typeof value === 'number' && Number.isFinite(value) &&
 const integerIn = (min, max) => (value) => Number.isInteger(value) && value >= min && value <= max ? value : undefined;
 const color = (value) => typeof value === 'string' && HEX_COLOR.test(value) ? value.toLowerCase() : undefined;
 const text = (value) => typeof value === 'string' ? value.trim().slice(0, MAX_GAME_NAME_LENGTH) : undefined;
+const flag = (value) => typeof value === 'boolean' ? value : undefined;
 const theme = (value) => Object.values(THEME).includes(value) ? value : undefined;
 
 const FIELDS = {
@@ -26,6 +29,8 @@ const FIELDS = {
     effectsVolume: {defaultValue: DEFAULT_EFFECTS_VOLUME, normalize: volume},
     titleRevealTime: {defaultValue: DEFAULT_TITLE_REVEAL_TIME, normalize: integerIn(0, MAX_REVEAL_TIME_SECONDS)},
     iconRevealTime: {defaultValue: DEFAULT_ICON_REVEAL_TIME, normalize: integerIn(0, MAX_REVEAL_TIME_SECONDS)},
+    clipSeconds: {defaultValue: DEFAULT_CLIP_SECONDS, normalize: integerIn(0, MAX_CLIP_SECONDS)},
+    randomClipStart: {defaultValue: false, normalize: flag},
     gameName: {defaultValue: '', normalize: text},
     printPrimaryColor: {defaultValue: DEFAULT_PRINT_PRIMARY_COLOR, normalize: color},
     printSecondaryColor: {defaultValue: DEFAULT_PRINT_SECONDARY_COLOR, normalize: color},

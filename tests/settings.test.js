@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {defaultSettings, sanitizeSettings, SETTING_KEYS} from '../js/modules/Settings.js';
-import {MAX_CARTONS_GENERATED, MAX_GAME_NAME_LENGTH, MAX_REVEAL_TIME_SECONDS, THEME} from '../js/constants.js';
+import {MAX_CARTONS_GENERATED, MAX_CLIP_SECONDS, MAX_GAME_NAME_LENGTH, MAX_REVEAL_TIME_SECONDS, THEME} from '../js/constants.js';
 
 test('los valores por defecto superan su propia validación', () => {
     const defaults = defaultSettings();
@@ -15,7 +15,8 @@ test('los valores por defecto superan su propia validación', () => {
 test('acepta valores válidos en sus límites', () => {
     const input = {
         theme: THEME.LIGHT, musicVolume: 0, effectsVolume: 1, titleRevealTime: MAX_REVEAL_TIME_SECONDS, iconRevealTime: 0,
-        gameName: 'x'.repeat(MAX_GAME_NAME_LENGTH), printPrimaryColor: '#ABCDEF', printSecondaryColor: '#000000', cartonCount: MAX_CARTONS_GENERATED
+        gameName: 'x'.repeat(MAX_GAME_NAME_LENGTH), printPrimaryColor: '#ABCDEF', printSecondaryColor: '#000000', cartonCount: MAX_CARTONS_GENERATED,
+        clipSeconds: MAX_CLIP_SECONDS, randomClipStart: true
     };
     const {values, applied, discarded} = sanitizeSettings(input);
 
@@ -27,12 +28,12 @@ test('acepta valores válidos en sus límites', () => {
 test('descarta lo que está fuera de rango, con el tipo equivocado o es desconocido', () => {
     const {values, applied, discarded} = sanitizeSettings({
         theme: 'rosa', musicVolume: 1.5, effectsVolume: -0.1, titleRevealTime: 31, iconRevealTime: 2.5, gameName: 12,
-        printPrimaryColor: 'rojo', printSecondaryColor: '#fff', cartonCount: 0, otraCosa: true
+        printPrimaryColor: 'rojo', printSecondaryColor: '#fff', cartonCount: 0, clipSeconds: MAX_CLIP_SECONDS + 1, randomClipStart: 'sí', otraCosa: true
     });
 
     assert.deepEqual(values, {});
     assert.deepEqual(applied, []);
-    assert.equal(discarded.length, 10);
+    assert.equal(discarded.length, 12);
 });
 
 test('rechaza NaN, infinitos, textos numéricos y nulos', () => {

@@ -6,7 +6,7 @@ import {STORAGE_PREFIX} from '../js/constants.js';
 const KEY = `${STORAGE_PREFIX}settings`;
 const data = new Map([[KEY, JSON.stringify({
     musicVolume: 0.4, effectsVolume: 0.2, titleRevealTime: 9, iconRevealTime: 3, gameName: 'Fiesta de prueba',
-    printPrimaryColor: '#112233', printSecondaryColor: '#445566', cartonCount: 25, theme: 'light'
+    printPrimaryColor: '#112233', printSecondaryColor: '#445566', cartonCount: 25, theme: 'light', clipSeconds: 20, randomClipStart: true
 })]]);
 
 globalThis.localStorage = {
@@ -45,6 +45,13 @@ test('al arrancar aplica los tiempos de revelado, el nombre y los datos de carto
     assert.equal(get('q:.color-preview-print-secondary').style['background-color'], '#445566');
 });
 
+test('al arrancar aplica el fragmento guardado a los controles de la configuración', () => {
+    assert.equal(get('#clip-seconds').value, 20);
+    assert.equal(get('#clip-seconds-value').textContent, '20 segundos');
+    assert.equal(get('#random-clip-start').checked, true);
+    assert.equal(get('#random-clip-start').disabled, false);
+});
+
 test('al arrancar aplica el tema guardado', () => {
     assert.equal(document.documentElement.dataset.theme, 'light');
 });
@@ -67,16 +74,20 @@ test('guardar la configuración guarda los tiempos', () => {
     get('#config-btn').fire('click');
     get('#title-reveal-time').value = '12';
     get('#icon-reveal-time').value = '20';
+    get('#clip-seconds').value = '35';
+    get('#random-clip-start').checked = false;
     get('#save-config-btn').fire('click');
     get('#alert-ok').fire('click');
 
     assert.equal(stored().titleRevealTime, 12);
     assert.equal(stored().iconRevealTime, 20);
+    assert.equal(stored().clipSeconds, 35);
+    assert.equal(stored().randomClipStart, false);
 });
 
 test('importar ajustes los aplica en vivo y los guarda', async () => {
     const file = {text: async () => JSON.stringify({type: 'settings', version: 1, settings: {
-        musicVolume: 0.8, effectsVolume: 0.1, titleRevealTime: 2, gameName: 'Importado', printPrimaryColor: '#abcdef', cartonCount: 7, theme: 'dark', basura: 1
+        musicVolume: 0.8, effectsVolume: 0.1, titleRevealTime: 2, gameName: 'Importado', printPrimaryColor: '#abcdef', cartonCount: 7, theme: 'dark', clipSeconds: 45, randomClipStart: true, basura: 1
     }})};
 
     get('#import-settings-input').fire('change', {target: {files: [file], value: 'ruta'}});
@@ -90,9 +101,13 @@ test('importar ajustes los aplica en vivo y los guarda', async () => {
     assert.equal(get('#carton-count').value, 7);
     assert.equal(get('q:.color-preview-print').style['background-color'], '#abcdef');
     assert.equal(document.documentElement.dataset.theme, 'dark');
+    assert.equal(get('#clip-seconds').value, 45);
+    assert.equal(get('#random-clip-start').checked, true);
     assert.equal(isOpen('#alert-modal'), true);
 
     const saved = stored();
+    assert.equal(saved.clipSeconds, 45);
+    assert.equal(saved.randomClipStart, true);
     assert.equal(saved.musicVolume, 0.8);
     assert.equal(saved.titleRevealTime, 2);
     assert.equal(saved.gameName, 'Importado');

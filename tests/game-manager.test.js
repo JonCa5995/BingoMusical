@@ -106,3 +106,11 @@ test('alterna el modo continuo', () => {
     assert.equal(game.isContinuousMode(), true);
     assert.equal(game.toggleContinuousMode(), false);
 });
+
+test('guarda el fragmento de canción: sin fragmento por defecto', () => {
+    const game = new GameManager();
+
+    assert.deepEqual(game.getClip(), {seconds: 0, randomStart: false});
+    game.setClip(30, true);
+    assert.deepEqual(game.getClip(), {seconds: 30, randomStart: true});
+});

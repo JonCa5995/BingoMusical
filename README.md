@@ -34,6 +34,12 @@ y abrir <http://localhost:8000>.
 
 El botón **«Automático»** (modo continuo) sirve para **reproducir las canciones sin empezar el juego**: al terminar una canción pasa sola a la siguiente, sin pulsar ningún botón. Es útil para ambientar o para probar la lista. Se desactiva solo al iniciar una partida (el botón pasa a mostrar «Manual» mientras está activo).
 
+### Fragmentos de canción
+
+En la configuración (⚙️), **«Duración del fragmento»** hace que cada canción suene solo unos segundos (de 1 a 120; con 0 suena entera). La casilla **«Empezar en un punto aleatorio»** elige al azar el comienzo, de modo que el fragmento siempre quepa dentro de la canción. Si la canción dura menos que el fragmento, suena entera.
+
+Al acabar el fragmento la canción se da por terminada, igual que si hubiera acabado sola: en el **modo continuo** pasa a la siguiente, y en una partida se queda esperando a «Siguiente». La barra de progreso y el tiempo se miden desde el inicio del fragmento. Los tiempos de revelado de título e icono también cuentan desde ese inicio; si el fragmento no supera el mayor de ellos, la configuración avisa de que se revelarán al terminar.
+
 ### Listas
 
 - **Exportar lista** descarga un JSON con las canciones (título e icono), el nombre del juego y los cartones generados.
@@ -41,7 +47,7 @@ El botón **«Automático»** (modo continuo) sirve para **reproducir las cancio
 
 ### Ajustes
 
-La aplicación recuerda en el navegador: el tema, el volumen de la música y de los efectos, los tiempos de revelado, el nombre del juego, los colores de impresión y la cantidad de cartones que propone el generador.
+La aplicación recuerda en el navegador: el tema, el volumen de la música y de los efectos, los tiempos de revelado, el fragmento de canción, el nombre del juego, los colores de impresión y la cantidad de cartones que propone el generador.
 
 Para **llevarlos a otro navegador**, la configuración (⚙️) tiene los botones **Exportar ajustes** e **Importar ajustes**. El archivo es un JSON:
 
@@ -56,6 +62,8 @@ Para **llevarlos a otro navegador**, la configuración (⚙️) tiene los botone
     "effectsVolume": 0.7,
     "titleRevealTime": 5,
     "iconRevealTime": 10,
+    "clipSeconds": 0,
+    "randomClipStart": false,
     "gameName": "Noche de bingo",
     "printPrimaryColor": "#6366f1",
     "printSecondaryColor": "#f8faff",
@@ -69,6 +77,8 @@ Para **llevarlos a otro navegador**, la configuración (⚙️) tiene los botone
 | `theme` | `"dark"` o `"light"` |
 | `musicVolume`, `effectsVolume` | número entre 0 y 1 |
 | `titleRevealTime`, `iconRevealTime` | entero entre 0 y 30 (segundos) |
+| `clipSeconds` | entero entre 0 y 120 (0 = canción completa) |
+| `randomClipStart` | `true` o `false` |
 | `gameName` | texto de hasta 50 caracteres |
 | `printPrimaryColor`, `printSecondaryColor` | color `#rrggbb` |
 | `cartonCount` | entero entre 1 y 1500 |

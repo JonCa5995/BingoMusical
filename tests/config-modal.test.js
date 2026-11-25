@@ -7,10 +7,11 @@ import {MSG, TEXT} from '../js/messages.js';
 import {mkDialog, mkEl} from './helpers/fakeDom.js';
 
 const NAMES = ['configBtn', 'closeConfigModalBtn', 'saveConfigBtn', 'titleRevealTimeSlider', 'titleRevealValueSpan', 'iconRevealTimeSlider',
-    'iconRevealValueSpan', 'exportSettingsBtn', 'importSettingsBtn', 'importSettingsInput'];
+    'iconRevealValueSpan', 'exportSettingsBtn', 'importSettingsBtn', 'importSettingsInput', 'clipSecondsSlider', 'clipSecondsValueSpan',
+    'randomClipStartCheckbox', 'clipWarning'];
 
 const build = (settings = defaultSettings()) => {
-    const elements = Object.fromEntries(NAMES.map(name => [name, mkEl(/Slider|Input/.test(name) ? 'input' : 'button')]));
+    const elements = Object.fromEntries(NAMES.map(name => [name, mkEl(/Slider|Input|Checkbox/.test(name) ? 'input' : 'button')]));
     elements.configModal = mkDialog();
     const log = [];
     const game = new GameManager();
@@ -48,7 +49,7 @@ test('guardar aplica los tiempos al juego y los comunica para guardarlos', () =>
 
     assert.equal(game.getTitleRevealTime(), 7);
     assert.equal(game.getIconRevealTime(), 3);
-    assert.deepEqual(log[0], ['guardado', {titleRevealTime: 7, iconRevealTime: 3}]);
+    assert.deepEqual(log[0], ['guardado', {titleRevealTime: 7, iconRevealTime: 3, clipSeconds: 0, randomClipStart: false}]);
 });
 
 test('setRevealTimes actualiza los controles', () => {
@@ -121,4 +122,63 @@ test('si el archivo no se puede leer lo comunica como error', async () => {
     await elements.importSettingsInput._listeners.change[0]({target: unreadable});
 
     assert.deepEqual(log[0], ['aviso', MSG.settings.importFailed('sin permiso')]);
+});
+
+test('init muestra el fragmento del juego: sin fragmento, la canción completa y la casilla desactivada', () => {
+    const {elements} = build();
+
+    assert.equal(elements.clipSecondsSlider.value, 0);
+    assert.equal(elements.clipSecondsValueSpan.textContent, TEXT.clipSeconds(0));
+    assert.equal(elements.randomClipStartCheckbox.disabled, true);
+    assert.equal(elements.clipWarning.textContent, '');
+});
+
+test('al mover el control del fragmento actualiza el texto y activa la casilla de inicio aleatorio', () => {
+    const {elements} = build();
+
+    elements.clipSecondsSlider.value = '30';
+    elements.clipSecondsSlider.fire('input');
+
+    assert.equal(elements.clipSecondsValueSpan.textContent, '30 segundos');
+    assert.equal(elements.randomClipStartCheckbox.disabled, false);
+});
+
+test('avisa si el fragmento no supera el mayor tiempo de revelado, y deja de avisar si lo supera', () => {
+    const {elements} = build();
+
+    elements.clipSecondsSlider.value = '8';
+    elements.clipSecondsSlider.fire('input');
+    assert.equal(elements.clipWarning.textContent, TEXT.clipWarning(8, 10));
+
+    elements.clipSecondsSlider.value = '11';
+    elements.clipSecondsSlider.fire('input');
+    assert.equal(elements.clipWarning.textContent, '');
+
+    elements.titleRevealTimeSlider.value = '20';
+    elements.titleRevealTimeSlider.fire('input', {target: elements.titleRevealTimeSlider});
+    assert.equal(elements.clipWarning.textContent, TEXT.clipWarning(11, 20));
+});
+
+test('guardar aplica el fragmento al juego, lo comunica y lo menciona en el aviso', () => {
+    const {elements, game, log} = build();
+    elements.clipSecondsSlider.value = '25';
+    elements.randomClipStartCheckbox.checked = true;
+
+    elements.saveConfigBtn.fire('click');
+
+    assert.deepEqual(game.getClip(), {seconds: 25, randomStart: true});
+    assert.deepEqual(log[0][1].clipSeconds, 25);
+    assert.deepEqual(log[0][1].randomClipStart, true);
+    assert.ok(log.find(entry => entry[0] === 'aviso')[1].message.includes('Fragmento de 25 segundos (inicio aleatorio)'));
+});
+
+test('setClip refleja un fragmento en los controles', () => {
+    const {modal, elements} = build();
+
+    modal.setClip({seconds: 45, randomStart: true});
+
+    assert.equal(elements.clipSecondsSlider.value, 45);
+    assert.equal(elements.randomClipStartCheckbox.checked, true);
+    assert.equal(elements.randomClipStartCheckbox.disabled, false);
+    assert.equal(elements.clipSecondsValueSpan.textContent, '45 segundos');
 });
