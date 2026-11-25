@@ -8,7 +8,8 @@ const GROUPS = {
     ],
     songs: [
         'addSongsInput', 'addSongsLabel', 'songsListElement', 'songsSection', 'deleteAllBtn', 'searchInput',
-        'filterStatus', 'sortOrder', 'exportListBtn', 'importListBtn', 'importFileInput'
+        'filterStatus', 'sortOrder', 'exportListBtn', 'importListBtn', 'importFileInput', 'linkAudioBtn', 'linkAudioInput',
+        'exportGameBtn'
     ],
     history: [
         'historyGrid', 'playedCounterSpan', 'totalCounterSpan', 'clearHistoryBtn'
@@ -20,7 +21,10 @@ const GROUPS = {
         'lineaOverlay', 'continueLineaBtn', 'celebrationOverlay', 'restartBtn'
     ],
     toolbar: [
-        'themeToggleBtn', 'themeIcon', 'fullscreenBtn', 'shortcutsHelpBtn'
+        'themeToggleBtn', 'themeIcon', 'fullscreenBtn', 'shortcutsHelpBtn', 'openCheckCartonBtn', 'openProjectionBtn'
+    ],
+    checkCarton: [
+        'checkCartonModal', 'closeCheckCartonModalBtn', 'checkCartonNumberInput', 'checkCartonSubmitBtn', 'checkCartonResult'
     ],
     iconPicker: [
         'iconModal', 'closeIconModalBtn', 'modalSongTitle', 'iconPickerContainer', 'iconSearchInput',
@@ -28,7 +32,8 @@ const GROUPS = {
     ],
     config: [
         'configBtn', 'configModal', 'closeConfigModalBtn', 'saveConfigBtn', 'titleRevealTimeSlider',
-        'titleRevealValueSpan', 'iconRevealTimeSlider', 'iconRevealValueSpan'
+        'titleRevealValueSpan', 'iconRevealTimeSlider', 'iconRevealValueSpan', 'exportSettingsBtn', 'importSettingsBtn',
+        'importSettingsInput', 'clipSecondsSlider', 'clipSecondsValueSpan', 'randomClipStartCheckbox', 'clipWarning'
     ],
     dialogs: [
         'confirmModal', 'confirmTitle', 'confirmMessage', 'confirmCancelBtn', 'confirmAcceptBtn', 'alertModal',
@@ -39,7 +44,8 @@ const GROUPS = {
         'createNewCartonesBtn', 'addCartonesBtn', 'printExistingCartonesBtn', 'deleteAllCartonesBtn',
         'cartonModal', 'closeCartonModalBtn', 'cartonCountInput', 'generateSaveCartonesBtn', 'printModal',
         'closePrintModalBtn', 'printCartonesInfo', 'printPrimaryColorInput', 'printSecondaryColorInput',
-        'printCartonPreview', 'previewPrintBtn', 'printPdfBtn', 'printHtmlBtn', 'printRangeRadios',
+        'printCartonPreview', 'previewPrintBtn', 'printPdfBtn', 'printHtmlBtn', 'printRangeRadios', 'printPreviewPrevBtn',
+        'printPreviewNextBtn', 'printPreviewPosition',
         'rangeInputsContainer', 'rangeFromInput', 'rangeToInput'
     ],
     ui: [
@@ -104,6 +110,9 @@ const IDS = {
     printPrimaryColorInput: 'print-primary-color',
     printSecondaryColorInput: 'print-secondary-color',
     printCartonPreview: 'print-carton-preview',
+    printPreviewPrevBtn: 'print-preview-prev',
+    printPreviewNextBtn: 'print-preview-next',
+    printPreviewPosition: 'print-preview-position',
     previewPrintBtn: 'preview-print-btn',
     printPdfBtn: 'print-pdf-btn',
     printHtmlBtn: 'print-html-btn',
@@ -127,6 +136,13 @@ const IDS = {
     iconRevealTimeSlider: 'icon-reveal-time',
     iconRevealValueSpan: 'icon-reveal-value',
     saveConfigBtn: 'save-config-btn',
+    clipSecondsSlider: 'clip-seconds',
+    clipSecondsValueSpan: 'clip-seconds-value',
+    randomClipStartCheckbox: 'random-clip-start',
+    clipWarning: 'clip-warning',
+    exportSettingsBtn: 'export-settings-btn',
+    importSettingsBtn: 'import-settings-btn',
+    importSettingsInput: 'import-settings-input',
 
     confirmModal: 'confirm-modal',
     confirmTitle: 'confirm-title',
@@ -145,6 +161,16 @@ const IDS = {
     restartBtn: 'restart-btn',
 
     exportListBtn: 'export-list',
+    openCheckCartonBtn: 'open-check-carton-btn',
+    openProjectionBtn: 'open-projection-btn',
+    checkCartonModal: 'check-carton-modal',
+    closeCheckCartonModalBtn: 'close-check-carton-modal',
+    checkCartonNumberInput: 'check-carton-number',
+    checkCartonSubmitBtn: 'check-carton-submit',
+    checkCartonResult: 'check-carton-result',
+    exportGameBtn: 'export-game-btn',
+    linkAudioBtn: 'link-audio-btn',
+    linkAudioInput: 'link-audio-input',
     importListBtn: 'import-list',
     importFileInput: 'import-file',
 

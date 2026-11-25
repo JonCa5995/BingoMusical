@@ -1,8 +1,5 @@
 import {
     CARTON_MODE,
-    DEFAULT_CARTON_COUNT,
-    DEFAULT_PRINT_PRIMARY_COLOR,
-    DEFAULT_PRINT_SECONDARY_COLOR,
     MAX_CARTONS_GENERATED,
     PRINT_FORMAT,
     SOUND
@@ -11,7 +8,7 @@ import {MSG, TEXT} from '../messages.js';
 import {gameNameOrDefault} from '../utils.js';
 
 export class CartonModals {
-    constructor({elements, game, cartonManager, modals, dialogs, sounds, getSongs, onCartonesChanged}) {
+    constructor({elements, game, cartonManager, modals, dialogs, sounds, getSongs, onCartonesChanged, settings, onSettingsChanged}) {
         this.el = elements;
         this.game = game;
         this.cartonManager = cartonManager;
@@ -20,7 +17,10 @@ export class CartonModals {
         this.sounds = sounds;
         this.getSongs = getSongs;
         this.onCartonesChanged = onCartonesChanged;
+        this.initialSettings = settings;
+        this.onSettingsChanged = onSettingsChanged;
         this.mode = null;
+        this.previewIndex = 0;
     }
 
     init() {
@@ -35,11 +35,31 @@ export class CartonModals {
         const el = this.el;
 
         el.cartonCountInput.max = MAX_CARTONS_GENERATED;
-        el.cartonCountInput.value = DEFAULT_CARTON_COUNT;
-        el.printPrimaryColorInput.value = DEFAULT_PRINT_PRIMARY_COLOR;
-        el.printSecondaryColorInput.value = DEFAULT_PRINT_SECONDARY_COLOR;
-        document.querySelector('.color-preview-print')?.style.setProperty('background-color', DEFAULT_PRINT_PRIMARY_COLOR);
-        document.querySelector('.color-preview-print-secondary')?.style.setProperty('background-color', DEFAULT_PRINT_SECONDARY_COLOR);
+        this.applySettings(this.initialSettings);
+    }
+
+    applySettings(settings) {
+        const el = this.el;
+
+        if ('cartonCount' in settings) {
+            el.cartonCountInput.value = settings.cartonCount;
+        }
+        if ('printPrimaryColor' in settings) {
+            el.printPrimaryColorInput.value = settings.printPrimaryColor;
+            document.querySelector('.color-preview-print')?.style.setProperty('background-color', settings.printPrimaryColor);
+        }
+        if ('printSecondaryColor' in settings) {
+            el.printSecondaryColorInput.value = settings.printSecondaryColor;
+            document.querySelector('.color-preview-print-secondary')?.style.setProperty('background-color', settings.printSecondaryColor);
+        }
+    }
+
+    getSettings() {
+        return {
+            cartonCount: Number.parseInt(this.el.cartonCountInput.value),
+            printPrimaryColor: this.el.printPrimaryColorInput.value,
+            printSecondaryColor: this.el.printSecondaryColorInput.value
+        };
     }
 
     _bindOptionsModal() {
@@ -66,6 +86,8 @@ export class CartonModals {
         el.printHtmlBtn.addEventListener('click', () => this.print(PRINT_FORMAT.HTML));
         el.printPdfBtn.addEventListener('click', () => this.print(PRINT_FORMAT.PDF));
         el.previewPrintBtn.addEventListener('click', () => this.updatePreview());
+        el.printPreviewPrevBtn.addEventListener('click', () => this.stepPreview(-1));
+        el.printPreviewNextBtn.addEventListener('click', () => this.stepPreview(1));
 
         el.printRangeRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
@@ -76,10 +98,12 @@ export class CartonModals {
 
         el.printPrimaryColorInput.addEventListener('input', (e) => {
             document.querySelector('.color-preview-print').style.backgroundColor = e.target.value;
+            this.onSettingsChanged({printPrimaryColor: e.target.value});
             this.updatePreview();
         });
         el.printSecondaryColorInput.addEventListener('input', (e) => {
             document.querySelector('.color-preview-print-secondary').style.backgroundColor = e.target.value;
+            this.onSettingsChanged({printSecondaryColor: e.target.value});
             this.updatePreview();
         });
     }
@@ -158,11 +182,8 @@ export class CartonModals {
         const mode = this.mode || CARTON_MODE.NEW;
         const existingCartones = mode === CARTON_MODE.ADD ? this.game.getCartones() : [];
 
-        const result = this.cartonManager.generate(
-            this.getSongs(),
-            Number.parseInt(this.el.cartonCountInput.value),
-            existingCartones
-        );
+        const requestedCount = Number.parseInt(this.el.cartonCountInput.value);
+        const result = this.cartonManager.generate(this.getSongs(), requestedCount, existingCartones);
 
         if (!result.success) {
             this.dialogs.showAlert(result.alert);
@@ -171,12 +192,21 @@ export class CartonModals {
 
         const count = result.cartones.length;
 
+        if (count === 0) {
+            this.dialogs.showAlert(MSG.cartones.noMoreUnique);
+            return;
+        }
+
+        const partial = result.missing > 0;
+        this.onSettingsChanged({cartonCount: requestedCount});
+
         if (mode === CARTON_MODE.NEW) {
             this.game.setCartones(result.cartones);
-            this.dialogs.showAlert(MSG.cartones.generated(count));
+            this.dialogs.showAlert(partial ? MSG.cartones.generatedPartial(count, result.requested) : MSG.cartones.generated(count));
         } else if (mode === CARTON_MODE.ADD) {
             this.game.addCartones(result.cartones);
-            this.dialogs.showAlert(MSG.cartones.added(count, this.game.getCartonesCount()));
+            const total = this.game.getCartonesCount();
+            this.dialogs.showAlert(partial ? MSG.cartones.addedPartial(count, result.requested, total) : MSG.cartones.added(count, total));
         }
 
         this.onCartonesChanged();
@@ -200,6 +230,7 @@ export class CartonModals {
         this.el.printRangeRadios[0].checked = true;
         this.el.rangeInputsContainer.style.display = 'none';
 
+        this.previewIndex = 0;
         this.updatePreview();
 
         this.modals.openWithClick(this.el.printModal);
@@ -222,8 +253,20 @@ export class CartonModals {
     }
 
     updatePreview() {
-        const gameName = gameNameOrDefault(this.game.getGameName());
-        this.cartonManager.updatePrintPreview(this.getSongs(), gameName, this._printColors());
+        const cartones = this.game.getCartones();
+        if (cartones.length === 0) return;
+
+        this.previewIndex = Math.min(Math.max(this.previewIndex, 0), cartones.length - 1);
+        this.cartonManager.updatePrintPreview(cartones[this.previewIndex], gameNameOrDefault(this.game.getGameName()), this._printColors());
+
+        this.el.printPreviewPosition.textContent = TEXT.cartones.previewPosition(this.previewIndex + 1, cartones.length);
+        this.el.printPreviewPrevBtn.disabled = this.previewIndex === 0;
+        this.el.printPreviewNextBtn.disabled = this.previewIndex === cartones.length - 1;
+    }
+
+    stepPreview(offset) {
+        this.previewIndex += offset;
+        this.updatePreview();
     }
 
     _printColors() {

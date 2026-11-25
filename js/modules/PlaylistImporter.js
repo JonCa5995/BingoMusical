@@ -11,13 +11,13 @@ export class PlaylistImporter {
     async loadSongs(playlistSongs) {
         const { candidates, duplicates } = this._prepareCandidates(playlistSongs);
 
-        const loaded = await Promise.all(candidates.map(candidate => this._loadAudio(candidate)));
-        const songs = loaded.filter(Boolean);
+        const songs = await Promise.all(candidates.map(candidate => this._loadAudio(candidate)));
+        const missing = songs.filter(song => !song.file).map(song => song.title);
 
         this.songManager.resetIdCounter();
         this.songManager.assignMissingIds(songs);
 
-        return { songs, duplicates };
+        return { songs, duplicates, missing };
     }
 
     _prepareCandidates(playlistSongs) {
@@ -64,7 +64,7 @@ export class PlaylistImporter {
             return { ...candidate, file: await response.blob(), played: false };
         } catch {
             console.warn(`Archivo no encontrado: ${candidate.audioPath}`);
-            return null;
+            return { ...candidate, file: null, played: false };
         }
     }
 }

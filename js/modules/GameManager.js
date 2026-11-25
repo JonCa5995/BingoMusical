@@ -1,4 +1,5 @@
 import {
+    DEFAULT_CLIP_SECONDS,
     DEFAULT_ICON_REVEAL_TIME,
     DEFAULT_TITLE_REVEAL_TIME,
     MIN_SONGS_FOR_BINGO,
@@ -15,6 +16,8 @@ export class GameManager {
     continuousMode = false;
     titleRevealTime = DEFAULT_TITLE_REVEAL_TIME;
     iconRevealTime = DEFAULT_ICON_REVEAL_TIME;
+    clipSeconds = DEFAULT_CLIP_SECONDS;
+    randomClipStart = false;
     gameName = '';
     cartones = [];
 
@@ -118,6 +121,10 @@ export class GameManager {
         this.lineaCompleted = true;
     }
 
+    isLineaCompleted() {
+        return this.lineaCompleted;
+    }
+
     canCallBingo() {
         return this._canCall(this.bingoCompleted, MSG.game.bingoAlreadyCalled, MIN_SONGS_FOR_BINGO, MSG.game.bingoNeedsSongs);
     }
@@ -132,6 +139,15 @@ export class GameManager {
 
     allSongsPlayed(songs) {
         return this._unplayedSongs(songs).length === 0;
+    }
+
+    restore({started, lineaCompleted, bingoCompleted, currentSongId, playedSongs}) {
+        this.resetGame();
+        this.gameStarted = started;
+        this.lineaCompleted = lineaCompleted;
+        this.bingoCompleted = bingoCompleted;
+        this.currentSongIndex = currentSongId;
+        this.playedSongs = [...playedSongs];
     }
 
     resetGame() {
@@ -165,6 +181,15 @@ export class GameManager {
 
     setIconRevealTime(seconds) {
         this.iconRevealTime = seconds;
+    }
+
+    setClip(seconds, randomStart) {
+        this.clipSeconds = seconds;
+        this.randomClipStart = randomStart;
+    }
+
+    getClip() {
+        return {seconds: this.clipSeconds, randomStart: this.randomClipStart};
     }
 
     getTitleRevealTime() {

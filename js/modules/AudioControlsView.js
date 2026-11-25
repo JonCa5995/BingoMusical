@@ -1,8 +1,9 @@
 export class AudioControlsView {
-    constructor({audioElement, elements, handlers}) {
+    constructor({audioElement, elements, handlers, getTimeline}) {
         this.audioElement = audioElement;
         this.el = elements;
         this.handlers = handlers;
+        this.getTimeline = getTimeline ?? (() => ({currentTime: audioElement.currentTime, duration: audioElement.duration}));
     }
 
     bind() {
@@ -18,6 +19,18 @@ export class AudioControlsView {
         this._bindVolumeSlider(this.el.effectsVolumeSlider, this.el.effectsVolumeValueSpan, this.handlers.onEffectsVolume);
     }
 
+    setVolumes(musicVolume, effectsVolume) {
+        for (const [slider, valueSpan, volume] of [
+            [this.el.musicVolumeSlider, this.el.musicVolumeValueSpan, musicVolume],
+            [this.el.effectsVolumeSlider, this.el.effectsVolumeValueSpan, effectsVolume]
+        ]) {
+            const percent = Math.round(volume * 100);
+            slider.value = percent;
+            slider.setAttribute('aria-valuenow', percent);
+            valueSpan.textContent = `${percent}%`;
+        }
+    }
+
     _bindVolumeSlider(slider, valueSpan, onChange) {
         slider.addEventListener('input', (e) => {
             const value = e.target.value;
@@ -28,7 +41,7 @@ export class AudioControlsView {
     }
 
     updateProgress() {
-        const {currentTime, duration} = this.audioElement;
+        const {currentTime, duration} = this.getTimeline();
         const progress = (currentTime / duration) * 100;
         if (!Number.isFinite(progress)) return;
 
@@ -40,7 +53,7 @@ export class AudioControlsView {
     }
 
     updateDuration() {
-        const duration = this.audioElement.duration;
+        const {duration} = this.getTimeline();
         this.el.durationSpan.textContent = formatTime(duration);
         this.el.durationSpan.setAttribute('datetime', `PT${Number.isFinite(duration) ? Math.floor(duration) : 0}S`);
     }

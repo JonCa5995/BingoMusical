@@ -1,0 +1,105 @@
+.btn-check {
+    background: var(--gradient-primary, linear-gradient(135deg, #6366f1, #8b5cf6));
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.btn-check:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+}
+
+.check-carton-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.check-carton-form .config-input {
+    width: 8rem;
+}
+
+.check-carton-title {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    margin-bottom: 0.75rem;
+}
+
+.check-verdict {
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.check-verdict.check-ok {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success-color);
+}
+
+.check-verdict.check-pending {
+    background: rgba(148, 163, 184, 0.15);
+    color: var(--text-muted);
+}
+
+.check-row {
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.check-row-complete {
+    border-color: var(--success-color);
+}
+
+.check-row-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
+    color: var(--text-color);
+}
+
+.check-songs {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem 0.75rem;
+}
+
+.check-song {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.check-mark {
+    font-weight: 700;
+}
+
+.check-song-played .check-mark {
+    color: var(--success-color);
+}
+
+.check-song-pending {
+    opacity: 0.7;
+}
+
+.check-song-pending .check-mark {
+    color: var(--danger-color);
+}
+
+.check-song-icon {
+    font-size: 1.3rem;
+    width: 1.6rem;
+    height: 1.6rem;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.check-song-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

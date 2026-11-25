@@ -12,6 +12,7 @@
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
   <meta property="og:title" content="Bingo Musical">
   <meta property="og:type" content="website">
   <meta property="og:url" content="Proyecto local">
@@ -88,6 +89,25 @@
               aria-label="Cantar bingo"
       >
         <span aria-hidden="true">🎉</span>
+      </button>
+
+      <button id="open-check-carton-btn"
+              class="btn btn-special btn-check"
+              type="button"
+              disabled
+              title="Comprobar un cartón (C)"
+              aria-label="Comprobar un cartón"
+      >
+        <span aria-hidden="true">🔍</span>
+      </button>
+
+      <button id="open-projection-btn"
+              class="btn btn-secondary btn-icon"
+              type="button"
+              title="Abrir la ventana de proyección (P)"
+              aria-label="Abrir la ventana de proyección"
+      >
+        <span aria-hidden="true">📺</span>
       </button>
 
       <button id="fullscreen-btn"
@@ -185,7 +205,7 @@
             <button id="shuffle-all"
                     class="btn btn-secondary btn-icon"
                     type="button"
-                    aria-label="Modo Continuo"
+                    aria-label="Automático (modo continuo)"
                     aria-pressed="false"
                     title="Reproducción automática"
             >
@@ -213,9 +233,22 @@
             <button id="export-list" class="btn btn-secondary btn-icon" type="button" aria-label="Exportar Lista" title="Exportar Lista">
               <span aria-hidden="true">⬇️</span>
             </button>
-            <button id="import-list" class="btn btn-secondary btn-icon" type="button" aria-label="Importar Lista" title="Importar Lista">
+            <button id="export-game-btn" class="btn btn-secondary btn-icon" type="button" aria-label="Exportar partida" title="Exportar la partida: canciones, progreso, cartones y ajustes">
+              <span aria-hidden="true">💾</span>
+            </button>
+            <button id="import-list" class="btn btn-secondary btn-icon" type="button" aria-label="Importar lista o partida" title="Importar lista o partida">
               <span aria-hidden="true">⬆️</span>
             </button>
+            <button id="link-audio-btn" class="btn btn-secondary btn-icon" type="button" aria-label="Vincular audio" title="Vincular la carpeta de audio a las canciones sin archivo">
+              <span aria-hidden="true">🔗</span>
+            </button>
+            <input id="link-audio-input"
+                   class="file-import"
+                   type="file"
+                   webkitdirectory
+                   multiple
+                   aria-label="Seleccionar la carpeta de audio"
+            >
             <input id="import-file"
                    class="file-import"
                    type="file"
@@ -327,6 +360,53 @@
           >
           <small id="icon-hint" class="config-hint">
             Tiempo desde que se inicia la canción hasta que aparece el icono en el reproductor y en el historial
+          </small>
+        </div>
+
+        <div class="config-group">
+          <label class="config-label" for="clip-seconds">
+            ✂️ Duración del fragmento:
+            <span class="config-value" id="clip-seconds-value">Canción completa</span>
+          </label>
+          <input id="clip-seconds"
+                 class="config-slider"
+                 type="range"
+                 min="0"
+                 max="120"
+                 value="0"
+                 step="1"
+                 aria-describedby="clip-hint clip-warning"
+          >
+          <small id="clip-hint" class="config-hint">
+            Reproduce solo los primeros segundos de cada canción. Con 0 suena la canción completa
+          </small>
+          <label class="radio-option" for="random-clip-start">
+            <input id="random-clip-start" type="checkbox">
+            <span>Empezar en un punto aleatorio de la canción</span>
+          </label>
+          <small id="clip-warning" class="config-hint" role="status"></small>
+        </div>
+
+        <div class="config-group">
+          <span class="config-label">💾 Ajustes del juego</span>
+          <div class="settings-file-actions">
+            <button id="export-settings-btn" class="btn btn-secondary btn-icon" type="button">
+              <span aria-hidden="true">📤</span>
+              Exportar ajustes
+            </button>
+            <button id="import-settings-btn" class="btn btn-secondary btn-icon" type="button">
+              <span aria-hidden="true">📥</span>
+              Importar ajustes
+            </button>
+            <input id="import-settings-input"
+                   class="file-import"
+                   type="file"
+                   accept=".json"
+                   aria-label="Seleccionar archivo de ajustes a importar"
+            >
+          </div>
+          <small class="config-hint">
+            Guarda en un archivo el volumen, los tiempos, el nombre, los colores y el tema para llevarlos a otro navegador
           </small>
         </div>
 
@@ -506,6 +586,15 @@
 
           <div class="carton-preview-section">
             <h3>👁️ Vista Previa</h3>
+            <div class="preview-nav">
+              <button id="print-preview-prev" class="btn btn-secondary btn-icon" type="button" aria-label="Cartón anterior" title="Cartón anterior">
+                <span aria-hidden="true">◀</span>
+              </button>
+              <span id="print-preview-position" class="preview-position" aria-live="polite">Cartón 1 de 1</span>
+              <button id="print-preview-next" class="btn btn-secondary btn-icon" type="button" aria-label="Cartón siguiente" title="Cartón siguiente">
+                <span aria-hidden="true">▶</span>
+              </button>
+            </div>
             <div id="print-carton-preview" class="carton-preview-container">
             </div>
           </div>
@@ -588,6 +677,34 @@
             Aceptar
           </button>
         </footer>
+      </section>
+    </article>
+  </dialog>
+
+  <dialog id="check-carton-modal" class="modal hidden" aria-labelledby="check-carton-title">
+    <article class="modal-content">
+      <header class="modal-header">
+        <h2 id="check-carton-title">🔍 Comprobar cartón</h2>
+        <button id="close-check-carton-modal" class="close-btn" type="button" aria-label="Cerrar la comprobación">
+          ✕
+        </button>
+      </header>
+      <section class="modal-body">
+        <div class="check-carton-form">
+          <label class="config-label" for="check-carton-number">Número de cartón:</label>
+          <input id="check-carton-number"
+                 class="config-input"
+                 type="number"
+                 min="1"
+                 step="1"
+                 inputmode="numeric"
+          >
+          <button id="check-carton-submit" class="btn btn-play btn-icon" type="button">
+            <span aria-hidden="true">🔍</span>
+            Comprobar
+          </button>
+        </div>
+        <div id="check-carton-result" class="check-carton-result" aria-live="polite"></div>
       </section>
     </article>
   </dialog>

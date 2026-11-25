@@ -6,7 +6,7 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    background: var(--primary-color);
+    background: var(--button-bg);
     color: white;
     white-space: nowrap;
 }
@@ -82,7 +82,7 @@
 }
 
 .btn-secondary {
-    background: var(--text-muted);
+    background: var(--button-secondary-bg);
 }
 
 .btn-large {

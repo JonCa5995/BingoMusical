@@ -18,11 +18,9 @@ export class CartonManager {
         this.exporters.set(format, exporter);
     }
 
-    updatePrintPreview(songs, gameName, colors) {
+    updatePrintPreview(carton, gameName, colors) {
         try {
-            const previewCarton = this.cartonGenerator.generateSingleCarton(songs, 1);
-
-            this.previewContainer.innerHTML = this.renderer.generatePreviewHTML(previewCarton, colors, gameName);
+            this.previewContainer.innerHTML = this.renderer.generatePreviewHTML(carton, colors, gameName);
         } catch (error) {
             this.previewContainer.innerHTML = `
                 <div class="carton-preview-placeholder">
@@ -84,10 +82,10 @@ export class CartonManager {
         this.sounds.play(SOUND.START);
 
         try {
-            const cartones = this.cartonGenerator.generateCartones(playableSongs, count, existingCartones);
+            const {cartones, missing} = this.cartonGenerator.generateAsMany(playableSongs, count, existingCartones);
 
             this.sounds.play(SOUND.WIN);
-            return {success: true, cartones};
+            return {success: true, cartones, requested: count, missing};
         } catch (error) {
             return {success: false, alert: MSG.cartones.generateFailed(error.message)};
         }
