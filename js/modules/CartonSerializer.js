@@ -28,7 +28,7 @@ export function deserializeCartones(cartonesData, songs) {
             return {type: CELL_TYPE.DECORATIVE, position};
         }
 
-        return {type: CELL_TYPE.SONG, position, song, marked: false};
+        return {type: CELL_TYPE.SONG, position, song};
     };
 
     return cartonesData.map(cartonData => ({

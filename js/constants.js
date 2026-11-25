@@ -34,6 +34,10 @@ export const DEFAULT_TITLE_REVEAL_TIME = 5;
 export const DEFAULT_ICON_REVEAL_TIME = 10;
 export const MAX_REVEAL_TIME_SECONDS = 30;
 
+// Fragmento de canción: 0 segundos significa canción completa
+export const DEFAULT_CLIP_SECONDS = 0;
+export const MAX_CLIP_SECONDS = 120;
+
 // Esperas de la interfaz (en milisegundos)
 export const SEARCH_DEBOUNCE_MS = 300;             // tras la última tecla, antes de filtrar la lista
 export const CELEBRATION_DELAY_MS = 500;           // entre cantar LÍNEA/BINGO y mostrar la celebración
@@ -42,7 +46,20 @@ export const CONTINUOUS_NEXT_SONG_DELAY_MS = 1000; // pausa entre canciones en m
 export const PRINT_DIALOG_DELAY_MS = 250;          // para que cargue el documento antes de abrir el diálogo de impresión
 export const REVOKE_URL_DELAY_MS = 1000;           // margen antes de liberar la URL de una descarga
 export const ICON_MODAL_CLOSE_DELAY_MS = 300;      // el modal de iconos se cierra un instante después de elegir
+export const AUTOSAVE_DELAY_MS = 750;              // tras el último cambio, antes de guardar la partida en el navegador
 export const MS_PER_SECOND = 1000;
+
+// Ventana de proyección para el público
+export const PROJECTION_CHANNEL = 'bingo-musical-projection';
+export const PROJECTION_PAGE = 'projection.html';
+export const PROJECTION_WINDOW_NAME = 'bingo-projection';
+export const PROJECTION_FEATURES = 'popup,width=1280,height=720';
+export const PROJECTION_HISTORY_LIMIT = 12;
+export const PROJECTION_STATE_VERSION = 1;
+
+// Aplicación instalable sin conexión
+export const SERVICE_WORKER_FILE = 'sw.js';
+export const SERVICE_WORKER_DEV_PARAM = 'sw';
 
 // ============================================================
 // IMÁGENES Y AUDIO
@@ -63,9 +80,20 @@ export const DEFAULT_EFFECTS_VOLUME = 0.7;
 
 export const DEFAULT_SONGS_FOLDER = 'canciones/';
 export const AUDIO_FILE_EXTENSION = '.mp3';
+export const AUDIO_EXTENSIONS = /\.(mp3|wav|ogg|oga|m4a|aac|flac|opus|weba)$/i;
 export const LOGO_PATH = 'icon.png';
 export const DECORATIVE_ICON_PATH = 'img/icon-decorative.svg';
 export const STORAGE_PREFIX = 'bingoMusical_';
+export const SETTINGS_FILE_TYPE = 'settings';
+export const SETTINGS_FILE_VERSION = 1;
+
+// Archivos de partida (los JSON vienen de fuera, así que tienen límites)
+export const GAME_FILE_TYPE = 'game';
+export const GAME_FILE_VERSION = 1;
+export const MAX_SONGS_IN_FILE = 2000;
+export const MAX_CARTONES_IN_FILE = 20000;
+export const MAX_SONG_TITLE_LENGTH = 300;
+export const MAX_ICON_DATA_LENGTH = 2000000;
 
 // ============================================================
 // VALORES POR DEFECTO
@@ -120,6 +148,10 @@ export const THEME = Object.freeze({
 });
 
 /** Nombres de los efectos de sonido (sus parámetros están en SoundEffects.js) */
+export const ALERT_KIND = Object.freeze({
+    ERROR: 'error'
+});
+
 export const SOUND = Object.freeze({
     CLICK: 'click',
     START: 'start',

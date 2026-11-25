@@ -8,6 +8,12 @@ const HTML_ESCAPES = {
     "'": '&#39;'
 };
 
+const IMAGE_DATA_URL = /^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/]+={0,2}$/;
+
+export function isImageDataUrl(value) {
+    return typeof value === 'string' && IMAGE_DATA_URL.test(value);
+}
+
 export function escapeHTML(value) {
     return String(value ?? '').replaceAll(/[&<>"']/g, char => HTML_ESCAPES[char]);
 }

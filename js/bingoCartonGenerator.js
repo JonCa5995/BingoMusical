@@ -11,6 +11,16 @@ import {TEXT} from "./messages.js";
 
 export class BingoCartonGenerator {
     generateCartones(songs, count = 1, existingCartones = []) {
+        const {cartones, missing} = this.generateAsMany(songs, count, existingCartones);
+
+        if (missing > 0) {
+            throw new Error(TEXT.cartones.notUnique);
+        }
+
+        return cartones;
+    }
+
+    generateAsMany(songs, count = 1, existingCartones = []) {
         if (songs.length < MIN_SONGS_REQUIRED) {
             throw new Error(TEXT.cartones.generatorNeedsSongs(MIN_SONGS_REQUIRED));
         }
@@ -20,10 +30,13 @@ export class BingoCartonGenerator {
         const cartones = [];
 
         for (let i = 0; i < count; i++) {
-            cartones.push(this._generateUniqueCarton(songs, startNumber + i, usedRows));
+            const carton = this._generateUniqueCarton(songs, startNumber + i, usedRows);
+            if (!carton) break;
+
+            cartones.push(carton);
         }
 
-        return cartones;
+        return {cartones, missing: count - cartones.length};
     }
 
     _generateUniqueCarton(songs, number, usedRows) {
@@ -37,7 +50,7 @@ export class BingoCartonGenerator {
             attempts++;
 
             if (attempts > MAX_CARTON_GENERATION_ATTEMPTS) {
-                throw new Error(TEXT.cartones.notUnique);
+                return null;
             }
         } while (keys.some(key => usedRows.has(key)));
 
@@ -88,8 +101,7 @@ export class BingoCartonGenerator {
                 cells.push({
                     type: CELL_TYPE.SONG,
                     position: i,
-                    song: songs[positions.indexOf(i)],
-                    marked: false
+                    song: songs[positions.indexOf(i)]
                 });
             } else {
                 cells.push({

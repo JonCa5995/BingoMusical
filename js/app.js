@@ -16,19 +16,24 @@ import {ModalManager} from "./modules/ModalManager.js";
 import {Dialogs} from "./modules/Dialogs.js";
 import {ConfigModal} from "./modules/ConfigModal.js";
 import {CartonModals} from "./modules/CartonModals.js";
+import {CartonCheckModal} from "./modules/CartonCheckModal.js";
 import {CartonManager} from "./modules/CartonManager.js";
 import {KeyboardShortcuts} from "./modules/KeyboardShortcuts.js";
 import {CartonHtmlRenderer} from "./modules/CartonHtmlRenderer.js";
 import {CartonExporter} from "./modules/CartonExporter.js";
 import {SongListView} from "./modules/SongListView.js";
 import {PlaylistImporter} from "./modules/PlaylistImporter.js";
+import {linkAudioFiles} from "./modules/AudioLinker.js";
+import {SavedGameController} from "./modules/SavedGameController.js";
+import {GameStateStore} from "./modules/GameStateStore.js";
+import {ProjectionChannel, buildProjectionState} from "./modules/ProjectionChannel.js";
+import {registerServiceWorker} from "./modules/ServiceWorkerRegistrar.js";
 import {deserializeCartones} from "./modules/CartonSerializer.js";
 import {
     CELEBRATION_DELAY_MS,
     CONTINUOUS_NEXT_SONG_DELAY_MS,
-    DEFAULT_EFFECTS_VOLUME,
-    DEFAULT_MUSIC_VOLUME,
     DEFAULT_SONGS_FOLDER,
+    GAME_FILE_TYPE,
     IMPORT_MESSAGE_DELAY_MS,
     LOGO_PATH,
     MAX_GAME_NAME_LENGTH,
@@ -41,6 +46,8 @@ import {gameNameOrDefault, iconTextHtml} from "./utils.js";
 
 class BingoMusical {
     constructor() {
+        this.preferences = new PreferencesStore();
+        this.settings = this.preferences.loadSettings();
         this.songs = [];
         this.listRevealTimers = [];
         this.cartonGenerator = new BingoCartonGenerator();
@@ -52,6 +59,8 @@ class BingoMusical {
         this._createShellFeatures();
         this._createCartones();
         this._createSongList();
+        this._createSavedGame();
+        this._createProjection();
 
         this.init();
     }
@@ -62,6 +71,7 @@ class BingoMusical {
         this.audio = new AudioManager(this.dom.player.audioPlayer, this.sounds);
         this.audioControls = new AudioControlsView({
             audioElement: this.dom.player.audioPlayer,
+            getTimeline: () => this.audio.getTimeline(),
             elements: {
                 progressBar: this.dom.player.progressBar,
                 progressFill: this.dom.player.progressFill,
@@ -74,8 +84,14 @@ class BingoMusical {
             },
             handlers: {
                 onSeek: (fraction) => this.audio.seekToFraction(fraction),
-                onMusicVolume: (volume) => this.audio.setVolume(volume),
-                onEffectsVolume: (volume) => this.sounds.setVolume(volume)
+                onMusicVolume: (volume) => {
+                    this.audio.setVolume(volume);
+                    this._saveSettings({musicVolume: volume});
+                },
+                onEffectsVolume: (volume) => {
+                    this.sounds.setVolume(volume);
+                    this._saveSettings({effectsVolume: volume});
+                }
             }
         });
     }
@@ -95,10 +111,10 @@ class BingoMusical {
 
     _createShellFeatures() {
         this.theme = new ThemeManager({
-            preferences: new PreferencesStore(),
+            preferences: this.preferences,
             toggleButton: this.dom.toolbar.themeToggleBtn,
             icon: this.dom.toolbar.themeIcon,
-            onToggle: () => this.sounds.play(SOUND.CLICK)
+            onToggle: () => { this.sounds.play(SOUND.CLICK); this.projection.schedulePublish(); }
         });
         this.fullscreen = new FullscreenManager({
             button: this.dom.toolbar.fullscreenBtn,
@@ -122,7 +138,10 @@ class BingoMusical {
             modals: this.modal,
             dialogs: this.dialogs,
             sounds: this.sounds,
-            canOpen: () => this.checkGameNotStarted(MSG.gameStarted.changeConfig)
+            canOpen: () => this.checkGameNotStarted(MSG.gameStarted.changeConfig),
+            getSettings: () => this._currentSettings(),
+            onSaved: (revealTimes) => this._saveSettings(revealTimes),
+            onSettingsImported: (values) => this._applyImportedSettings(values)
         });
         this.cartonModals = new CartonModals({
             elements: this.dom.cartones,
@@ -132,7 +151,17 @@ class BingoMusical {
             dialogs: this.dialogs,
             sounds: this.sounds,
             getSongs: () => this.songs,
-            onCartonesChanged: () => this.updateUIState()
+            onCartonesChanged: () => this._onCartonesChanged(),
+            settings: this.settings,
+            onSettingsChanged: (partial) => this._saveSettings(partial)
+        });
+        this.cartonCheck = new CartonCheckModal({
+            elements: this.dom.checkCarton,
+            openButton: this.dom.toolbar.openCheckCartonBtn,
+            game: this.game,
+            modals: this.modal,
+            dialogs: this.dialogs,
+            sounds: this.sounds
         });
     }
 
@@ -163,11 +192,46 @@ class BingoMusical {
         });
     }
 
+    _createProjection() {
+        this.songStartedAt = null;
+        this.projection = new ProjectionChannel({
+            getState: () => buildProjectionState({
+                songs: this.songs,
+                game: this.game,
+                theme: this.theme.getCurrent(),
+                startedAt: this.songStartedAt
+            })
+        });
+    }
+
+    _onGameChanged() {
+        this.savedGame.scheduleAutosave();
+        this.projection.schedulePublish();
+    }
+
+    _createSavedGame() {
+        this.initialPlayerTitle = this.dom.player.songTitleElement.textContent;
+        this.savedGame = new SavedGameController({
+            game: this.game,
+            songManager: this.songManager,
+            store: new GameStateStore(),
+            dialogs: this.dialogs,
+            sounds: this.sounds,
+            getSongs: () => this.songs,
+            setSongs: (songs) => { this.songs = songs; },
+            getSettings: () => this._currentSettings(),
+            applySettings: (values) => this._applyImportedSettings(values),
+            renderRestored: (state) => this._renderRestoredGame(state)
+        });
+    }
+
     init() {
-        this._applyConfigToDom();
+        this._applyBootSettings();
         this.setupEventListeners();
         this.configModal.init();
         this.cartonModals.init();
+        this.cartonCheck.init();
+        this.dom.toolbar.openProjectionBtn.addEventListener('click', () => this.projection.open());
         this.audioControls.bind();
         this.dragAndDrop.init();
         this.theme.init();
@@ -175,23 +239,119 @@ class BingoMusical {
         this.songList.render();
         this.updateCounters();
         this.updateControls(false);
+        this.savedGame.offerSavedGame();
+        registerServiceWorker();
     }
 
-    _applyConfigToDom() {
+    _applyBootSettings() {
         const dom = this.dom;
+        const settings = this.settings;
 
         dom.game.gameNameInput.maxLength = MAX_GAME_NAME_LENGTH;
         dom.game.gameNameInput.title = TEXT.gameName.editHint(MAX_GAME_NAME_LENGTH);
 
-        for (const [slider, label, volume] of [
-            [dom.volume.musicVolumeSlider, dom.volume.musicVolumeValueSpan, DEFAULT_MUSIC_VOLUME],
-            [dom.volume.effectsVolumeSlider, dom.volume.effectsVolumeValueSpan, DEFAULT_EFFECTS_VOLUME]
-        ]) {
-            const percent = Math.round(volume * 100);
-            slider.value = percent;
-            slider.setAttribute('aria-valuenow', percent);
-            label.textContent = `${percent}%`;
+        this.audio.setVolume(settings.musicVolume);
+        this.sounds.setVolume(settings.effectsVolume);
+        this.audioControls.setVolumes(settings.musicVolume, settings.effectsVolume);
+
+        this.game.setTitleRevealTime(settings.titleRevealTime);
+        this.game.setIconRevealTime(settings.iconRevealTime);
+        this.game.setClip(settings.clipSeconds, settings.randomClipStart);
+
+        if (settings.gameName) {
+            this._setGameName(settings.gameName);
         }
+    }
+
+    _currentSettings() {
+        return {
+            theme: this.theme.getCurrent(),
+            musicVolume: this.audio.musicVolume,
+            effectsVolume: this.sounds.volume,
+            titleRevealTime: this.game.getTitleRevealTime(),
+            iconRevealTime: this.game.getIconRevealTime(),
+            clipSeconds: this.game.getClip().seconds,
+            randomClipStart: this.game.getClip().randomStart,
+            gameName: this.game.getGameName(),
+            ...this.cartonModals.getSettings()
+        };
+    }
+
+    _applyImportedSettings(values) {
+        if ('musicVolume' in values || 'effectsVolume' in values) {
+            const musicVolume = values.musicVolume ?? this.audio.musicVolume;
+            const effectsVolume = values.effectsVolume ?? this.sounds.volume;
+
+            this.audio.setVolume(musicVolume);
+            this.sounds.setVolume(effectsVolume);
+            this.audioControls.setVolumes(musicVolume, effectsVolume);
+        }
+
+        if ('titleRevealTime' in values || 'iconRevealTime' in values) {
+            this.game.setTitleRevealTime(values.titleRevealTime ?? this.game.getTitleRevealTime());
+            this.game.setIconRevealTime(values.iconRevealTime ?? this.game.getIconRevealTime());
+            this.configModal.setRevealTimes(this.game.getTitleRevealTime(), this.game.getIconRevealTime());
+        }
+
+        if ('clipSeconds' in values || 'randomClipStart' in values) {
+            const clip = this.game.getClip();
+
+            this.game.setClip(values.clipSeconds ?? clip.seconds, values.randomClipStart ?? clip.randomStart);
+            this.configModal.setClip(this.game.getClip());
+        }
+
+        if ('gameName' in values) {
+            this._setGameName(values.gameName);
+        }
+        if ('theme' in values) {
+            this.theme.apply(values.theme);
+        }
+
+        this.cartonModals.applySettings(values);
+        this._saveSettings(values);
+    }
+
+    _saveSettings(partial) {
+        this.preferences.saveSettings(partial);
+
+        if ('gameName' in partial) {
+            this.savedGame?.scheduleAutosave();
+        }
+    }
+
+    _onCartonesChanged() {
+        this.updateUIState();
+        this._onGameChanged();
+    }
+
+    _renderRestoredGame({playedSongs, currentSong}) {
+        this._clearListRevealTimers();
+        this.ui.clearPlayerRevealTimers();
+
+        if (this.audio.hasSongLoaded()) {
+            this.stopSong();
+        }
+
+        this.dom.history.historyGrid.innerHTML = '';
+        playedSongs.forEach(song => this._addHistoryItem(song, true));
+
+        this._showPlayerFor(currentSong);
+        this._renderContinuousModeButton(false);
+        this.refreshUI();
+        this.updateControls(false);
+    }
+
+    _showPlayerFor(song) {
+        if (song) {
+            this.ui.updatePlayerUI(song, 0, 0, false);
+            return;
+        }
+
+        this.dom.player.songTitleElement.textContent = this.initialPlayerTitle;
+        this.dom.player.currentIconImg.alt = TEXT.player.currentSongAlt;
+        this.dom.player.currentIconImg.src = LOGO_PATH;
+        this.dom.player.songTitleElement.style.opacity = '1';
+        this.dom.player.currentIconImg.style.opacity = '1';
     }
 
     _setupPlayerEventListeners() {
@@ -235,6 +395,12 @@ class BingoMusical {
         this._setupGameNameEventListeners();
 
         this.dom.songs.exportListBtn.addEventListener('click', () => this.exportPlaylist());
+        this.dom.songs.exportGameBtn.addEventListener('click', () => this.savedGame.exportGame());
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') this.savedGame.flush();
+        });
+        this.dom.songs.linkAudioBtn.addEventListener('click', () => this.dom.songs.linkAudioInput.click());
+        this.dom.songs.linkAudioInput.addEventListener('change', (e) => this.linkAudio(e));
         this.dom.songs.importListBtn.addEventListener('click', () => this.dom.songs.importFileInput.click());
         this.dom.songs.importFileInput.addEventListener('change', (e) => this.importPlaylist(e));
         this.dom.game.lineaBtn.addEventListener('click', () => this.triggerLinea());
@@ -244,7 +410,9 @@ class BingoMusical {
 
     _setupGameNameEventListeners() {
         this.dom.game.gameNameInput.addEventListener('input', (e) => {
-            this.game.setGameName(e.target.value.trim());
+            const name = e.target.value.trim();
+            this.game.setGameName(name);
+            this._saveSettings({gameName: name});
         });
 
         this.dom.game.gameNameInput.addEventListener('blur', (e) => {
@@ -253,6 +421,7 @@ class BingoMusical {
                 this.dialogs.showAlert(MSG.game.nameTooLong(MAX_GAME_NAME_LENGTH));
                 e.target.value = name.substring(0, MAX_GAME_NAME_LENGTH);
                 this.game.setGameName(e.target.value);
+                this._saveSettings({gameName: e.target.value});
             }
         });
     }
@@ -320,6 +489,14 @@ class BingoMusical {
                     if (!this.dom.game.bingoBtn.disabled) this.triggerBingo();
                 }
             })
+            .register('c', {
+                ...SHORTCUTS.check,
+                action: () => this.cartonCheck.open()
+            })
+            .register('p', {
+                ...SHORTCUTS.projection,
+                action: () => this.projection.open()
+            })
             .register('escape', {
                 ...SHORTCUTS.escape,
                 allowInModal: true, preventDefault: false,
@@ -359,6 +536,7 @@ class BingoMusical {
     _setGameName(name) {
         this.game.setGameName(name);
         this.dom.game.gameNameInput.value = name;
+        this._saveSettings({gameName: name});
     }
 
     clearFileInput(event) {
@@ -369,6 +547,7 @@ class BingoMusical {
         this.songList.render();
         this.updateCounters();
         this.updateUIState();
+        this._onGameChanged();
     }
 
     // ============================================================
@@ -403,6 +582,7 @@ class BingoMusical {
         }
 
         complete();
+        this._onGameChanged();
         this.sounds.play(sound);
         setTimeout(() => overlay.classList.remove('hidden'), CELEBRATION_DELAY_MS);
     }
@@ -432,14 +612,34 @@ class BingoMusical {
         }
     }
 
+    linkAudio(event) {
+        const files = Array.from(event.target.files);
+        this.clearFileInput(event);
+
+        if (files.length === 0) return;
+
+        if (this.songs.length === 0) {
+            this.dialogs.showAlert(MSG.audio.noSongsToLink);
+            return;
+        }
+
+        const result = linkAudioFiles(this.songs, files);
+
+        if (result.pendingCount === 0) {
+            this.dialogs.showAlert(MSG.audio.allLinked);
+        } else if (result.linked.length === 0) {
+            this.dialogs.showAlert(MSG.audio.noMatches(result.pendingCount, result.audioFiles));
+        } else {
+            this.sounds.play(SOUND.WIN);
+            this.refreshUI();
+            this.updateControls(this.audio.isPlaying);
+            this.dialogs.showAlert(MSG.audio.linked(result));
+        }
+    }
+
     async importPlaylist(event) {
         const file = event.target.files[0];
         if (!file) return;
-
-        if (!this.checkGameNotStarted(MSG.gameStarted.importList)) {
-            this.clearFileInput(event);
-            return;
-        }
 
         const result = await this.playlistFile.read(file);
 
@@ -449,14 +649,25 @@ class BingoMusical {
             return;
         }
 
-        const duplicates = await this._applyImportedPlaylist(result.playlist);
-        this._announceImportResult(duplicates);
+        if (result.playlist.type === GAME_FILE_TYPE) {
+            await this.savedGame.importGame(result.playlist);
+            this.clearFileInput(event);
+            return;
+        }
+
+        if (!this.checkGameNotStarted(MSG.gameStarted.importList)) {
+            this.clearFileInput(event);
+            return;
+        }
+
+        const {duplicates, missing} = await this._applyImportedPlaylist(result.playlist);
+        this._announceImportResult(duplicates, missing);
         this.clearFileInput(event);
     }
 
     async _applyImportedPlaylist(playlist) {
         this.game.clearHistory();
-        const {songs, duplicates} = await this.importer.loadSongs(playlist.songs);
+        const {songs, duplicates, missing} = await this.importer.loadSongs(playlist.songs);
         this.songs = songs;
 
         this._setGameName(playlist.name || '');
@@ -464,7 +675,7 @@ class BingoMusical {
         this._loadImportedCartones(playlist.cartones);
         this.refreshUI();
 
-        return duplicates;
+        return {duplicates, missing};
     }
 
     _loadImportedCartones(cartones) {
@@ -475,7 +686,7 @@ class BingoMusical {
         }
     }
 
-    _announceImportResult(duplicates) {
+    _announceImportResult(duplicates, missing) {
         if (duplicates.length > 0) {
             this.sounds.play(SOUND.ERROR);
             this.dialogs.showAlert(MSG.playlist.importDuplicates(duplicates));
@@ -484,10 +695,10 @@ class BingoMusical {
         setTimeout(() => {
             if (this.songs.length === 0) {
                 this.sounds.play(SOUND.ERROR);
-                this.dialogs.showAlert(MSG.playlist.importNoSongs(this.songsFolder));
+                this.dialogs.showAlert(MSG.playlist.importNoSongs);
             } else {
                 this.sounds.play(SOUND.WIN);
-                this.dialogs.showAlert(MSG.playlist.importOk(this.songs.length, this.songsFolder));
+                this.dialogs.showAlert(MSG.playlist.importOk(this.songs.length, this.songsFolder, missing.length));
             }
         }, duplicates.length > 0 ? IMPORT_MESSAGE_DELAY_MS : 0);
     }
@@ -503,6 +714,7 @@ class BingoMusical {
 
         const result = this.icons.openIconPicker(songId, this.songs, () => {
             this.songList.render();
+            this._onGameChanged();
         });
 
         if (!result.success) {
@@ -562,6 +774,8 @@ class BingoMusical {
             this.game.isContinuousMode(),
             () => this.toggleContinuousMode()
         );
+
+        this.dom.toolbar.openCheckCartonBtn.disabled = !this.game.hasCartonesGenerated();
 
         const shouldDisableGameName = this.game.isGameStarted() || this.game.hasCartonesGenerated();
         this.dom.game.gameNameInput.disabled = shouldDisableGameName;
@@ -669,11 +883,12 @@ class BingoMusical {
         song.hideTitle = true;
         song.hideIcon = true;
 
-        this.audio.play(song.file, () => this._onSongStarted(song));
+        this.audio.play(song.file, () => this._onSongStarted(song), this.game.getClip());
     }
 
     _onSongStarted(song) {
         this.game.setCurrentSong(song.id);
+        this.songStartedAt = Date.now();
         this.updatePlayerUI(song);
         this.updateControls(true);
 
@@ -685,6 +900,7 @@ class BingoMusical {
 
         this.songList.render();
         this._scheduleListReveal(song);
+        this._onGameChanged();
     }
 
     _scheduleListReveal(song) {
@@ -769,6 +985,7 @@ class BingoMusical {
         if (this.game.isGameStarted()) {
             if (this.game.allSongsPlayed(this.songs) && !this.game.isBingoCompleted()) {
                 this.game.completeBingo();
+                this._onGameChanged();
                 setTimeout(() => {
                     this.sounds.play(SOUND.COMPLETE);
                     this.dom.celebration.celebrationOverlay.classList.remove('hidden');
@@ -791,8 +1008,12 @@ class BingoMusical {
     }
 
     addToHistory(song) {
-        const iconRevealTime = this.game.getIconRevealTime();
-        const gameStarted = this.game.isGameStarted();
+        this._addHistoryItem(song, false);
+    }
+
+    _addHistoryItem(song, instant) {
+        const iconRevealTime = instant ? 0 : this.game.getIconRevealTime();
+        const gameStarted = instant ? false : this.game.isGameStarted();
         const historyItem = this.ui.addToHistory(song, iconRevealTime, gameStarted);
 
         historyItem.addEventListener('click', () => {
