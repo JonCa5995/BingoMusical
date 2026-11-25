@@ -2,6 +2,8 @@
  * SongManager Module
  * Gestiona las operaciones CRUD de canciones y su filtrado/ordenamiento
  */
+import { ICON_TYPE } from '../constants.js';
+import { MSG } from '../messages.js';
 
 /** Reproducidas antes que pendientes; entre reproducidas, según `playedOrderDirection` (1 o -1) */
 const playedFirst = (playedOrderDirection) => (a, b) => {
@@ -56,7 +58,7 @@ export class SongManager {
                 id: this.songIdCounter++,
                 title: fileName,
                 icon: randomIcon,
-                iconType: 'emoji',
+                iconType: ICON_TYPE.EMOJI,
                 audioPath: file.name,
                 file: file,
                 played: false
@@ -138,11 +140,7 @@ export class SongManager {
     validateMinSongs(songs, minRequired) {
         const totalSongsWithFiles = this.getTotalSongsWithFiles(songs);
         if (totalSongsWithFiles < minRequired) {
-            return {
-                valid: false,
-                error: `Necesitas al menos ${minRequired} canciones cargadas para poder jugar.`,
-                title: 'Canciones Insuficientes'
-            };
+            return { valid: false, alert: MSG.songs.notEnoughToPlay(minRequired) };
         }
         return { valid: true };
     }

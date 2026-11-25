@@ -2,6 +2,9 @@
  * ThemeManager Module
  * Tema claro/oscuro: aplicarlo, alternarlo y recordarlo entre visitas.
  */
+import { THEME } from '../constants.js';
+import { TEXT } from '../messages.js';
+
 export class ThemeManager {
     /**
      * @param {Object} deps
@@ -23,16 +26,16 @@ export class ThemeManager {
      * Aplica el tema guardado y escucha el botón
      */
     init() {
-        this.apply(this.preferences.loadTheme('dark'));
+        this.apply(this.preferences.loadTheme(THEME.DARK));
         this.toggleButton.addEventListener('click', () => this.toggle());
     }
 
     getCurrent() {
-        return this.root.dataset.theme || 'dark';
+        return this.root.dataset.theme || THEME.DARK;
     }
 
     toggle() {
-        const newTheme = this.getCurrent() === 'dark' ? 'light' : 'dark';
+        const newTheme = this.getCurrent() === THEME.DARK ? THEME.LIGHT : THEME.DARK;
         this.apply(newTheme);
         this.preferences.saveTheme(newTheme);
         this.onToggle();
@@ -40,7 +43,7 @@ export class ThemeManager {
 
     apply(theme) {
         this.root.dataset.theme = theme;
-        this.icon.textContent = theme === 'dark' ? '🌙' : '☀️';
-        this.toggleButton.setAttribute('title', theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro');
+        this.icon.textContent = theme === THEME.DARK ? '🌙' : '☀️';
+        this.toggleButton.setAttribute('title', theme === THEME.DARK ? TEXT.theme.toLight : TEXT.theme.toDark);
     }
 }

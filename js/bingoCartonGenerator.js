@@ -1,4 +1,5 @@
 import {
+    CELL_TYPE,
     CELLS_PER_ROW,
     MAX_CARTON_GENERATION_ATTEMPTS,
     MIN_SONGS_REQUIRED,
@@ -6,6 +7,7 @@ import {
     SONGS_IN_ROW,
     SONGS_PER_CARTON
 } from "./constants.js";
+import {TEXT} from "./messages.js";
 
 /**
  * BingoCartonGenerator
@@ -15,7 +17,7 @@ import {
 export class BingoCartonGenerator {
     generateCartones(songs, count = 1, existingCartones = []) {
         if (songs.length < MIN_SONGS_REQUIRED) {
-            throw new Error(`Se necesitan al menos ${MIN_SONGS_REQUIRED} canciones para generar cartones`);
+            throw new Error(TEXT.cartones.generatorNeedsSongs(MIN_SONGS_REQUIRED));
         }
 
         const cartones = [];
@@ -38,7 +40,7 @@ export class BingoCartonGenerator {
                 attempts++;
 
                 if (attempts > MAX_CARTON_GENERATION_ATTEMPTS) {
-                    throw new Error('No se pudieron generar cartones únicos suficientes. Intenta con menos cartones.');
+                    throw new Error(TEXT.cartones.notUnique);
                 }
             } while (this.isDuplicateCarton(carton, usedRows));
 
@@ -88,7 +90,7 @@ export class BingoCartonGenerator {
         for (let i = 0; i < CELLS_PER_ROW; i++) {
             if (positions.includes(i)) {
                 cells.push({
-                    type: 'song',
+                    type: CELL_TYPE.SONG,
                     position: i,
                     song: songs[positions.indexOf(i)],
                     marked: false
@@ -96,7 +98,7 @@ export class BingoCartonGenerator {
             } else {
                 cells.push({
                     // El icono decorativo es presentación: lo pone CartonHtmlRenderer
-                    type: 'decorative',
+                    type: CELL_TYPE.DECORATIVE,
                     position: i
                 });
             }
@@ -123,7 +125,7 @@ export class BingoCartonGenerator {
      */
     rowSongsKey(row) {
         return row.cells
-            .filter(cell => cell.type === 'song')
+            .filter(cell => cell.type === CELL_TYPE.SONG)
             .map(cell => cell.song.id)
             .sort((a, b) => a - b)
             .join('-');

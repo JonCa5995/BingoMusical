@@ -4,6 +4,8 @@
  * Los efectos de sonido los sintetiza SoundEffects y la barra de progreso y los
  * controles de volumen los pinta AudioControlsView.
  */
+import {DEFAULT_MUSIC_VOLUME, SOUND} from '../constants.js';
+
 export class AudioManager {
     /**
      * @param {HTMLAudioElement} audioElement - Elemento <audio> de la música
@@ -16,7 +18,7 @@ export class AudioManager {
         this.sounds = sounds;
         this.urlApi = urlApi;
         this.isPlaying = false;
-        this.musicVolume = 1;
+        this.musicVolume = DEFAULT_MUSIC_VOLUME;
         this.currentObjectUrl = null;
 
         // El propio AudioManager lleva su estado: nadie más debe escribir isPlaying
@@ -46,7 +48,7 @@ export class AudioManager {
      * @param {Function} onPlayCallback - Callback cuando empiece a reproducir
      */
     play(audioFile, onPlayCallback) {
-        this.sounds.play('start');
+        this.sounds.play(SOUND.START);
         this.audioElement.pause();
 
         // Liberar la URL de la canción anterior para no acumular blobs en memoria
@@ -69,7 +71,7 @@ export class AudioManager {
      * @returns {boolean} true si queda sonando
      */
     pause() {
-        this.sounds.play('click');
+        this.sounds.play(SOUND.CLICK);
 
         if (this.isPlaying) {
             this.audioElement.pause();
@@ -101,7 +103,7 @@ export class AudioManager {
      * Detiene la reproducción y vuelve al principio
      */
     stop() {
-        this.sounds.play('click');
+        this.sounds.play(SOUND.CLICK);
         this.audioElement.pause();
         this.audioElement.currentTime = 0;
         this.isPlaying = false;
@@ -111,7 +113,7 @@ export class AudioManager {
      * Vuelve al principio y reproduce
      */
     restart() {
-        this.sounds.play('click');
+        this.sounds.play(SOUND.CLICK);
         this.audioElement.currentTime = 0;
         this._startPlayback();
     }
@@ -125,6 +127,6 @@ export class AudioManager {
 
         const clamped = Math.min(Math.max(fraction, 0), 1);
         this.audioElement.currentTime = clamped * this.audioElement.duration;
-        this.sounds.play('click');
+        this.sounds.play(SOUND.CLICK);
     }
 }

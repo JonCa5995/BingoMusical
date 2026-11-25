@@ -4,6 +4,9 @@
  * que hace el usuario sobre cada canción. No decide qué ocurre al pulsar: eso lo
  * deciden los handlers que recibe.
  */
+import { SEARCH_DEBOUNCE_MS } from '../constants.js';
+import { TEXT } from '../messages.js';
+
 export class SongListView {
     /**
      * @param {Object} deps
@@ -33,7 +36,7 @@ export class SongListView {
         // La búsqueda espera a que el usuario deje de escribir
         searchInput.addEventListener('input', () => {
             clearTimeout(this.searchDebounceTimer);
-            this.searchDebounceTimer = setTimeout(() => this.render(), 300);
+            this.searchDebounceTimer = setTimeout(() => this.render(), SEARCH_DEBOUNCE_MS);
         });
         filterStatus.addEventListener('change', () => this.render());
         sortOrder.addEventListener('change', () => this.render());
@@ -92,7 +95,7 @@ export class SongListView {
         iconBtn.dataset.songId = song.id;
         iconBtn.title = this.ui.getSongIconTitle(song, gameStarted);
         iconBtn.style.cursor = iconLocked ? 'not-allowed' : 'pointer';
-        iconBtn.setAttribute('aria-label', `Cambiar icono de ${song.title}`);
+        iconBtn.setAttribute('aria-label', TEXT.list.changeIconLabel(song.title));
         iconBtn.disabled = iconLocked;
         iconBtn.innerHTML = this.ui.getSongIconHtml(song);
 
@@ -124,8 +127,8 @@ export class SongListView {
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.className = 'song-item-delete';
-        deleteBtn.title = 'Eliminar canción';
-        deleteBtn.setAttribute('aria-label', `Eliminar ${song.title}`);
+        deleteBtn.title = TEXT.list.deleteTitle;
+        deleteBtn.setAttribute('aria-label', TEXT.list.deleteLabel(song.title));
         deleteBtn.innerHTML = '<span aria-hidden="true">❌</span>';
 
         iconBtn.onclick = (e) => {

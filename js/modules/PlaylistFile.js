@@ -2,8 +2,10 @@
  * PlaylistFile Module
  * Archivo JSON de la playlist: crearlo y descargarlo (exportar) y leerlo (importar).
  */
-import { downloadFile, slugify } from '../utils.js';
-import { serializeCartones } from './CartonSerializer.js';
+import {downloadFile, slugify} from '../utils.js';
+import {serializeCartones} from './CartonSerializer.js';
+import {DEFAULT_GAME_NAME, DEFAULT_PLAYLIST_NAME, ICON_TYPE} from '../constants.js';
+import {TEXT} from '../messages.js';
 
 export class PlaylistFile {
     /**
@@ -11,7 +13,7 @@ export class PlaylistFile {
      * @param {Function} [options.download] - (contenido, nombre, mime, ariaLabel); inyectable para pruebas
      * @param {Function} [options.now] - Devuelve la fecha actual; inyectable para pruebas
      */
-    constructor({ download = downloadFile, now = () => new Date() } = {}) {
+    constructor({download = downloadFile, now = () => new Date()} = {}) {
         this.download = download;
         this.now = now;
     }
@@ -22,13 +24,13 @@ export class PlaylistFile {
     build(songs, gameName = '', cartones = []) {
         return {
             version: '1.1',
-            name: gameName || 'Lista de Bingo Musical',
+            name: gameName || DEFAULT_PLAYLIST_NAME,
             date: this.now().toISOString(),
             songs: songs.map(song => ({
                 id: song.id,
                 title: song.title,
                 icon: song.icon,
-                iconType: song.iconType || 'emoji',
+                iconType: song.iconType || ICON_TYPE.EMOJI,
             })),
             cartones: serializeCartones(cartones)
         };
@@ -39,34 +41,32 @@ export class PlaylistFile {
      */
     export(songs, songsFolder, gameName = '', cartones = []) {
         if (!songs || songs.length === 0) {
-            return { success: false, error: 'No hay canciones para exportar' };
+            return {success: false, error: TEXT.playlist.noSongsToExport};
         }
 
         try {
             const playlist = this.build(songs, gameName, cartones);
             const date = this.now().toISOString().split('T')[0];
-            const fileName = `${gameName ? slugify(gameName) : 'bingo-musical'}-${date}.json`;
+            const fileName = `${slugify(gameName || DEFAULT_GAME_NAME)}-${date}.json`;
 
             this.download(
                 JSON.stringify(playlist, null, 2),
                 fileName,
                 'application/json',
-                'Descargar lista de canciones en formato JSON'
+                TEXT.playlist.downloadLabel
             );
 
             const cartonesInfo = cartones.length > 0
-                ? `\n${cartones.length} cartón(es) incluido(s) en el archivo.`
+                ? TEXT.playlist.cartonesIncluded(cartones.length)
                 : '';
 
             return {
                 success: true,
-                message: `Lista "${gameName || 'Bingo Musical'}" exportada correctamente.${cartonesInfo}\n\n` +
-                    `Coloca el archivo JSON en la carpeta raíz del proyecto.\n` +
-                    `Coloca los archivos de audio en: ${songsFolder}`
+                message: TEXT.playlist.exported(gameName || DEFAULT_GAME_NAME, cartonesInfo, songsFolder)
             };
         } catch (error) {
             console.error('Error al exportar playlist:', error);
-            return { success: false, error: error.message };
+            return {success: false, error: error.message};
         }
     }
 
@@ -76,20 +76,20 @@ export class PlaylistFile {
      */
     async read(file) {
         if (!file) {
-            return { success: false, error: 'No se seleccionó ningún archivo' };
+            return {success: false, error: TEXT.playlist.noFileSelected};
         }
 
         try {
             const playlist = JSON.parse(await file.text());
 
             if (!Array.isArray(playlist.songs)) {
-                return { success: false, error: 'Formato de archivo inválido' };
+                return {success: false, error: TEXT.playlist.invalidFormat};
             }
 
-            return { success: true, playlist };
+            return {success: true, playlist};
         } catch (error) {
             console.error('Error al importar playlist:', error);
-            return { success: false, error: error.message };
+            return {success: false, error: error.message};
         }
     }
 }

@@ -3,6 +3,8 @@
  * Registro de atajos de teclado: añadir un atajo nuevo es registrarlo, sin tocar
  * la gestión del teclado. La ayuda se genera a partir del propio registro.
  */
+import { TEXT } from '../messages.js';
+
 export class KeyboardShortcuts {
     /**
      * @param {Function} isModalOpen - Devuelve true si hay algún modal abierto
@@ -59,6 +61,6 @@ export class KeyboardShortcuts {
         const lines = [...this.shortcuts.values()].map(({ icon, label, description }) =>
             `${icon} ${label} → ${description}`.trim()
         );
-        return ['ATAJOS DE TECLADO DISPONIBLES:', '', ...lines].join('\n');
+        return [TEXT.shortcuts.helpHeader, '', ...lines].join('\n');
     }
 }

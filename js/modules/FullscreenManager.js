@@ -2,6 +2,8 @@
  * FullscreenManager Module
  * Pantalla completa: alternarla y reflejar su estado en el botón y en <body>.
  */
+import {TEXT} from '../messages.js';
+
 export class FullscreenManager {
     /**
      * @param {Object} deps
@@ -43,6 +45,6 @@ export class FullscreenManager {
         const active = this.isActive();
         this.doc.body.classList.toggle('fullscreen', active);
         this.button.innerHTML = `<span class="fullscreen-icon" aria-hidden="true">${active ? '⊗' : '⛶'}</span>`;
-        this.button.setAttribute('aria-label', active ? 'Salir de pantalla completa' : 'Activar pantalla completa');
+        this.button.setAttribute('aria-label', active ? TEXT.fullscreen.exit : TEXT.fullscreen.enter);
     }
 }

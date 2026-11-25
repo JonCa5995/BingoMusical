@@ -2,6 +2,9 @@
  * ModalManager Module
  * Gestiona todos los modales de la aplicación (alertas, confirmaciones, cartones)
  */
+import { SOUND } from '../constants.js';
+import { DEFAULT_TITLES } from '../messages.js';
+
 export class ModalManager {
     constructor(dom, sounds) {
         this.dom = dom;
@@ -35,14 +38,14 @@ export class ModalManager {
     /**
      * Muestra un modal de alerta
      */
-    showAlert(message, title = 'Información') {
+    showAlert({message, title = DEFAULT_TITLES.alert}) {
         this.dom.alertTitle.textContent = title;
         // textContent: los mensajes pueden incluir nombres de archivo; los saltos de línea se respetan por CSS
         this.dom.alertMessage.textContent = message;
         this.openModal(this.dom.alertModal);
 
         const isError = /error|inválido|insuficientes/i.test(title);
-        this.sounds.play(isError ? 'error' : 'click');
+        this.sounds.play(isError ? SOUND.ERROR : SOUND.CLICK);
     }
 
     /**
@@ -55,14 +58,14 @@ export class ModalManager {
     /**
      * Muestra un modal de confirmación y retorna una promesa
      */
-    showConfirm(message, title = 'Confirmar') {
+    showConfirm({message, title = DEFAULT_TITLES.confirm}) {
         return new Promise((resolve) => {
             this.dom.confirmTitle.textContent = title;
             this.dom.confirmMessage.textContent = message;
             this.openModal(this.dom.confirmModal);
 
             this.confirmCallback = resolve;
-            this.sounds.play('click');
+            this.sounds.play(SOUND.CLICK);
         });
     }
 

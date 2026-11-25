@@ -4,6 +4,8 @@
  * duplicados, asigna iconos libres, conserva los IDs y descarga los audios.
  * No toca la interfaz ni el estado del juego.
  */
+import { ICON_TYPE, AUDIO_FILE_EXTENSION } from '../constants.js';
+
 export class PlaylistImporter {
     /**
      * @param {Object} deps
@@ -52,13 +54,13 @@ export class PlaylistImporter {
                 continue;
             }
 
-            let { icon, iconType = 'emoji' } = songData;
+            let { icon, iconType = ICON_TYPE.EMOJI } = songData;
 
             if (!icon || usedIcons.has(icon)) {
                 // Excluir los iconos ya asignados en esta importación
-                const assigned = [...usedIcons].map(usedIcon => ({ icon: usedIcon, iconType: 'emoji' }));
+                const assigned = [...usedIcons].map(usedIcon => ({ icon: usedIcon, iconType: ICON_TYPE.EMOJI }));
                 icon = this.getRandomIcon(assigned);
-                iconType = 'emoji';
+                iconType = ICON_TYPE.EMOJI;
             }
 
             usedIcons.add(icon);
@@ -69,7 +71,7 @@ export class PlaylistImporter {
             const id = hasValidId ? songData.id : null;
             if (hasValidId) usedIds.add(id);
 
-            candidates.push({ id, title, icon, iconType, audioPath: this.songsFolder + title + '.mp3' });
+            candidates.push({ id, title, icon, iconType, audioPath: this.songsFolder + title + AUDIO_FILE_EXTENSION });
         }
 
         return { candidates, duplicates };
@@ -77,7 +79,7 @@ export class PlaylistImporter {
 
     async _loadAudio(candidate) {
         try {
-            const url = this.songsFolder + encodeURIComponent(candidate.title) + '.mp3';
+            const url = this.songsFolder + encodeURIComponent(candidate.title) + AUDIO_FILE_EXTENSION;
             const response = await this.fetch(url);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return { ...candidate, file: await response.blob(), played: false };

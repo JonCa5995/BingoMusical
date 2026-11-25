@@ -3,6 +3,7 @@
  * Sintetiza los efectos de sonido (clic, victoria, error...) con Web Audio.
  * No sabe nada de la música ni de la interfaz.
  */
+import { SOUND, DEFAULT_EFFECTS_VOLUME } from '../constants.js';
 
 /**
  * Definición de los efectos de sonido (datos, no código).
@@ -10,14 +11,14 @@
  * - melody: una secuencia de notas separadas por `interval` segundos
  */
 export const SOUND_EFFECTS = {
-    start: { type: 'sweep', startFreq: 400, endFreq: 800, duration: 0.3, volume: 1, waveType: 'sine' },
-    click: { type: 'sweep', startFreq: 800, endFreq: 800, duration: 0.05, volume: 0.2, waveType: 'sine' },
-    error: { type: 'sweep', startFreq: 600, endFreq: 100, duration: 0.6, volume: 0.6, waveType: 'square' },
-    win: {
+    [SOUND.START]: { type: 'sweep', startFreq: 400, endFreq: 800, duration: 0.3, volume: 1, waveType: 'sine' },
+    [SOUND.CLICK]: { type: 'sweep', startFreq: 800, endFreq: 800, duration: 0.05, volume: 0.2, waveType: 'sine' },
+    [SOUND.ERROR]: { type: 'sweep', startFreq: 600, endFreq: 100, duration: 0.6, volume: 0.6, waveType: 'square' },
+    [SOUND.WIN]: {
         type: 'melody', notes: [523.25, 587.33, 659.25, 783.99],
         interval: 0.15, noteDuration: 0.15, volume: 0.3, waveType: 'sine'
     },
-    complete: {
+    [SOUND.COMPLETE]: {
         type: 'melody', notes: [523.25, 659.25, 783.99, 1046.5],
         interval: 0.1, noteDuration: 0.5, volume: 0.4, waveType: 'triangle'
     }
@@ -36,7 +37,7 @@ export class SoundEffects {
      * @param {Function} [options.createAudioContext] - Fábrica del AudioContext (inyectable para pruebas)
      * @param {number} [options.volume=0.7] - Volumen inicial (0 a 1)
      */
-    constructor({ effects = SOUND_EFFECTS, createAudioContext = createBrowserAudioContext, volume = 0.7 } = {}) {
+    constructor({ effects = SOUND_EFFECTS, createAudioContext = createBrowserAudioContext, volume = DEFAULT_EFFECTS_VOLUME } = {}) {
         this.effects = effects;
         this.createAudioContext = createAudioContext;
         this.volume = volume;

@@ -1,6 +1,7 @@
 /**
  * Utilidades compartidas
  */
+import { REVOKE_URL_DELAY_MS } from './constants.js';
 
 const HTML_ESCAPES = {
     '&': '&amp;',
@@ -49,5 +50,5 @@ export function downloadFile(content, filename, mimeType, ariaLabel = '') {
     link.remove();
 
     // Liberar tras un margen: revocar justo después de click() puede cancelar la descarga en Firefox/Safari
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setTimeout(() => URL.revokeObjectURL(url), REVOKE_URL_DELAY_MS);
 }

@@ -12,6 +12,7 @@
  *
  * Fuera de este módulo nadie debe conocer la forma guardada.
  */
+import {CELL_TYPE} from '../constants.js';
 
 /**
  * Convierte cartones en memoria a su forma guardada
@@ -25,7 +26,7 @@ export function serializeCartones(cartones) {
         rows: carton.rows.map(row => ({
             cells: row.cells.map(cell => ({
                 position: cell.position,
-                songId: cell.type === 'song' ? cell.song.id : null
+                songId: cell.type === CELL_TYPE.SONG ? cell.song.id : null
             }))
         })),
         generatedAt: carton.generatedAt
@@ -44,17 +45,17 @@ export function deserializeCartones(cartonesData, songs) {
 
     const toCell = ({position, songId}) => {
         if (songId == null) {
-            return {type: 'decorative', position};
+            return {type: CELL_TYPE.DECORATIVE, position};
         }
 
         const song = songMap.get(songId);
         if (!song) {
             console.warn(`Canción con ID ${songId} no encontrada`);
-            return {type: 'decorative', position};
+            return {type: CELL_TYPE.DECORATIVE, position};
         }
 
         // `marked` no se guarda: siempre empieza sin marcar
-        return {type: 'song', position, song, marked: false};
+        return {type: CELL_TYPE.SONG, position, song, marked: false};
     };
 
     return cartonesData.map(cartonData => ({

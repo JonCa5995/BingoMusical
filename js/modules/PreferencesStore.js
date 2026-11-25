@@ -2,7 +2,8 @@
  * PreferencesStore Module
  * Preferencias del usuario que se recuerdan entre visitas (por ahora, el tema).
  */
-const STORAGE_PREFIX = 'bingoMusical_';
+import { STORAGE_PREFIX, THEME } from '../constants.js';
+
 const KEYS = {
     THEME: `${STORAGE_PREFIX}theme`
 };
@@ -25,7 +26,7 @@ export class PreferencesStore {
         }
     }
 
-    loadTheme(defaultTheme = 'dark') {
+    loadTheme(defaultTheme = THEME.DARK) {
         try {
             return this.storage.getItem(KEYS.THEME) || defaultTheme;
         } catch (error) {

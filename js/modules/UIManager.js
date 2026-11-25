@@ -3,19 +3,8 @@
  * Gestiona el renderizado y actualización de la interfaz de usuario
  */
 import { escapeHTML } from '../utils.js';
-
-/** Mensajes de la lista de canciones cuando no hay nada que mostrar */
-const EMPTY_LIST_MESSAGES = {
-    empty: {
-        title: 'No hay canciones cargadas',
-        text: 'Arrastra archivos de audio o usa el botón "Agregar Canciones"',
-        warnsMinSongs: true
-    },
-    noResults: {
-        title: 'No se encontraron canciones',
-        text: 'Intenta con otro término de búsqueda o cambia los filtros'
-    }
-};
+import { ICON_TYPE, MS_PER_SECOND, PLAYER_ICON_SIZE, HISTORY_ICON_SIZE } from '../constants.js';
+import { TEXT } from '../messages.js';
 
 export class UIManager {
     constructor(dom, minSongsRequired) {
@@ -71,9 +60,9 @@ export class UIManager {
      * Crea el mensaje que se muestra cuando la lista no tiene canciones
      */
     _createEmptyMessage(kind) {
-        const { title, text, warnsMinSongs } = EMPTY_LIST_MESSAGES[kind];
-        const minSongsWarning = warnsMinSongs
-            ? `\n            <p role="alert" style="font-size:0.85rem;margin-top:1rem;color:var(--warning-color);"><strong>⚠️ Necesitas al menos ${this.MIN_SONGS_REQUIRED} canciones para jugar</strong></p>`
+        const { title, text, minSongsWarning: warning } = TEXT.list[kind];
+        const minSongsWarning = warning
+            ? `\n            <p role="alert" style="font-size:0.85rem;margin-top:1rem;color:var(--warning-color);"><strong>${warning(this.MIN_SONGS_REQUIRED)}</strong></p>`
             : '';
 
         const emptyLi = document.createElement('li');
@@ -93,7 +82,7 @@ export class UIManager {
         const warning = document.createElement('li');
         warning.setAttribute('role', 'alert');
         warning.style.cssText = 'text-align:center;padding:1rem;margin-bottom:1rem;background:rgba(245,158,11,0.1);border-radius:8px;color:var(--warning-color);list-style:none;';
-        warning.innerHTML = `<strong>⚠️ Tienes ${totalSongs}/${this.MIN_SONGS_REQUIRED} canciones.</strong> Necesitas al menos ${this.MIN_SONGS_REQUIRED} para jugar.`;
+        warning.innerHTML = `<strong>${TEXT.list.notEnoughWarning.count(totalSongs, this.MIN_SONGS_REQUIRED)}</strong>${TEXT.list.notEnoughWarning.rest(this.MIN_SONGS_REQUIRED)}`;
         return warning;
     }
 
@@ -122,7 +111,7 @@ export class UIManager {
             this.playerRevealTimers.push(setTimeout(() => {
                 this.dom.songTitleElement.style.transition = 'opacity 1s ease-in';
                 this.dom.songTitleElement.style.opacity = '1';
-            }, titleRevealTime * 1000));
+            }, titleRevealTime * MS_PER_SECOND));
             
             // Icono se maneja más abajo
             this.dom.currentIconImg.style.transition = '';
@@ -132,10 +121,10 @@ export class UIManager {
         this.dom.currentIconImg.alt = song.title;
 
         // Preparar icono
-        if (song.iconType === 'image' && song.icon) {
+        if (song.iconType === ICON_TYPE.IMAGE && song.icon) {
             this.dom.currentIconImg.src = song.icon;
         } else {
-            this.dom.currentIconImg.src = this.emojiToDataURL(song.icon, 300);
+            this.dom.currentIconImg.src = this.emojiToDataURL(song.icon, PLAYER_ICON_SIZE);
         }
 
         // Revelar icono después del tiempo configurado (solo si el juego ha iniciado)
@@ -143,7 +132,7 @@ export class UIManager {
             this.playerRevealTimers.push(setTimeout(() => {
                 this.dom.currentIconImg.style.transition = 'opacity 1s ease-in';
                 this.dom.currentIconImg.style.opacity = '1';
-            }, iconRevealTime * 1000));
+            }, iconRevealTime * MS_PER_SECOND));
         }
     }
 
@@ -161,13 +150,13 @@ export class UIManager {
     updateControls(playing, gameStarted, hasSongLoaded = true, noSongsLeft = false) {
         if (playing) {
             this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">⏸</span>';
-            this.dom.pauseBtn.setAttribute('aria-label', 'Pausar canción actual');
+            this.dom.pauseBtn.setAttribute('aria-label', TEXT.player.pauseLabel);
             this.dom.stopBtn.disabled = false;
             this.dom.pauseBtn.disabled = false;
             this.dom.songIconContainer.classList.add('playing');
         } else {
             this.dom.pauseBtn.innerHTML = '<span aria-hidden="true">▶️</span>';
-            this.dom.pauseBtn.setAttribute('aria-label', 'Reproducir canción seleccionada');
+            this.dom.pauseBtn.setAttribute('aria-label', TEXT.player.playLabel);
             this.dom.stopBtn.disabled = !hasSongLoaded;
             this.dom.pauseBtn.disabled = !hasSongLoaded;
             this.dom.songIconContainer.classList.remove('playing');
@@ -221,11 +210,11 @@ export class UIManager {
         this._setLocked(this.dom.configBtn, isDisabled);
 
         if (gameStarted) {
-            this.dom.playBtn.innerHTML = '<span aria-hidden="true">🔀</span> Siguiente';
-            this.dom.playBtn.setAttribute('aria-label', 'Siguiente canción');
+            this.dom.playBtn.innerHTML = `<span aria-hidden="true">${TEXT.player.next.icon}</span> ${TEXT.player.next.text}`;
+            this.dom.playBtn.setAttribute('aria-label', TEXT.player.next.label);
         } else {
-            this.dom.playBtn.innerHTML = '<span aria-hidden="true">▶️</span> Iniciar Juego';
-            this.dom.playBtn.setAttribute('aria-label', 'Iniciar Juego');
+            this.dom.playBtn.innerHTML = `<span aria-hidden="true">${TEXT.player.start.icon}</span> ${TEXT.player.start.text}`;
+            this.dom.playBtn.setAttribute('aria-label', TEXT.player.start.label);
         }
     }
 
@@ -237,7 +226,7 @@ export class UIManager {
         historyItem.className = 'history-item';
         historyItem.title = song.title;
         historyItem.setAttribute('role', 'img');
-        historyItem.setAttribute('aria-label', `Canción reproducida: ${song.title}`);
+        historyItem.setAttribute('aria-label', TEXT.player.playedHistoryLabel(song.title));
 
         const img = document.createElement('img');
         
@@ -246,10 +235,10 @@ export class UIManager {
             img.style.opacity = '0';
         }
 
-        if (song.iconType === 'image' && song.icon) {
+        if (song.iconType === ICON_TYPE.IMAGE && song.icon) {
             img.src = song.icon;
         } else {
-            img.src = this.emojiToDataURL(song.icon, 150);
+            img.src = this.emojiToDataURL(song.icon, HISTORY_ICON_SIZE);
         }
 
         img.alt = song.title;
@@ -265,7 +254,7 @@ export class UIManager {
             setTimeout(() => {
                 img.style.transition = 'opacity 1s ease-in';
                 img.style.opacity = '1';
-            }, iconRevealTime * 1000);
+            }, iconRevealTime * MS_PER_SECOND);
         }
 
         return historyItem;
@@ -275,8 +264,8 @@ export class UIManager {
      * Obtiene el título del icono de una canción
      */
     getSongIconTitle(song, gameStarted) {
-        if (song.played) return 'Icono bloqueado (canción ya reproducida)';
-        return gameStarted ? 'Icono bloqueado (juego iniciado)' : 'Click para cambiar icono';
+        if (song.played) return TEXT.list.iconTitle.lockedPlayed;
+        return gameStarted ? TEXT.list.iconTitle.lockedStarted : TEXT.list.iconTitle.change;
     }
 
     /**
@@ -284,7 +273,7 @@ export class UIManager {
      */
     getSongIconHtml(song) {
         const title = escapeHTML(song.title);
-        if (song.iconType === 'image') {
+        if (song.iconType === ICON_TYPE.IMAGE) {
             return `<img src="${escapeHTML(song.icon)}" alt="${title}" style="padding:.25rem;aspect-ratio:1;object-fit:contain;">`;
         }
         return `<span role="img" aria-label="${title}">${escapeHTML(song.icon)}</span>`;
@@ -295,11 +284,11 @@ export class UIManager {
      */
     getSongStateLabel(song) {
         if (song.played) {
-            return '✓ Ya reproducida';
+            return TEXT.list.songState.played;
         } else if (song.file) {
-            return '○ Pendiente';
+            return TEXT.list.songState.pending;
         } else {
-            return '⚠ Sin archivo';
+            return TEXT.list.songState.noFile;
         }
     }
 }

@@ -3,6 +3,8 @@
  * Gestiona la selección y personalización de iconos para las canciones
  */
 import {availableIcons, iconKeywords} from './IconDictionary.js';
+import {CUSTOM_ICON_SIZE, ICON_MODAL_CLOSE_DELAY_MS, ICON_TYPE, SOUND} from '../constants.js';
+import {MSG, TEXT} from '../messages.js';
 
 export class IconManager {
     constructor(dom, sounds, getSongs) {
@@ -42,7 +44,7 @@ export class IconManager {
     getAvailableIcons(songs) {
         const usedIcons = new Set(
             songs
-                .filter(song => song.iconType === 'emoji' && song.icon != null)
+                .filter(song => song.iconType === ICON_TYPE.EMOJI && song.icon != null)
                 .map(song => song.icon)
         );
         return availableIcons.filter(icon => !usedIcons.has(icon));
@@ -54,7 +56,7 @@ export class IconManager {
     isIconUsed(icon, songs) {
         return songs.some(s =>
             s.icon === icon &&
-            s.iconType === 'emoji' &&
+            s.iconType === ICON_TYPE.EMOJI &&
             s.id !== this.currentEditingSongId
         );
     }
@@ -64,14 +66,10 @@ export class IconManager {
      */
     openIconPicker(songId, songs, onIconSelected) {
         const song = songs.find(s => s.id === songId);
-        if (!song) return {success: false, error: 'Canción no encontrada'};
+        if (!song) return {success: false, alert: MSG.icons.songNotFound};
 
         if (song.played) {
-            return {
-                success: false,
-                error: 'No puedes cambiar el icono de una canción que ya fue reproducida.',
-                title: 'Canción Ya Reproducida'
-            };
+            return {success: false, alert: MSG.songs.iconLocked};
         }
 
         this.currentEditingSongId = songId;
@@ -85,7 +83,7 @@ export class IconManager {
             const iconOption = document.createElement('button');
             iconOption.type = 'button';
             iconOption.className = 'icon-option';
-            iconOption.setAttribute('aria-label', `Seleccionar icono ${icon}`);
+            iconOption.setAttribute('aria-label', TEXT.icons.selectLabel(icon));
 
             const isUsed = this.isIconUsed(icon, songs);
             const isCurrentSongIcon = icon === song.icon;
@@ -100,7 +98,7 @@ export class IconManager {
             if (isUsed && !isCurrentSongIcon) {
                 iconOption.style.opacity = '0.3';
                 iconOption.style.cursor = 'not-allowed';
-                iconOption.title = 'Este icono ya está en uso';
+                iconOption.title = TEXT.icons.inUse;
                 iconOption.disabled = true;
             } else {
                 iconOption.onclick = () => this.selectIcon(icon, songs);
@@ -119,7 +117,7 @@ export class IconManager {
             this.dom.iconModal.showModal();
         }
 
-        this.sounds.play('click');
+        this.sounds.play(SOUND.CLICK);
 
         return {success: true};
     }
@@ -180,7 +178,7 @@ export class IconManager {
         if (visibleCount === 0 && query !== '') {
             const noResultsMsg = document.createElement('div');
             noResultsMsg.className = 'icon-picker-no-results';
-            noResultsMsg.textContent = `No se encontraron iconos para "${searchText}"`;
+            noResultsMsg.textContent = TEXT.icons.noResults(searchText);
             this.dom.iconPickerContainer.appendChild(noResultsMsg);
         }
     }
@@ -195,9 +193,9 @@ export class IconManager {
         if (!song || song.played) return;
 
         song.icon = icon;
-        song.iconType = 'emoji';
+        song.iconType = ICON_TYPE.EMOJI;
 
-        this.sounds.play('click');
+        this.sounds.play(SOUND.CLICK);
 
         // Actualizar visualización de iconos seleccionados
         for (const opt of document.querySelectorAll('.icon-option')) {
@@ -211,7 +209,7 @@ export class IconManager {
             this.onIconSelected();
         }
 
-        setTimeout(() => this.closeIconModal(), 300);
+        setTimeout(() => this.closeIconModal(), ICON_MODAL_CLOSE_DELAY_MS);
     }
 
     /**
@@ -230,8 +228,8 @@ export class IconManager {
         const callback = this.onIconSelected;
 
         const handleUpdate = () => {
-            song.iconType = 'image';
-            this.sounds.play('click');
+            song.iconType = ICON_TYPE.IMAGE;
+            this.sounds.play(SOUND.CLICK);
             this.closeIconModal();
 
             // Usar la referencia guardada del callback
@@ -245,10 +243,10 @@ export class IconManager {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    canvas.width = 300;
-                    canvas.height = 300;
+                    canvas.width = CUSTOM_ICON_SIZE;
+                    canvas.height = CUSTOM_ICON_SIZE;
                     const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, 300, 300);
+                    ctx.drawImage(img, 0, 0, CUSTOM_ICON_SIZE, CUSTOM_ICON_SIZE);
                     song.icon = canvas.toDataURL('image/png');
                     handleUpdate();
                 };

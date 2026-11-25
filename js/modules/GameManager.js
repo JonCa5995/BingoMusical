@@ -3,11 +3,12 @@
  * Gestiona la lógica del juego de bingo: reproducción aleatoria, historial, LÍNEA y BINGO
  */
 import {
-    DEFAULT_TITLE_REVEAL_TIME,
     DEFAULT_ICON_REVEAL_TIME,
-    MIN_SONGS_FOR_LINEA,
-    MIN_SONGS_FOR_BINGO
+    DEFAULT_TITLE_REVEAL_TIME,
+    MIN_SONGS_FOR_BINGO,
+    MIN_SONGS_FOR_LINEA
 } from '../constants.js';
+import {MSG} from '../messages.js';
 
 export class GameManager {
     gameStarted = false;
@@ -113,7 +114,7 @@ export class GameManager {
      */
     getRandomUnplayedSong(songs) {
         const unplayedSongs = songs.filter(song => !song.played && song.file);
-        
+
         if (unplayedSongs.length === 0) {
             return null;
         }
@@ -126,7 +127,7 @@ export class GameManager {
      */
     getRandomSong(songs) {
         const availableSongs = songs.filter(song => song.file);
-        
+
         if (availableSongs.length === 0) {
             return null;
         }
@@ -152,22 +153,14 @@ export class GameManager {
      */
     canCallLinea() {
         if (this.lineaCompleted) {
-            return {
-                valid: false,
-                error: 'La línea ya fue cantada. Solo puedes cantar línea una vez por juego.',
-                title: 'Línea Ya Cantada'
-            };
+            return {valid: false, alert: MSG.game.lineaAlreadyCalled};
         }
 
         if (this.playedSongs.length < MIN_SONGS_FOR_LINEA) {
-            return {
-                valid: false,
-                error: `Debes reproducir al menos ${MIN_SONGS_FOR_LINEA} canciones antes de cantar LÍNEA.`,
-                title: 'Canciones Insuficientes'
-            };
+            return {valid: false, alert: MSG.game.lineaNeedsSongs(MIN_SONGS_FOR_LINEA)};
         }
 
-        return { valid: true };
+        return {valid: true};
     }
 
     /**
@@ -182,22 +175,14 @@ export class GameManager {
      */
     canCallBingo() {
         if (this.bingoCompleted) {
-            return {
-                valid: false,
-                error: 'El bingo ya fue completado. Reinicia el juego para comenzar de nuevo.',
-                title: 'Bingo Ya Completado'
-            };
+            return {valid: false, alert: MSG.game.bingoAlreadyCalled};
         }
 
         if (this.playedSongs.length < MIN_SONGS_FOR_BINGO) {
-            return {
-                valid: false,
-                error: `Debes reproducir al menos ${MIN_SONGS_FOR_BINGO} canciones antes de cantar BINGO.`,
-                title: 'Canciones Insuficientes'
-            };
+            return {valid: false, alert: MSG.game.bingoNeedsSongs(MIN_SONGS_FOR_BINGO)};
         }
 
-        return { valid: true };
+        return {valid: true};
     }
 
     /**

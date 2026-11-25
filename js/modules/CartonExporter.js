@@ -3,8 +3,9 @@
  * Entrega los cartones al usuario: descarga como HTML o abre el diálogo de impresión (PDF).
  * El HTML lo produce el renderer que recibe; aquí solo se decide cómo se entrega.
  */
-import { DEFAULT_GAME_NAME } from '../constants.js';
-import { downloadFile, slugify } from '../utils.js';
+import {DEFAULT_GAME_NAME, PRINT_DIALOG_DELAY_MS} from '../constants.js';
+import {downloadFile, slugify} from '../utils.js';
+import {TEXT} from '../messages.js';
 
 export class CartonExporter {
     /**
@@ -27,7 +28,7 @@ export class CartonExporter {
             html,
             `cartones-${slugify(gameName)}.html`,
             'text/html;charset=utf-8',
-            `Descargar ${cartones.length} cartones de bingo`
+            TEXT.cartones.downloadLabel(cartones.length)
         );
     }
 
@@ -40,7 +41,7 @@ export class CartonExporter {
         const printWindow = this.window.open('', '_blank');
 
         if (!printWindow) {
-            throw new Error('No se pudo abrir la ventana de impresión. Por favor, permite ventanas emergentes.');
+            throw new Error(TEXT.cartones.popupBlocked);
         }
 
         printWindow.document.write(html);
@@ -49,7 +50,7 @@ export class CartonExporter {
         // Esperar a que se cargue el contenido
         printWindow.onload = () => {
             printWindow.focus();
-            setTimeout(() => printWindow.print(), 250);
+            setTimeout(() => printWindow.print(), PRINT_DIALOG_DELAY_MS);
         };
     }
 }
