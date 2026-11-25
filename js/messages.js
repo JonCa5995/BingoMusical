@@ -20,7 +20,17 @@ export const DEFAULT_TITLES = {
 // ============================================================
 // ALERTAS Y CONFIRMACIONES
 // ============================================================
+const labelsOf = (keys) => keys.map(key => TEXT.settings.labels[key] ?? key).join(', ');
+
 export const MSG = {
+    settings: {
+        exported: msg('Ajustes Exportados', 'Se ha descargado el archivo con los ajustes. Para llevarlos a otro navegador, impórtalo desde la configuración.'),
+        importFailed: (error) => errorMsg('Error de Importación', `Error al importar los ajustes: ${error}`),
+        imported: (applied, discarded) => applied.length === 0
+            ? msg('Sin Ajustes Válidos', 'El archivo no contenía ningún ajuste válido, así que no se ha cambiado nada.')
+            : msg('Ajustes Importados', `Se han aplicado ${applied.length} ajuste(s): ${labelsOf(applied)}.` +
+                (discarded.length > 0 ? `\n\nSe han descartado por no ser válidos: ${labelsOf(discarded)}.` : ''))
+    },
     gameStarted: {
         changeConfig: msg(T.gameStarted, 'No puedes cambiar la configuración una vez que el juego ha iniciado.'),
         importList: msg(T.gameStarted, 'No puedes importar una lista una vez que el juego ha iniciado. Debes reiniciar el juego primero.'),
@@ -92,6 +102,24 @@ export const MSG = {
 // TEXTOS DE LA INTERFAZ
 // ============================================================
 export const TEXT = {
+    settings: {
+        labels: {
+            theme: 'Tema',
+            musicVolume: 'Volumen de la música',
+            effectsVolume: 'Volumen de los efectos',
+            titleRevealTime: 'Tiempo para revelar el título',
+            iconRevealTime: 'Tiempo para revelar el icono',
+            gameName: 'Nombre del juego',
+            printPrimaryColor: 'Color principal de impresión',
+            printSecondaryColor: 'Color secundario de impresión',
+            cartonCount: 'Cantidad de cartones'
+        },
+        downloadLabel: 'Descargar los ajustes del juego en formato JSON',
+        invalidJson: 'El archivo no es un JSON válido.',
+        notSettings: 'El archivo no contiene ajustes de Bingo Musical.',
+        newerVersion: (version) => `El archivo es de una versión más nueva (${version}) que la que entiende esta aplicación.`
+    },
+
     cartonActions: {
         addSongs: 'añadir canciones',
         changeIcon: 'cambiar el icono',

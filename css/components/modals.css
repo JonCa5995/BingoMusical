@@ -217,6 +217,12 @@ article.modal-content {
     font-style: italic;
 }
 
+.settings-file-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
 .radio-group {
     display: flex;
     flex-direction: column;

@@ -4,7 +4,7 @@ import {MSG} from '../js/messages.js';
 import {ALERT_KIND} from '../js/constants.js';
 
 const REGLA_ANTIGUA = /error|inválido|insuficientes/i;
-const ARGUMENTOS = [['texto', 'pdf'], [['a', 'b'], 'pdf'], [3, 'pdf']];
+const ARGUMENTOS = [['texto', 'pdf'], [['a', 'b'], 'pdf'], [3, 'pdf'], [['theme'], ['otro']], [[], ['otro']]];
 
 const collectAlerts = () => {
     const alerts = [];
@@ -36,17 +36,20 @@ test('todos los avisos, fijos o calculados, tienen título y mensaje de texto', 
     }
 });
 
-test('el tipo de cada aviso coincide con la regla antigua basada en el título', () => {
+test('todo aviso cuyo título cumplía la regla antigua sigue siendo de tipo error', () => {
     for (const {trail, alert} of collectAlerts()) {
-        assert.equal(alert.kind === ALERT_KIND.ERROR, REGLA_ANTIGUA.test(alert.title), `${trail}: «${alert.title}»`);
+        if (REGLA_ANTIGUA.test(alert.title)) {
+            assert.equal(alert.kind, ALERT_KIND.ERROR, `${trail}: «${alert.title}»`);
+        }
     }
 });
 
-test('los avisos de error son los esperados', () => {
+test('los 11 avisos que sonaban como error siguen siéndolo', () => {
     const errors = collectAlerts().filter(({alert}) => alert.kind === ALERT_KIND.ERROR).map(({trail}) => trail);
 
-    assert.ok(errors.length >= 11);
-    assert.ok(errors.includes('MSG.cartones.invalidCount()'));
-    assert.ok(errors.includes('MSG.playlist.importFailed()'));
-    assert.ok(errors.includes('MSG.game.lineaNeedsSongs()'));
+    for (const trail of ['MSG.game.lineaNeedsSongs()', 'MSG.game.bingoNeedsSongs()', 'MSG.songs.notEnoughToPlay()', 'MSG.cartones.notEnoughSongs()',
+        'MSG.icons.songNotFound', 'MSG.cartones.printFailed()', 'MSG.cartones.generateFailed()', 'MSG.playlist.exportFailed()',
+        'MSG.playlist.importFailed()', 'MSG.playlist.importNoSongs()', 'MSG.cartones.invalidCount()']) {
+        assert.ok(errors.includes(trail), `falta ${trail}`);
+    }
 });

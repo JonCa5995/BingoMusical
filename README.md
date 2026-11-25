@@ -23,7 +23,7 @@ y abrir <http://localhost:8000>.
 ## Cómo se juega
 
 1. **Añadir canciones:** botón «Agregar Canciones» (o arrastrar los archivos `.mp3` a la lista). Cada canción recibe un icono distinto que se puede cambiar o sustituir por una imagen propia. Se necesitan al menos **24 canciones**.
-2. **Nombre y configuración:** el nombre del juego aparece en los cartones. La configuración (⚙️) fija cuántos segundos pasan hasta que se revela el título y el icono de cada canción. Solo se puede cambiar antes de empezar.
+2. **Nombre y configuración:** el nombre del juego aparece en los cartones. La configuración (⚙️) fija cuántos segundos pasan hasta que se revela el título y el icono de cada canción. Solo se puede cambiar antes de empezar. Los ajustes se guardan en el navegador y se recuperan al volver a abrir la aplicación (ver «Ajustes»).
 3. **Generar cartones:** «Generar Cartones» permite crear cartones nuevos o añadir más (hasta **1.500** por tanda). Cada cartón tiene 3 filas de 8 casillas con 4 canciones por fila, 12 canciones distintas, y **dos cartones nunca comparten una fila**.
 4. **Imprimir:** desde el mismo menú, en HTML o en PDF (con el diálogo de impresión del navegador), todos los cartones o un rango, con colores a elegir y vista previa.
 5. **Jugar:** «Iniciar Juego» reproduce una canción al azar y, una vez empezada la partida, el mismo botón pasa a ser «Siguiente». El historial muestra las que ya han salido.
@@ -38,6 +38,42 @@ El botón **«Automático»** (modo continuo) sirve para **reproducir las cancio
 
 - **Exportar lista** descarga un JSON con las canciones (título e icono), el nombre del juego y los cartones generados.
 - **Importar lista** lee ese JSON y busca los audios en la carpeta `canciones/` (convención: `canciones/<título>.mp3`). Los JSON no contienen el audio.
+
+### Ajustes
+
+La aplicación recuerda en el navegador: el tema, el volumen de la música y de los efectos, los tiempos de revelado, el nombre del juego, los colores de impresión y la cantidad de cartones que propone el generador.
+
+Para **llevarlos a otro navegador**, la configuración (⚙️) tiene los botones **Exportar ajustes** e **Importar ajustes**. El archivo es un JSON:
+
+```json
+{
+  "type": "settings",
+  "version": 1,
+  "date": "2026-03-04T05:06:07.000Z",
+  "settings": {
+    "theme": "dark",
+    "musicVolume": 1,
+    "effectsVolume": 0.7,
+    "titleRevealTime": 5,
+    "iconRevealTime": 10,
+    "gameName": "Noche de bingo",
+    "printPrimaryColor": "#6366f1",
+    "printSecondaryColor": "#f8faff",
+    "cartonCount": 10
+  }
+}
+```
+
+| Campo | Valores válidos |
+|---|---|
+| `theme` | `"dark"` o `"light"` |
+| `musicVolume`, `effectsVolume` | número entre 0 y 1 |
+| `titleRevealTime`, `iconRevealTime` | entero entre 0 y 30 (segundos) |
+| `gameName` | texto de hasta 50 caracteres |
+| `printPrimaryColor`, `printSecondaryColor` | color `#rrggbb` |
+| `cartonCount` | entero entre 1 y 1500 |
+
+Al importar, cada campo se valida: los inválidos o desconocidos se **descartan** (la aplicación dice cuáles) y el resto se aplica. Un archivo puede llevar solo algunos campos. Si el archivo no es de ajustes, no es un JSON válido o es de una versión más nueva que la que entiende la aplicación, se rechaza sin cambiar nada.
 
 ### Atajos de teclado
 

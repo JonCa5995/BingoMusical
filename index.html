@@ -330,6 +330,29 @@
           </small>
         </div>
 
+        <div class="config-group">
+          <span class="config-label">💾 Ajustes del juego</span>
+          <div class="settings-file-actions">
+            <button id="export-settings-btn" class="btn btn-secondary btn-icon" type="button">
+              <span aria-hidden="true">📤</span>
+              Exportar ajustes
+            </button>
+            <button id="import-settings-btn" class="btn btn-secondary btn-icon" type="button">
+              <span aria-hidden="true">📥</span>
+              Importar ajustes
+            </button>
+            <input id="import-settings-input"
+                   class="file-import"
+                   type="file"
+                   accept=".json"
+                   aria-label="Seleccionar archivo de ajustes a importar"
+            >
+          </div>
+          <small class="config-hint">
+            Guarda en un archivo el volumen, los tiempos, el nombre, los colores y el tema para llevarlos a otro navegador
+          </small>
+        </div>
+
         <footer class="modal-actions">
           <button id="save-config-btn" class="btn btn-play btn-icon" type="button">
             <span aria-hidden="true">✔️</span>

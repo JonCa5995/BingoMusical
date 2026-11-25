@@ -66,6 +66,8 @@ export const AUDIO_FILE_EXTENSION = '.mp3';
 export const LOGO_PATH = 'icon.png';
 export const DECORATIVE_ICON_PATH = 'img/icon-decorative.svg';
 export const STORAGE_PREFIX = 'bingoMusical_';
+export const SETTINGS_FILE_TYPE = 'settings';
+export const SETTINGS_FILE_VERSION = 1;
 
 // ============================================================
 // VALORES POR DEFECTO

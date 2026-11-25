@@ -1,8 +1,5 @@
 import {
     CARTON_MODE,
-    DEFAULT_CARTON_COUNT,
-    DEFAULT_PRINT_PRIMARY_COLOR,
-    DEFAULT_PRINT_SECONDARY_COLOR,
     MAX_CARTONS_GENERATED,
     PRINT_FORMAT,
     SOUND
@@ -11,7 +8,7 @@ import {MSG, TEXT} from '../messages.js';
 import {gameNameOrDefault} from '../utils.js';
 
 export class CartonModals {
-    constructor({elements, game, cartonManager, modals, dialogs, sounds, getSongs, onCartonesChanged}) {
+    constructor({elements, game, cartonManager, modals, dialogs, sounds, getSongs, onCartonesChanged, settings, onSettingsChanged}) {
         this.el = elements;
         this.game = game;
         this.cartonManager = cartonManager;
@@ -20,6 +17,8 @@ export class CartonModals {
         this.sounds = sounds;
         this.getSongs = getSongs;
         this.onCartonesChanged = onCartonesChanged;
+        this.initialSettings = settings;
+        this.onSettingsChanged = onSettingsChanged;
         this.mode = null;
     }
 
@@ -35,11 +34,31 @@ export class CartonModals {
         const el = this.el;
 
         el.cartonCountInput.max = MAX_CARTONS_GENERATED;
-        el.cartonCountInput.value = DEFAULT_CARTON_COUNT;
-        el.printPrimaryColorInput.value = DEFAULT_PRINT_PRIMARY_COLOR;
-        el.printSecondaryColorInput.value = DEFAULT_PRINT_SECONDARY_COLOR;
-        document.querySelector('.color-preview-print')?.style.setProperty('background-color', DEFAULT_PRINT_PRIMARY_COLOR);
-        document.querySelector('.color-preview-print-secondary')?.style.setProperty('background-color', DEFAULT_PRINT_SECONDARY_COLOR);
+        this.applySettings(this.initialSettings);
+    }
+
+    applySettings(settings) {
+        const el = this.el;
+
+        if ('cartonCount' in settings) {
+            el.cartonCountInput.value = settings.cartonCount;
+        }
+        if ('printPrimaryColor' in settings) {
+            el.printPrimaryColorInput.value = settings.printPrimaryColor;
+            document.querySelector('.color-preview-print')?.style.setProperty('background-color', settings.printPrimaryColor);
+        }
+        if ('printSecondaryColor' in settings) {
+            el.printSecondaryColorInput.value = settings.printSecondaryColor;
+            document.querySelector('.color-preview-print-secondary')?.style.setProperty('background-color', settings.printSecondaryColor);
+        }
+    }
+
+    getSettings() {
+        return {
+            cartonCount: Number.parseInt(this.el.cartonCountInput.value),
+            printPrimaryColor: this.el.printPrimaryColorInput.value,
+            printSecondaryColor: this.el.printSecondaryColorInput.value
+        };
     }
 
     _bindOptionsModal() {
@@ -76,10 +95,12 @@ export class CartonModals {
 
         el.printPrimaryColorInput.addEventListener('input', (e) => {
             document.querySelector('.color-preview-print').style.backgroundColor = e.target.value;
+            this.onSettingsChanged({printPrimaryColor: e.target.value});
             this.updatePreview();
         });
         el.printSecondaryColorInput.addEventListener('input', (e) => {
             document.querySelector('.color-preview-print-secondary').style.backgroundColor = e.target.value;
+            this.onSettingsChanged({printSecondaryColor: e.target.value});
             this.updatePreview();
         });
     }
@@ -158,11 +179,8 @@ export class CartonModals {
         const mode = this.mode || CARTON_MODE.NEW;
         const existingCartones = mode === CARTON_MODE.ADD ? this.game.getCartones() : [];
 
-        const result = this.cartonManager.generate(
-            this.getSongs(),
-            Number.parseInt(this.el.cartonCountInput.value),
-            existingCartones
-        );
+        const requestedCount = Number.parseInt(this.el.cartonCountInput.value);
+        const result = this.cartonManager.generate(this.getSongs(), requestedCount, existingCartones);
 
         if (!result.success) {
             this.dialogs.showAlert(result.alert);
@@ -170,6 +188,7 @@ export class CartonModals {
         }
 
         const count = result.cartones.length;
+        this.onSettingsChanged({cartonCount: requestedCount});
 
         if (mode === CARTON_MODE.NEW) {
             this.game.setCartones(result.cartones);

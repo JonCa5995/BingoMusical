@@ -28,7 +28,8 @@ const GROUPS = {
     ],
     config: [
         'configBtn', 'configModal', 'closeConfigModalBtn', 'saveConfigBtn', 'titleRevealTimeSlider',
-        'titleRevealValueSpan', 'iconRevealTimeSlider', 'iconRevealValueSpan'
+        'titleRevealValueSpan', 'iconRevealTimeSlider', 'iconRevealValueSpan', 'exportSettingsBtn', 'importSettingsBtn',
+        'importSettingsInput'
     ],
     dialogs: [
         'confirmModal', 'confirmTitle', 'confirmMessage', 'confirmCancelBtn', 'confirmAcceptBtn', 'alertModal',
@@ -127,6 +128,9 @@ const IDS = {
     iconRevealTimeSlider: 'icon-reveal-time',
     iconRevealValueSpan: 'icon-reveal-value',
     saveConfigBtn: 'save-config-btn',
+    exportSettingsBtn: 'export-settings-btn',
+    importSettingsBtn: 'import-settings-btn',
+    importSettingsInput: 'import-settings-input',
 
     confirmModal: 'confirm-modal',
     confirmTitle: 'confirm-title',

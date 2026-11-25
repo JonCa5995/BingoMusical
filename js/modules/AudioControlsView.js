@@ -18,6 +18,18 @@ export class AudioControlsView {
         this._bindVolumeSlider(this.el.effectsVolumeSlider, this.el.effectsVolumeValueSpan, this.handlers.onEffectsVolume);
     }
 
+    setVolumes(musicVolume, effectsVolume) {
+        for (const [slider, valueSpan, volume] of [
+            [this.el.musicVolumeSlider, this.el.musicVolumeValueSpan, musicVolume],
+            [this.el.effectsVolumeSlider, this.el.effectsVolumeValueSpan, effectsVolume]
+        ]) {
+            const percent = Math.round(volume * 100);
+            slider.value = percent;
+            slider.setAttribute('aria-valuenow', percent);
+            valueSpan.textContent = `${percent}%`;
+        }
+    }
+
     _bindVolumeSlider(slider, valueSpan, onChange) {
         slider.addEventListener('input', (e) => {
             const value = e.target.value;
