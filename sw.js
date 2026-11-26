@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'bingo-musical-v5';
+const CACHE_VERSION = 'bingo-musical-v6';
 
 const PRECACHE = [
     './',
