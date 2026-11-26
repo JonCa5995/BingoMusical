@@ -27,13 +27,13 @@ const view = new ProjectionView({
 
 view.start();
 
-window.addEventListener('resize', () => {
+globalThis.addEventListener('resize', () => {
     view.syncLogo(false);
     view.syncHistory();
 });
 
 setInterval(() => view.sendAlive(), PROJECTION_ALIVE_MS);
-window.addEventListener('pagehide', () => view.sendBye());
+globalThis.addEventListener('pagehide', () => view.sendBye());
 
 document.addEventListener('dblclick', () => {
     if (document.fullscreenElement) {

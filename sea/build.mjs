@@ -7,6 +7,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ROOT_FILES = ['index.html', 'projection.html', 'manifest.webmanifest', 'sw.js', 'favicon.ico', 'icon.png', 'icon.svg'];
 const FOLDERS = [['css', ['.css']], ['js', ['.js']], ['img', ['.png', '.svg']]];
 
+function compareCodeUnits(a, b) {
+    if (a < b) return -1;
+
+    return a > b ? 1 : 0;
+}
+
 export function listAppFiles(root = ROOT) {
     const walk = (folder, extensions) => fs.readdirSync(path.join(root, folder), {withFileTypes: true}).flatMap(entry => {
         const relative = path.posix.join(folder, entry.name);
@@ -15,7 +21,7 @@ export function listAppFiles(root = ROOT) {
         return extensions.includes(path.extname(entry.name)) ? [relative] : [];
     });
 
-    return [...ROOT_FILES, ...FOLDERS.flatMap(([folder, extensions]) => walk(folder, extensions))].sort();
+    return [...ROOT_FILES, ...FOLDERS.flatMap(([folder, extensions]) => walk(folder, extensions))].sort(compareCodeUnits);
 }
 
 export function buildSeaConfig(files, {root = ROOT, output = 'dist/BingoMusical.exe'} = {}) {

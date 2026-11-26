@@ -131,7 +131,7 @@ export class ProjectionView {
         this.el.celebration.classList.toggle('hidden', celebration === null);
         if (celebration === null) return;
 
-        const {kind, ok, cartonId, rows} = celebration;
+        const {kind, ok, rows} = celebration;
         const texts = TEXT.projection.celebration;
         const title = ok ? texts[kind].title : texts.fail[kind].title;
 

@@ -105,8 +105,10 @@ test('ProjectionChannel publica el estado, agrupa avisos seguidos y responde al 
 test('ProjectionChannel sin BroadcastChannel no falla', () => {
     const projection = new ProjectionChannel({getState: () => ({}), createChannel: () => null, openWindow: () => {}});
 
-    projection.publish();
-    projection.schedulePublish();
+    assert.doesNotThrow(() => {
+        projection.publish();
+        projection.schedulePublish();
+    });
 });
 
 test('ProjectionChannel abre la ventana de proyección', () => {
@@ -817,9 +819,11 @@ test('sin medidas del navegador (la caja aún mide cero) se estima a partir del 
 });
 
 test('syncHistory antes de recibir ningún estado no hace nada', () => {
-    const {view} = buildView();
+    const {view, el} = buildView();
 
     view.syncHistory();
+
+    assert.equal(el.history.children.length, 0);
 });
 
 test('un hueco sin icono y sin acertar se dibuja como una cruz grande, sin imagen ni emoji', () => {

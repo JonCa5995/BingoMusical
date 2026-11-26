@@ -1,3 +1,9 @@
+const listenersFor = (listeners, type) => {
+    if (!listeners[type]) listeners[type] = [];
+
+    return listeners[type];
+};
+
 export const mkEl = (tag = 'div') => {
     const el = {
         tag, attrs: {}, children: [], dataset: {}, className: '', title: '', textContent: '', value: '', disabled: false, checked: false,
@@ -26,7 +32,7 @@ export const mkEl = (tag = 'div') => {
             this.children = [];
             if (fragment) this.appendChild(fragment);
         },
-        addEventListener(type, listener) { (this._listeners[type] ||= []).push(listener); },
+        addEventListener(type, listener) { listenersFor(this._listeners, type).push(listener); },
         fire(type, event = {}) { (this._listeners[type] || []).forEach(listener => listener({target: this, currentTarget: this, ...event})); },
         remove() {}, scrollTo() {}, click() { this.fire('click'); },
         getContext() { return {fillText() {}, drawImage() {}}; },
@@ -56,9 +62,11 @@ export function installDocument() {
     const registry = new Map();
     const isDialog = (key) => /-modal$|^#linea-overlay$|^#celebration-overlay$/.test(key);
 
+    const tagFor = (key) => /input|slider/.test(key) ? 'input' : 'div';
+
     const get = (key) => {
         if (!registry.has(key)) {
-            const element = isDialog(key) ? mkDialog() : mkEl(/input|slider/.test(key) ? 'input' : 'div');
+            const element = isDialog(key) ? mkDialog() : mkEl(tagFor(key));
             element.key = key;
             element.files = [];
             element.parentElement = mkEl();
@@ -83,7 +91,7 @@ export function installDocument() {
         querySelector: (selector) => get('q:' + selector),
         querySelectorAll: () => [],
         getElementsByName: () => radios,
-        addEventListener: (type, listener) => { (documentListeners[type] ||= []).push(listener); },
+        addEventListener: (type, listener) => { listenersFor(documentListeners, type).push(listener); },
         createElement: (tag) => {
             const element = mkEl(tag);
             element.parentElement = mkEl();

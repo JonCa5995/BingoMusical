@@ -12,6 +12,13 @@ const T = {
 const msg = (title, message) => ({title, message});
 const errorMsg = (title, message) => ({title, message, kind: ALERT_KIND.ERROR});
 
+const clipLine = (clip) => {
+    if (!(clip?.seconds > 0)) return '';
+
+    const random = clip.randomStart ? ' (inicio aleatorio)' : '';
+    return '\n• Fragmento de ' + clip.seconds + ' segundos' + random;
+};
+
 export const DEFAULT_TITLES = {
     alert: 'Información',
     confirm: 'Confirmar'
@@ -55,7 +62,7 @@ export const MSG = {
             `Configuración guardada:\n\n` +
             `• Tiempo para revelar título: ${titleSeconds} segundos\n` +
             `• Tiempo para revelar icono: ${iconSeconds} segundos` +
-            (clip?.seconds > 0 ? `\n• Fragmento de ${clip.seconds} segundos${clip.randomStart ? ' (inicio aleatorio)' : ''}` : '')
+            clipLine(clip)
         )
     },
 

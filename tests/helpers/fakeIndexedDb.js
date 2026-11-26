@@ -16,6 +16,23 @@ export function createFakeIndexedDb() {
         return request;
     };
 
+    const makeTransaction = (data) => {
+        const transaction = {};
+        const store = {
+            get: (key) => makeRequest(transaction, () => structuredClone(data.get(key))),
+            put: (value, key) => makeRequest(transaction, () => { data.set(key, structuredClone(value)); }),
+            delete: (key) => makeRequest(transaction, () => { data.delete(key); })
+        };
+        transaction.objectStore = () => store;
+        return transaction;
+    };
+
+    const makeConnection = (name) => ({
+        createObjectStore: (storeName) => { databases.get(name).set(storeName, new Map()); },
+        transaction: (storeName) => makeTransaction(databases.get(name).get(storeName)),
+        close() {}
+    });
+
     return {
         counters,
         databases,
@@ -27,21 +44,7 @@ export function createFakeIndexedDb() {
                 const isNew = !databases.has(name);
                 if (isNew) databases.set(name, new Map());
 
-                request.result = {
-                    createObjectStore: (storeName) => { databases.get(name).set(storeName, new Map()); },
-                    transaction(storeName) {
-                        const data = databases.get(name).get(storeName);
-                        const transaction = {};
-                        const store = {
-                            get: (key) => makeRequest(transaction, () => structuredClone(data.get(key))),
-                            put: (value, key) => makeRequest(transaction, () => { data.set(key, structuredClone(value)); }),
-                            delete: (key) => makeRequest(transaction, () => { data.delete(key); })
-                        };
-                        transaction.objectStore = () => store;
-                        return transaction;
-                    },
-                    close() {}
-                };
+                request.result = makeConnection(name);
 
                 if (isNew) request.onupgradeneeded?.();
                 request.onsuccess?.();

@@ -347,7 +347,7 @@ export class BingoMusical {
             this.stopSong();
         }
 
-        this.dom.history.historyGrid.innerHTML = '';
+        this.dom.history.historyGrid.replaceChildren();
         playedSongs.forEach(song => this.addToHistory(song));
 
         this._showPlayerFor(currentSong);
@@ -1008,7 +1008,7 @@ export class BingoMusical {
             this.game.resetGame();
             this.songs = this.songManager.resetPlayedStatus(this.songs);
 
-            this.dom.history.historyGrid.innerHTML = '';
+            this.dom.history.historyGrid.replaceChildren();
             this.refreshUI();
             this.stopSong();
 
@@ -1021,8 +1021,10 @@ export class BingoMusical {
     }
 }
 
+const startApp = () => new BingoMusical();
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => new BingoMusical());
+    document.addEventListener('DOMContentLoaded', startApp);
 } else {
-    new BingoMusical();
+    startApp();
 }

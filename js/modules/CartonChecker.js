@@ -14,6 +14,7 @@ export function evaluateCarton(carton, playedIds) {
     const missingForBingo = rows.reduce((sum, row) => sum + row.missing, 0);
     const linea = rows.some(row => row.complete);
     const candidates = rows.filter(row => row.songs.length > 0).map(row => row.missing);
+    const missingForLinea = candidates.length > 0 ? Math.min(...candidates) : null;
 
     return {
         rows,
@@ -21,7 +22,7 @@ export function evaluateCarton(carton, playedIds) {
         linea,
         completeRows: rows.flatMap((row, index) => row.complete ? [index + 1] : []),
         bingo: total > 0 && missingForBingo === 0,
-        missingForLinea: linea ? 0 : (candidates.length > 0 ? Math.min(...candidates) : null),
+        missingForLinea: linea ? 0 : missingForLinea,
         missingForBingo
     };
 }

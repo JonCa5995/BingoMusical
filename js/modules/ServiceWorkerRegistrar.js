@@ -1,10 +1,10 @@
 import {SERVICE_WORKER_DEV_PARAM, SERVICE_WORKER_FILE} from '../constants.js';
 
-const LOCAL_HOSTS = ['localhost', '127.0.0.1', '[::1]'];
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 export function shouldRegisterServiceWorker({location, hasServiceWorker}) {
     if (!hasServiceWorker) return false;
-    if (!LOCAL_HOSTS.includes(location.hostname)) return true;
+    if (!LOCAL_HOSTS.has(location.hostname)) return true;
 
     return new URLSearchParams(location.search).get(SERVICE_WORKER_DEV_PARAM) === '1';
 }

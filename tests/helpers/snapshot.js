@@ -27,4 +27,4 @@ export function makeSnapshot(options = {}) {
     return captureSnapshot({songs, game, settings: {...defaultSettings(), gameName: options.name ?? 'Fiesta'}, now: new Date('2026-04-05T06:07:08.000Z')});
 }
 
-export const clone = (value) => JSON.parse(JSON.stringify(value));
+export const clone = (value) => structuredClone(value);

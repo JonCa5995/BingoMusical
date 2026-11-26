@@ -20,7 +20,7 @@ export function parseSettingsFile(text) {
         return {success: false, error: TEXT.settings.invalidJson};
     }
 
-    if (!data || data.type !== SETTINGS_FILE_TYPE || typeof data.settings !== 'object' || data.settings === null || Array.isArray(data.settings)) {
+    if (data?.type !== SETTINGS_FILE_TYPE || typeof data.settings !== 'object' || data.settings === null || Array.isArray(data.settings)) {
         return {success: false, error: TEXT.settings.notSettings};
     }
 

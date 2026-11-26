@@ -22,16 +22,16 @@ export class CartonExporter {
 
     async downloadAsPDF(cartones, config = {}) {
         const html = this.renderer.generatePrintableHTML(cartones, config);
-        const printWindow = this.window.open('', '_blank');
+        const url = URL.createObjectURL(new Blob([html], {type: 'text/html;charset=utf-8'}));
+        const printWindow = this.window.open(url, '_blank');
 
         if (!printWindow) {
+            URL.revokeObjectURL(url);
             throw new Error(TEXT.cartones.popupBlocked);
         }
 
-        printWindow.document.write(html);
-        printWindow.document.close();
-
         printWindow.onload = () => {
+            URL.revokeObjectURL(url);
             printWindow.focus();
             setTimeout(() => printWindow.print(), PRINT_DIALOG_DELAY_MS);
         };

@@ -54,12 +54,12 @@ function parseRange(header, size) {
     return start > end || start >= size ? {invalid: true} : {start, end};
 }
 
-function createAppServer({readAsset, songsDir}) {
-    function send(response, status, headers, body, method) {
-        response.writeHead(status, {'cache-control': 'no-cache', [MARKER_HEADER]: '1', ...headers});
-        response.end(method === 'HEAD' ? undefined : body);
-    }
+function send(response, status, headers, body, method) {
+    response.writeHead(status, {'cache-control': 'no-cache', [MARKER_HEADER]: '1', ...headers});
+    response.end(method === 'HEAD' ? undefined : body);
+}
 
+function createAppServer({readAsset, songsDir}) {
     function sendSong(request, response, relative) {
         const file = path.resolve(songsDir, relative);
         const inside = file === songsDir || file.startsWith(songsDir + path.sep);
@@ -161,9 +161,15 @@ async function startOnFreePort(server, firstPort) {
 }
 
 function openBrowser(url) {
-    const [command, args] = process.platform === 'win32'
-        ? ['cmd', ['/c', 'start', '', url]]
-        : process.platform === 'darwin' ? ['open', [url]] : ['xdg-open', [url]];
+    let command = 'xdg-open';
+    let args = [url];
+
+    if (process.platform === 'win32') {
+        command = 'cmd';
+        args = ['/c', 'start', '', url];
+    } else if (process.platform === 'darwin') {
+        command = 'open';
+    }
 
     spawn(command, args, {detached: true, stdio: 'ignore'}).on('error', () => {}).unref();
 }
