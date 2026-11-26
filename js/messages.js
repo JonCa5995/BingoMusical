@@ -13,10 +13,27 @@ const msg = (title, message) => ({title, message});
 const errorMsg = (title, message) => ({title, message, kind: ALERT_KIND.ERROR});
 
 const clipLine = (clip) => {
-    if (!(clip?.seconds > 0)) return '';
+    if (clip?.seconds > 0) {
+        const random = clip.randomStart ? ' (inicio aleatorio)' : '';
+        return '\n• Fragmento de ' + clip.seconds + ' segundos' + random;
+    }
 
-    const random = clip.randomStart ? ' (inicio aleatorio)' : '';
-    return '\n• Fragmento de ' + clip.seconds + ' segundos' + random;
+    return '';
+};
+
+const missingSongs = (count, total) => {
+    if (count === 1) return 'falta 1 canción';
+    if (total === undefined) return 'faltan ' + count + ' canciones';
+
+    return 'faltan ' + count + ' de ' + total;
+};
+
+const unlinkedBlock = (missing) => {
+    if (missing.length === 0) return '';
+
+    const titles = missing.slice(0, 10).map(song => song.title).join('\n- ');
+    const more = missing.length > 10 ? '\n- ...' : '';
+    return '\n\nSin coincidencia (' + missing.length + '):\n- ' + titles + more;
 };
 
 export const DEFAULT_TITLES = {
@@ -29,14 +46,21 @@ export const DEFAULT_TITLES = {
 // ============================================================
 const labelsOf = (keys) => keys.map(key => TEXT.settings.labels[key] ?? key).join(', ');
 
+const discardedLine = (discarded) => discarded.length > 0 ? '\n\nSe han descartado por no ser válidos: ' + labelsOf(discarded) + '.' : '';
+
+const importedSettings = (applied, discarded) => {
+    if (applied.length === 0) {
+        return msg('Sin Ajustes Válidos', 'El archivo no contenía ningún ajuste válido, así que no se ha cambiado nada.');
+    }
+
+    return msg('Ajustes Importados', 'Se han aplicado ' + applied.length + ' ajuste(s): ' + labelsOf(applied) + '.' + discardedLine(discarded));
+};
+
 export const MSG = {
     settings: {
         exported: msg('Ajustes Exportados', 'Se ha descargado el archivo con los ajustes. Para llevarlos a otro navegador, impórtalo desde la configuración.'),
         importFailed: (error) => errorMsg('Error de Importación', `Error al importar los ajustes: ${error}`),
-        imported: (applied, discarded) => applied.length === 0
-            ? msg('Sin Ajustes Válidos', 'El archivo no contenía ningún ajuste válido, así que no se ha cambiado nada.')
-            : msg('Ajustes Importados', `Se han aplicado ${applied.length} ajuste(s): ${labelsOf(applied)}.` +
-                (discarded.length > 0 ? `\n\nSe han descartado por no ser válidos: ${labelsOf(discarded)}.` : ''))
+        imported: importedSettings
     },
     gameStarted: {
         changeConfig: msg(T.gameStarted, 'No puedes cambiar la configuración una vez que el juego ha iniciado.'),
@@ -105,7 +129,7 @@ export const MSG = {
             `Ningún archivo de la carpeta coincide con las ${pending} canciones sin audio (se han leído ${audioFiles} archivos de audio).\n\nEl nombre de cada archivo, sin la extensión, debe ser igual al título de la canción.`),
         linked: ({linked, missing, pendingCount}) => msg('Audio Vinculado',
             `Se han vinculado ${linked.length} de ${pendingCount} canciones sin audio.` +
-            (missing.length > 0 ? `\n\nSin coincidencia (${missing.length}):\n- ${missing.slice(0, 10).map(song => song.title).join('\n- ')}${missing.length > 10 ? '\n- ...' : ''}` : ''))
+            unlinkedBlock(missing))
     },
 
     playlist: {
@@ -149,13 +173,13 @@ export const TEXT = {
         played: 'Ha salido',
         pending: 'Aún no ha salido',
         linea: ({linea, completeRows, missingForLinea}) => {
-            if (linea) return `📏 LÍNEA: sí (${completeRows.length === 1 ? 'fila' : 'filas'} ${completeRows.join(' y ')})`;
+            if (linea) return '📏 LÍNEA: sí (' + (completeRows.length === 1 ? 'fila' : 'filas') + ' ' + completeRows.join(' y ') + ')';
             if (missingForLinea === null) return '📏 LÍNEA: no (el cartón no tiene canciones)';
-            return `📏 LÍNEA: no, a la fila más cercana le ${missingForLinea === 1 ? 'falta 1 canción' : `faltan ${missingForLinea} canciones`}`;
+            return '📏 LÍNEA: no, a la fila más cercana le ' + missingSongs(missingForLinea);
         },
         bingo: ({bingo, missingForBingo, total}) => bingo
             ? '🎉 BINGO: sí, han salido todas las canciones'
-            : `🎉 BINGO: no, ${missingForBingo === 1 ? 'falta 1 canción' : `faltan ${missingForBingo} de ${total}`}`,
+            : '🎉 BINGO: no, ' + missingSongs(missingForBingo, total),
         row: (number, row) => `Fila ${number}: ${row.songs.length - row.missing} de ${row.songs.length}${row.complete ? ' ✓ completa' : ''}`,
         modeTitle: {check: '🔍 Comprobar cartón', linea: '📏 Cantar LÍNEA', bingo: '🎉 Cantar BINGO', ended: '🎉 ¡BINGO!'},
         singLinea: {

@@ -256,8 +256,8 @@ export class BingoMusical {
         this.songList.render();
         this.updateCounters();
         this.updateControls(false);
-        this.savedGame.offerSavedGame();
-        registerServiceWorker();
+        void this.savedGame.offerSavedGame();
+        void registerServiceWorker();
     }
 
     _applyBootSettings() {
@@ -808,7 +808,7 @@ export class BingoMusical {
         if (song.played) {
             this.dialogs.showAlert(MSG.songs.iconLocked);
         } else {
-            this.openIconPicker(song.id);
+            void this.openIconPicker(song.id);
         }
     }
 
@@ -910,7 +910,7 @@ export class BingoMusical {
         this.projection.dockLogo().finally(() => {
             this.waitingForProjection = false;
             this._startSong(song);
-        });
+        }).catch(error => console.error(error));
     }
 
     _startSong(song) {

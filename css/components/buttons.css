@@ -115,3 +115,15 @@
     background: var(--background-color);
     transform: rotate(90deg);
 }
+
+@media (prefers-reduced-motion: reduce) {
+    .btn,
+    .close-btn {
+        transition: none;
+    }
+
+    .btn:hover:not(:disabled),
+    .close-btn:hover {
+        transform: none;
+    }
+}

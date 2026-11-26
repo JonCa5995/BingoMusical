@@ -19,7 +19,6 @@ const view = new ProjectionView({
         counter: byId('projection-counter'),
         history: byId('projection-history'),
         progressBar: byId('projection-progress'),
-        progressFill: byId('projection-progress-fill'),
         time: byId('projection-time')
     },
     channel: new BroadcastChannel(PROJECTION_CHANNEL)
@@ -36,9 +35,9 @@ setInterval(() => view.sendAlive(), PROJECTION_ALIVE_MS);
 globalThis.addEventListener('pagehide', () => view.sendBye());
 
 document.addEventListener('dblclick', () => {
-    if (document.fullscreenElement) {
-        document.exitFullscreen();
-    } else {
-        document.documentElement.requestFullscreen();
-    }
+    const change = document.fullscreenElement
+        ? document.exitFullscreen()
+        : document.documentElement.requestFullscreen();
+
+    change.catch(() => {});
 });

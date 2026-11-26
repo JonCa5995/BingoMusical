@@ -143,3 +143,21 @@ strong.song-item-title {
     outline-offset: 2px;
     border-radius: 4px;
 }
+
+@media (prefers-reduced-motion: reduce) {
+    .history-item,
+    .history-item::before,
+    .song-item,
+    .song-item-icon,
+    .song-item-delete {
+        transition: none;
+        animation: none;
+    }
+
+    .history-item:hover,
+    .song-item:hover,
+    .song-item-icon:hover,
+    .song-item-delete:hover {
+        transform: none;
+    }
+}

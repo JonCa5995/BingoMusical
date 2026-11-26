@@ -378,3 +378,19 @@ article.modal-content {
     color: var(--text-muted);
     font-size: 1.1rem;
 }
+
+@media (prefers-reduced-motion: reduce) {
+    .icon-option,
+    .config-slider::-webkit-slider-thumb,
+    .config-slider::-moz-range-thumb,
+    .option-card {
+        transition: none;
+    }
+
+    .icon-option:hover:not(:disabled),
+    .config-slider::-webkit-slider-thumb:hover,
+    .config-slider::-moz-range-thumb:hover,
+    .option-card:hover {
+        transform: none;
+    }
+}

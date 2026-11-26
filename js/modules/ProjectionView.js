@@ -118,8 +118,7 @@ export class ProjectionView {
     }
 
     _showProgress(percent, currentTime, duration) {
-        this.el.progressFill.style.width = `${percent}%`;
-        this.el.progressBar.setAttribute('aria-valuenow', String(Math.round(percent)));
+        this.el.progressBar.value = percent;
         this.el.time.textContent = TEXT.projection.time(formatTime(currentTime), formatTime(duration));
     }
 

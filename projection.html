@@ -32,17 +32,15 @@
     <main class="projection-main" aria-live="polite">
       <p id="projection-status" class="projection-status"></p>
       <div id="projection-icon" class="projection-icon"></div>
-      <h2 id="projection-title" class="projection-title"></h2>
+      <p id="projection-title" class="projection-title"></p>
       <div class="projection-player">
-        <div id="projection-progress" class="projection-progress" role="progressbar" aria-label="Progreso de la canción" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-          <div id="projection-progress-fill" class="projection-progress-fill"></div>
-        </div>
+        <progress id="projection-progress" class="projection-progress" aria-label="Progreso de la canción" max="100" value="0"></progress>
         <p id="projection-time" class="projection-time">0:00 / 0:00</p>
       </div>
     </main>
 
     <section class="projection-side" aria-label="Canciones reproducidas">
-      <div id="projection-history" class="projection-history" role="group" aria-label="Canciones reproducidas"></div>
+      <fieldset id="projection-history" class="projection-history" aria-label="Canciones reproducidas"></fieldset>
       <p class="projection-hint">Doble clic para pantalla completa</p>
     </section>
   </div>

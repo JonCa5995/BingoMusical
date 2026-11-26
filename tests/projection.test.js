@@ -30,7 +30,7 @@ const SLOT_RECT = {left: 20, top: 10, width: 60, height: 60};
 const makeElements = () => {
     const elements = {
         header: spreadEl(), logo: spreadEl(), logoSlot: spreadEl(SLOT_RECT), gameName: spreadEl(), status: spreadEl(), icon: spreadEl(ICON_RECT), title: spreadEl(),
-        counter: spreadEl(), history: spreadEl(), progressBar: spreadEl(), progressFill: spreadEl(), time: spreadEl(),
+        counter: spreadEl(), history: spreadEl(), progressBar: spreadEl(), time: spreadEl(),
         celebration: spreadEl(), celebrationTitle: spreadEl(), celebrationText: spreadEl(), celebrationRows: spreadEl()
     };
     elements.celebration.classList.add('hidden');
@@ -327,8 +327,7 @@ test('la barra de progreso muestra el porcentaje, el tiempo y el valor accesible
 
     send(view, progressMessage());
 
-    assert.equal(el.progressFill.style.width, '25%');
-    assert.equal(el.progressBar.getAttribute('aria-valuenow'), '25');
+    assert.equal(el.progressBar.value, 25);
     assert.equal(el.time.textContent, TEXT.projection.time('0:30', '2:00'));
 });
 
@@ -337,10 +336,10 @@ test('el progreso nunca pasa del 100 % ni divide por cero', () => {
     view.start();
 
     send(view, progressMessage({currentTime: 500, duration: 120}));
-    assert.equal(el.progressFill.style.width, '100%');
+    assert.equal(el.progressBar.value, 100);
 
     send(view, progressMessage({currentTime: 5, duration: 0}));
-    assert.equal(el.progressFill.style.width, '0%');
+    assert.equal(el.progressBar.value, 0);
     assert.equal(el.time.textContent, TEXT.projection.time('0:05', '0:00'));
 });
 
@@ -353,7 +352,7 @@ test('ignora mensajes de progreso inválidos o de otra versión', () => {
         send(view, bad);
     }
 
-    assert.equal(el.progressFill.style.width, '25%');
+    assert.equal(el.progressBar.value, 25);
 });
 
 test('al cambiar de canción la barra vuelve a cero, y con la misma canción no se toca', () => {
@@ -363,10 +362,10 @@ test('al cambiar de canción la barra vuelve a cero, y con la misma canción no 
     send(view, progressMessage());
 
     send(view, stateFor({played: 3}));
-    assert.equal(el.progressFill.style.width, '25%');
+    assert.equal(el.progressBar.value, 25);
 
     send(view, stateFor({current: {id: 9, title: 'Nueva', icon: '🥁', iconType: 'emoji'}}));
-    assert.equal(el.progressFill.style.width, '0%');
+    assert.equal(el.progressBar.value, 0);
     assert.equal(el.time.textContent, TEXT.projection.time('0:00', '0:00'));
 });
 
